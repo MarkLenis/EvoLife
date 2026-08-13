@@ -18,6 +18,7 @@ class CreatureLifeRecordCreate(ExtensibleModel):
     parent_id_2: str | None = Field(default=None, max_length=64)
     offspring_count: int = Field(default=0, ge=0)
     genome_traits: dict[str, Any] = Field(default_factory=dict)
+    policy_kind: str | None = Field(default=None, max_length=64)
     extra_fields: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -33,3 +34,9 @@ class CreatureLifeRecordBatchCreate(BaseModel):
 class CreatureLifeRecordBatchResponse(BaseModel):
     inserted: int
     records: list[CreatureLifeRecordResponse]
+
+
+class CreatureLifeRecordListResponse(BaseModel):
+    run_id: str
+    records: list[CreatureLifeRecordResponse]
+    total: int

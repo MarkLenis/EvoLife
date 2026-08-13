@@ -39,6 +39,27 @@ class Database:
         if self.engine.dialect.name == "sqlite" and self.engine.url.database not in (None, ":memory:"):
             Path(self.engine.url.database).parent.mkdir(parents=True, exist_ok=True)
         Base.metadata.create_all(bind=self.engine)
+        _ensure_sqlite_columns(self.engine)
+
+
+def _ensure_sqlite_columns(engine) -> None:
+    """Add columns introduced after the first SQLite file was created."""
+    if engine.dialect.name != "sqlite":
+        return
+
+    statements = (
+        (
+            "creature_life_records",
+            "policy_kind",
+            "ALTER TABLE creature_life_records ADD COLUMN policy_kind VARCHAR(64)",
+        ),
+    )
+    with engine.begin() as connection:
+        for table, column, ddl in statements:
+            rows = connection.exec_driver_sql(f"PRAGMA table_info({table})").fetchall()
+            existing = {row[1] for row in rows}
+            if column not in existing and rows:
+                connection.exec_driver_sql(ddl)
 
     def get_session(self) -> Generator[Session, None, None]:
         session = self.session_factory()

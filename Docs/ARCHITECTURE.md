@@ -113,6 +113,9 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
 | `EvoLifeCreatureAgent` | AI | ML-Agents Agent bridge (`EvoLifeHerbivore` / `EvoLifePredator`) |
 | `CreatureObservationSchema` | AI | Documented observation size/order (v1, size 28) |
 | `IStatisticCollector` | Analytics | Snapshot production |
+| `AnalyticsSnapshotBuilder` / `CreatureLifetimeFactory` / `GenerationAggregator` | Analytics | Pure experiment metrics |
+| `CreatureLifecycleHub` | Simulation | Spawn/death fan-out for observers |
+| `IAnalyticsCreatureView` / `ICreatureLineage` / `IReadOnlyGenomeTraits` / `IEpisodeMetrics` | Common | Read-only analytics observation |
 | `GeneticObservationProvider` | Genetics | Normalized [0,1] genome vector for ML observations (`CreatureObservationSchema` indices 6–14) |
 | `IPolicyKindOwner` | Common | Simulation can set scripted vs PPO without referencing AI |
 
@@ -136,7 +139,7 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
    Movement and future eat/drink/attack use Environment `IResourceNode` and Creatures APIs (`ConsumeFood`, `Drink`, `ApplyDamage`). AI does not bypass these.
 
 6. **Measure**  
-   `PopulationStatisticCollector` builds `SimulationStatsSnapshot`. `StatsExportLoop` optionally POSTs to FastAPI via `BackendClient`.
+   `PopulationStatisticCollector` builds `SimulationStatsSnapshot`. `CreatureLifetimeRecorder` observes spawn/death via `CreatureLifecycleHub` (Common contracts). `StatsExportLoop` batches POSTs to FastAPI via `BackendClient` (v1 `/stats` or extended run/snapshot/creature/generation endpoints). See [ANALYTICS.md](ANALYTICS.md).
 
 7. **Present**  
    `SimulationHud` renders collector/clock data only.
@@ -198,15 +201,15 @@ Genome  --(IGenomeDecoder)-->  Phenotype (IReadOnlyPhenotype)
 
 ## Backend interaction
 
-Unity `BackendClient` POSTs JSON snapshots to:
+Unity `BackendClient` reuses the existing FastAPI app (no second analytics service):
 
-- `POST /api/v1/stats`
-- Experiments: `POST/GET /api/v1/experiments`
-- Health: `GET /health`
+- v1: `POST /api/v1/stats`, `POST/GET /api/v1/experiments`, `GET /health`
+- Extended (same SQLite run id): `POST /api/v1/runs`, snapshot batch, creature records, generation summaries
+- Queries: population-series, evolution-series, survival, policy-comparison, trait-evolution
 
-Payload fields match `SimulationStatsSnapshot` / Pydantic `StatsSnapshotIn` (`experimentId`, counts, sim time, unix timestamp).
+Payloads: v1 `SimulationStatsSnapshot` / `StatsSnapshotIn` (required camelCase fields unchanged; optional births/deaths/policy counts). Extended DTOs use snake_case and nested trait maps.
 
-Backend uses an in-memory store for early development; swap persistence later without changing Unity contracts.
+Default persistence is **SQLite**. See [ANALYTICS.md](ANALYTICS.md) and [Backend/README.md](../Backend/README.md).
 
 ---
 

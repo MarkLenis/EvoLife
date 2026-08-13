@@ -13,11 +13,24 @@ from app.persistence.repositories import (
     RunRepository,
     SnapshotRepository,
 )
-from app.schemas.creature import CreatureLifeRecordCreate, CreatureLifeRecordResponse
+from app.schemas.creature import (
+    CreatureLifeRecordCreate,
+    CreatureLifeRecordListResponse,
+    CreatureLifeRecordResponse,
+)
+from app.schemas.evaluation import (
+    PolicyComparisonResponse,
+    PolicyGroupMetrics,
+    SurvivalRecord,
+    SurvivalRecordsResponse,
+    TraitEvolutionPoint,
+    TraitEvolutionResponse,
+)
 from app.schemas.generation import (
     EvolutionTimeSeriesPoint,
     EvolutionTimeSeriesResponse,
     GenerationSummaryCreate,
+    GenerationSummaryListResponse,
     GenerationSummaryResponse,
 )
 from app.schemas.run import (
@@ -148,6 +161,7 @@ class AnalyticsService:
                 plant_count=snapshot.plant_count,
                 births=snapshot.births,
                 deaths=snapshot.deaths,
+                total_alive=_snapshot_total_alive(snapshot),
                 average_herbivore_speed=snapshot.average_herbivore_speed,
                 average_predator_speed=snapshot.average_predator_speed,
                 average_vision=snapshot.average_vision,
@@ -181,6 +195,123 @@ class AnalyticsService:
             for summary in summaries
         ]
         return EvolutionTimeSeriesResponse(run_id=run_id, points=points)
+
+    def list_creature_records(
+        self,
+        run_id: str,
+        *,
+        species: str | None = None,
+        generation: int | None = None,
+        policy_kind: str | None = None,
+        cause_of_death: str | None = None,
+    ) -> CreatureLifeRecordListResponse:
+        self.runs.get_by_id_or_raise(run_id)
+        records = self.creatures.list_for_run(
+            run_id,
+            species=species,
+            generation=generation,
+            policy_kind=policy_kind,
+            cause_of_death=cause_of_death,
+        )
+        return CreatureLifeRecordListResponse(
+            run_id=run_id,
+            records=[self._creature_to_response(item) for item in records],
+            total=len(records),
+        )
+
+    def list_generation_summaries(
+        self,
+        run_id: str,
+        *,
+        species: str | None = None,
+    ) -> GenerationSummaryListResponse:
+        self.runs.get_by_id_or_raise(run_id)
+        summaries = self.generations.list_for_run(run_id, species=species)
+        return GenerationSummaryListResponse(
+            run_id=run_id,
+            summaries=[self._generation_to_response(item) for item in summaries],
+            total=len(summaries),
+        )
+
+    def get_policy_comparison(self, run_id: str) -> PolicyComparisonResponse:
+        self.runs.get_by_id_or_raise(run_id)
+        records = self.creatures.list_for_run(run_id)
+        grouped: dict[str, list[CreatureLifeRecordModel]] = {}
+        for record in records:
+            key = record.policy_kind or (record.extra_fields or {}).get("policy_kind") or "unspecified"
+            grouped.setdefault(str(key), []).append(record)
+
+        groups = [_policy_group_metrics(kind, items) for kind, items in sorted(grouped.items())]
+        return PolicyComparisonResponse(run_id=run_id, groups=groups, total_creatures=len(records))
+
+    def get_survival_records(
+        self,
+        run_id: str,
+        *,
+        policy_kind: str | None = None,
+        species: str | None = None,
+    ) -> SurvivalRecordsResponse:
+        self.runs.get_by_id_or_raise(run_id)
+        records = self.creatures.list_for_run(run_id, species=species, policy_kind=policy_kind)
+        survival = [
+            SurvivalRecord(
+                creature_id=record.creature_id,
+                species=record.species,
+                policy_kind=record.policy_kind,
+                generation=record.generation,
+                lifetime=_creature_lifetime(record),
+                cause_of_death=record.cause_of_death,
+                birth_time=record.birth_time,
+                death_time=record.death_time,
+            )
+            for record in records
+        ]
+        return SurvivalRecordsResponse(run_id=run_id, records=survival, total=len(survival))
+
+    def get_trait_evolution(
+        self,
+        run_id: str,
+        trait: str,
+        *,
+        species: str | None = None,
+        policy_kind: str | None = None,
+    ) -> TraitEvolutionResponse:
+        self.runs.get_by_id_or_raise(run_id)
+        summaries = self.generations.list_for_run(run_id, species=species)
+        points: list[TraitEvolutionPoint] = []
+        for summary in summaries:
+            extra = summary.extra_statistics or {}
+            if policy_kind:
+                by_policy = extra.get("by_policy") or {}
+                slice_stats = by_policy.get(policy_kind) if isinstance(by_policy, dict) else None
+                if not isinstance(slice_stats, dict):
+                    continue
+                traits = slice_stats.get("average_genome_traits") or {}
+                variance = (slice_stats.get("trait_variance") or {}).get(trait, 0.0)
+                population = int(slice_stats.get("population_count") or 0)
+            else:
+                traits = summary.average_genome_traits or {}
+                variance = (extra.get("trait_variance") or {}).get(trait, 0.0)
+                population = summary.population_count
+
+            if trait not in traits:
+                continue
+            try:
+                mean = float(traits[trait])
+                variance_value = float(variance or 0.0)
+            except (TypeError, ValueError):
+                continue
+            points.append(
+                TraitEvolutionPoint(
+                    generation=summary.generation,
+                    species=summary.species,
+                    policy_kind=policy_kind,
+                    population_count=population,
+                    mean=mean,
+                    variance=variance_value,
+                )
+            )
+        return TraitEvolutionResponse(run_id=run_id, trait=trait, points=points)
 
     @staticmethod
     def _run_to_response(run: SimulationRunModel) -> SimulationRunResponse:
@@ -238,6 +369,10 @@ class AnalyticsService:
     def _creature_from_payload(run_id: str, payload: CreatureLifeRecordCreate) -> CreatureLifeRecordModel:
         extra = payload.model_extra or {}
         fields = {**payload.extra_fields, **extra}
+        policy_kind = payload.policy_kind or fields.get("policy_kind")
+        if policy_kind is not None:
+            policy_kind = str(policy_kind)
+            fields.setdefault("policy_kind", policy_kind)
         return CreatureLifeRecordModel(
             run_id=run_id,
             creature_id=payload.creature_id,
@@ -250,6 +385,7 @@ class AnalyticsService:
             parent_id_2=payload.parent_id_2,
             offspring_count=payload.offspring_count,
             genome_traits=payload.genome_traits,
+            policy_kind=policy_kind,
             extra_fields=fields,
         )
 
@@ -268,6 +404,7 @@ class AnalyticsService:
             parent_id_2=record.parent_id_2,
             offspring_count=record.offspring_count,
             genome_traits=record.genome_traits,
+            policy_kind=record.policy_kind,
             extra_fields=record.extra_fields,
         )
 
@@ -303,3 +440,70 @@ class AnalyticsService:
             notes=summary.notes,
             extra_statistics=summary.extra_statistics,
         )
+
+
+def _snapshot_total_alive(snapshot: SimulationSnapshotModel) -> int:
+    metrics = snapshot.extra_metrics or {}
+    total = metrics.get("totalAlive")
+    if total is None:
+        return snapshot.herbivore_population + snapshot.predator_population
+    try:
+        return int(total)
+    except (TypeError, ValueError):
+        return snapshot.herbivore_population + snapshot.predator_population
+
+
+def _creature_lifetime(record: CreatureLifeRecordModel) -> float:
+    extra = record.extra_fields or {}
+    if extra.get("lifetime") is not None:
+        try:
+            return max(0.0, float(extra["lifetime"]))
+        except (TypeError, ValueError):
+            pass
+    if record.death_time is not None:
+        return max(0.0, record.death_time - record.birth_time)
+    return 0.0
+
+
+def _mean(values: list[float]) -> float:
+    if not values:
+        return 0.0
+    return sum(values) / len(values)
+
+
+def _policy_group_metrics(policy_kind: str, records: list[CreatureLifeRecordModel]) -> PolicyGroupMetrics:
+    lifetimes = [_creature_lifetime(record) for record in records]
+    generations = [float(record.generation) for record in records]
+    offspring = [float(record.offspring_count) for record in records]
+    returns: list[float] = []
+    death_causes: dict[str, int] = {}
+    species_counts: dict[str, int] = {}
+    trait_values: dict[str, list[float]] = {}
+
+    for record in records:
+        extra = record.extra_fields or {}
+        if extra.get("episode_return") is not None:
+            try:
+                returns.append(float(extra["episode_return"]))
+            except (TypeError, ValueError):
+                pass
+        cause = record.cause_of_death or "unknown"
+        death_causes[cause] = death_causes.get(cause, 0) + 1
+        species_counts[record.species] = species_counts.get(record.species, 0) + 1
+        for name, value in (record.genome_traits or {}).items():
+            try:
+                trait_values.setdefault(str(name), []).append(float(value))
+            except (TypeError, ValueError):
+                continue
+
+    return PolicyGroupMetrics(
+        policy_kind=policy_kind,
+        creature_count=len(records),
+        mean_lifetime=_mean(lifetimes),
+        mean_generation=_mean(generations),
+        mean_offspring=_mean(offspring),
+        mean_episode_return=_mean(returns) if returns else None,
+        death_causes=death_causes,
+        average_genome_traits={name: _mean(values) for name, values in trait_values.items()},
+        species_counts=species_counts,
+    )

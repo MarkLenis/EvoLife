@@ -12,6 +12,7 @@ namespace EvoLife.Simulation
     public sealed class CreatureSpawner : MonoBehaviour
     {
         [SerializeField] PopulationTracker populationTracker;
+        [SerializeField] CreatureLifecycleHub lifecycleHub;
         [SerializeField] SpeciesVitalsDefinition defaultVitals;
         [SerializeField] int nextCreatureId = 1;
 
@@ -34,7 +35,10 @@ namespace EvoLife.Simulation
             string speciesId,
             CreatureRole role,
             Genome genome = null,
-            AgentPolicyKind policyKind = AgentPolicyKind.ScriptedBaseline)
+            AgentPolicyKind policyKind = AgentPolicyKind.ScriptedBaseline,
+            int generation = 0,
+            CreatureId? parentA = null,
+            CreatureId? parentB = null)
         {
             if (prefab == null)
             {
@@ -48,7 +52,7 @@ namespace EvoLife.Simulation
             var identity = instance.GetComponent<CreatureIdentity>();
             if (identity != null)
             {
-                identity.Assign(id, speciesId, role);
+                identity.Assign(id, speciesId, role, generation, parentA, parentB);
             }
 
             var vitals = instance.GetComponent<CreatureVitals>();
@@ -74,6 +78,7 @@ namespace EvoLife.Simulation
             policyOwner?.SetPolicyKind(policyKind);
 
             populationTracker?.Register(id, role);
+            lifecycleHub?.RegisterSpawned(instance);
             return instance;
         }
     }

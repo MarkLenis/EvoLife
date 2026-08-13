@@ -13,6 +13,8 @@ namespace EvoLife.Simulation
         [SerializeField] float defaultTimeScale = 1f;
         [SerializeField] AgentPolicyKind herbivorePolicy = AgentPolicyKind.ScriptedBaseline;
         [SerializeField] AgentPolicyKind predatorPolicy = AgentPolicyKind.ScriptedBaseline;
+        [SerializeField] string scenarioId = "";
+        [SerializeField] string trainingModelId = "";
 
         public string ExperimentName => experimentName;
         public int RandomSeed => randomSeed;
@@ -21,5 +23,7 @@ namespace EvoLife.Simulation
         public float DefaultTimeScale => defaultTimeScale;
         public AgentPolicyKind HerbivorePolicy => herbivorePolicy;
         public AgentPolicyKind PredatorPolicy => predatorPolicy;
+        public string ScenarioId => scenarioId;
+        public string TrainingModelId => trainingModelId;
     }
 }

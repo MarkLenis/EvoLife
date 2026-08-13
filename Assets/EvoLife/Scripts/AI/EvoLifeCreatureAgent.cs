@@ -47,6 +47,9 @@ namespace EvoLife.AI
         Vector3 episodeStartPosition;
         Quaternion episodeStartRotation;
         bool startPoseCaptured;
+        float lastCompletedEpisodeReturn;
+        int completedEpisodeCount;
+        bool hasCompletedEpisodeReturn;
 
         public string BehaviorName => MlAgentsBehaviorNames.ForRole(
             identity != null ? identity.Role : CreatureRoleOrDefault());
@@ -58,6 +61,18 @@ namespace EvoLife.AI
         public bool ControlEnabled => controlEnabled;
 
         public TrainingRewardSettings RewardSettings => rewardSettings;
+
+#if EVOLIFE_MLAGENTS
+        public bool HasEpisodeReturn => true;
+
+        public float EpisodeReturn => GetCumulativeReward();
+#else
+        public bool HasEpisodeReturn => hasCompletedEpisodeReturn;
+
+        public float EpisodeReturn => lastCompletedEpisodeReturn;
+#endif
+
+        public int CompletedEpisodeCount => completedEpisodeCount;
 
         public void Bind(
             IObservationSource observationSource,
@@ -217,7 +232,12 @@ namespace EvoLife.AI
             }
 
             episodeClosing = true;
+#if EVOLIFE_MLAGENTS
+            lastCompletedEpisodeReturn = GetCumulativeReward();
+            hasCompletedEpisodeReturn = true;
+            completedEpisodeCount++;
             EndEpisode();
+#endif
         }
 
         void ApplyBehaviorConfiguration()

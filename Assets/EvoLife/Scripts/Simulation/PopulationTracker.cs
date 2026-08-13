@@ -11,13 +11,18 @@ namespace EvoLife.Simulation
     {
         readonly HashSet<CreatureId> herbivores = new HashSet<CreatureId>();
         readonly HashSet<CreatureId> predators = new HashSet<CreatureId>();
+        int births;
+        int deaths;
 
         public int HerbivoreCount => herbivores.Count;
         public int PredatorCount => predators.Count;
         public int TotalAlive => herbivores.Count + predators.Count;
+        public int Births => births;
+        public int Deaths => deaths;
 
         public void Register(CreatureId id, CreatureRole role)
         {
+            var wasAlive = herbivores.Contains(id) || predators.Contains(id);
             if (role == CreatureRole.Predator)
             {
                 predators.Add(id);
@@ -28,12 +33,20 @@ namespace EvoLife.Simulation
                 herbivores.Add(id);
                 predators.Remove(id);
             }
+
+            if (!wasAlive)
+            {
+                births++;
+            }
         }
 
         public void Unregister(CreatureId id)
         {
-            herbivores.Remove(id);
-            predators.Remove(id);
+            var wasAlive = herbivores.Remove(id) | predators.Remove(id);
+            if (wasAlive)
+            {
+                deaths++;
+            }
         }
     }
 }

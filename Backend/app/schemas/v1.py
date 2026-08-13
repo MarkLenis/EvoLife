@@ -15,6 +15,12 @@ class StatsSnapshotIn(BaseModel):
     predatorCount: int
     totalAlive: int
     timestampUtcUnix: float
+    births: int | None = None
+    deaths: int | None = None
+    populationChange: int | None = None
+    scriptedAlive: int | None = None
+    ppoAlive: int | None = None
+    maxGeneration: int | None = None
 
 
 class ExperimentCreate(BaseModel):

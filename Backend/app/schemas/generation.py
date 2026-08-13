@@ -47,3 +47,9 @@ class EvolutionTimeSeriesPoint(BaseModel):
 class EvolutionTimeSeriesResponse(BaseModel):
     run_id: str
     points: list[EvolutionTimeSeriesPoint]
+
+
+class GenerationSummaryListResponse(BaseModel):
+    run_id: str
+    summaries: list[GenerationSummaryResponse]
+    total: int

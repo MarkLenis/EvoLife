@@ -62,7 +62,7 @@ Backend/app/            FastAPI application code
 Backend/tests/          Pytest
 Training/configs/       ML-Agents YAML
 Training/scripts/       Train/eval helpers
-Docs/                   Architecture & process
+Docs/                   Architecture, analytics, and process
 ```
 
 Rules:
@@ -104,7 +104,7 @@ pytest -q
 
 1. Open Window → General → Test Runner.
 2. Select **EditMode**.
-3. Run `EvoLife.Tests.EditMode` tests (`GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`).
+3. Run `EvoLife.Tests.EditMode` tests (`GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `AnalyticsCollectorTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`).
 
 ### Unity PlayMode
 
@@ -147,10 +147,10 @@ Cloud/agent Linux VMs typically **cannot** run the Unity Editor compiler. Backen
 
 1. Extend `SimulationStatsSnapshot` in **Analytics** (fields must remain `JsonUtility`-serializable for Unity).
 2. Update the collector (`PopulationStatisticCollector` or a new focused collector).
-3. Mirror the field in Backend `StatsSnapshotIn` (`Backend/app/models/schemas.py`).
-4. Add/adjust Backend tests in `Backend/tests/`.
+3. Mirror the field in Backend schemas (`Backend/app/schemas/`) — extend v1 optionally, or the extended snapshot/creature/generation models.
+4. Add/adjust Backend tests in `Backend/tests/` and Unity EditMode tests for pure collectors (`AnalyticsCollectorTests`).
 5. Optionally display in `SimulationHud`.
-6. Avoid computing domain rules inside Analytics — only aggregate what Simulation/Creatures already expose via contracts.
+6. Avoid computing domain rules inside Analytics — only aggregate what Simulation/Creatures already expose via Common contracts. See [ANALYTICS.md](ANALYTICS.md).
 
 ---
 
