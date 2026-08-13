@@ -2,6 +2,15 @@
 
 The genetics subsystem provides genomes, inheritance operations, lineage tracking, and integration hooks for simulation and ML policy observations.
 
+## Repository layout
+
+| Location | Role |
+|----------|------|
+| `evolife/genetics/` | Python reference implementation (pytest, offline ops, analytics) |
+| `Assets/EvoLife/Scripts/Genetics/` | Unity runtime seam (`Genome`, `IGeneticOperators`, `Phenotype`) |
+
+Per [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), **Genetics** owns genome data, crossover, mutation, and phenotype decode. The Python package below is the detailed, tested implementation of those operations. Unity integration should call into or mirror these rules via `IGeneticOperators` / `IGenomeDecoder` — not duplicate logic elsewhere.
+
 ## Overview
 
 Each creature carries a **genome** — a set of numeric traits with hard bounds. Offspring inherit traits from parents via crossover and mutation. Evolutionary success comes from survival and reproduction, not a global fitness score.
