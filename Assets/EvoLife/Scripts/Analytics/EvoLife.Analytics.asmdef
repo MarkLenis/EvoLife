@@ -1,0 +1,17 @@
+{
+  "name": "EvoLife.Analytics",
+  "rootNamespace": "EvoLife.Analytics",
+  "references": [
+    "EvoLife.Common",
+    "EvoLife.Simulation"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

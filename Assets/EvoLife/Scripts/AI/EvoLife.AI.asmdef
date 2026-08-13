@@ -1,0 +1,25 @@
+{
+  "name": "EvoLife.AI",
+  "rootNamespace": "EvoLife.AI",
+  "references": [
+    "EvoLife.Common",
+    "EvoLife.Creatures",
+    "EvoLife.Genetics",
+    "EvoLife.Environment"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [
+    {
+      "name": "com.unity.ml-agents",
+      "expression": "2.0.0",
+      "define": "EVOLIFE_MLAGENTS"
+    }
+  ],
+  "noEngineReferences": false
+}
