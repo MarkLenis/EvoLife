@@ -7,6 +7,7 @@ namespace EvoLife.UI
 {
     /// <summary>
     /// Minimal HUD for population and time. Presentation only — no simulation logic.
+    /// Prefer <see cref="DesktopDebugUi"/> for the full desktop inspector/dashboard.
     /// </summary>
     public sealed class SimulationHud : MonoBehaviour
     {

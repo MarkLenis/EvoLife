@@ -7,7 +7,7 @@ namespace EvoLife.Creatures
     /// <summary>
     /// Unity-facing owner of biological vitals. Delegates simulation to <see cref="CreatureBiology"/>.
     /// </summary>
-    public sealed class CreatureVitals : MonoBehaviour, IReadOnlyVitalState, ISimulationTickable, ICreatureDeathObservable
+    public sealed class CreatureVitals : MonoBehaviour, IReadOnlyVitalState, IReadOnlyCreatureActivity, ISimulationTickable, ICreatureDeathObservable
     {
         [SerializeField] SpeciesVitalsDefinition definition;
 
@@ -30,6 +30,8 @@ namespace EvoLife.Creatures
             get => currentActivity;
             set => currentActivity = value;
         }
+
+        string IReadOnlyCreatureActivity.CurrentActivity => currentActivity.ToString();
 
         public CreatureBiology Biology => biology;
 

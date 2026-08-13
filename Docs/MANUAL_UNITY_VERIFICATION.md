@@ -18,11 +18,13 @@ Unity Editor is not available in typical cloud agent environments. After pulling
    - `ReproductionTests` / `EcosystemLifecycleTests` (mating eligibility, lineage, mutation bounds, training vs persistent respawn, spawn-failure does not charge energy/health or start cooldown, success commits costs/cooldown once)
    - `PlantResourceTests` / `DayNightCycleTests` / `EnvironmentalEventTests` (depletion, regen, drought/food boom, event restore, no double death, lifecycle spawn/remove)
    - `ExperimentConfigurationTests` / `ExperimentLifecycleTests` (JSON round-trip, seeds, scenarios, stop conditions, metadata, extinct rates, policy selection, validation, initialization pause until `BeginRunning`, failed analytics never Running, FinishAsync pauses, second `BeginAsync` rejected, environment applied/placed once, founders spawned once)
-   - `AnalyticsExportControllerTests` (failed upload retains records, success dequeues, bounded overflow)
-   - `PopulationTrackerTests`
-   - `AnalyticsCollectorTests` (snapshot math, lifetime records, generation aggregates, policy classification, empty-population safety)
+  - `AnalyticsExportControllerTests` (failed upload retains records, success dequeues, bounded overflow)
+  - `PopulationTrackerTests`
+  - `AnalyticsCollectorTests` (snapshot math, lifetime records, generation aggregates, policy classification, empty-population safety)
+  - `DesktopUiPresenterTests` (inspector empty/living/dead, trait order, policy labels, zero ratios, event formatting, speed presets, ring-buffer capacity, selection clear, missing AI debug)
 5. Open `Assets/EvoLife/Scenes/Bootstrap.unity`, add missing component references (`SimulationClock`, `SimulationRunner`, `PopulationTracker`, `CreatureSpawner`, analytics) via the Inspector — the checked-in scene is a minimal placeholder.
-6. Confirm ScriptableObject create menus appear: `EvoLife/Creatures/Species Vitals`, `EvoLife/Simulation/Config`, `EvoLife/Simulation/Experiment Configuration`, `EvoLife/Simulation/Reproduction Config`, `EvoLife/Environment/Config`, `EvoLife/Environment/Event Config`, `EvoLife/AI/Scripted Baseline Profile`.
-7. Commit any Unity-generated `.meta` files so GUIDs are shared.
-8. Optional: with ML-Agents Python installed, run `./Training/scripts/train_herbivore.sh`, set a creature to `LearnedPpo`, press Play, and confirm the trainer connects (`EvoLifeHerbivore`).
-9. Optional: start Backend and toggle `StatsExportLoop.uploadToBackend` once a collector is wired in the scene.
+6. For desktop UI: open `Assets/EvoLife/Scenes/UiDebug.unity` or add `DesktopDebugUi` to a simulation scene (see [UI_DEBUG.md](UI_DEBUG.md)). Confirm camera WASD/RMB, click-select, inspector, pause/speed, event buttons, and F3 AI debug overlay. Do not treat demo time-scale as experiment output.
+7. Confirm ScriptableObject create menus appear: `EvoLife/Creatures/Species Vitals`, `EvoLife/Simulation/Config`, `EvoLife/Simulation/Experiment Configuration`, `EvoLife/Simulation/Reproduction Config`, `EvoLife/Environment/Config`, `EvoLife/Environment/Event Config`, `EvoLife/AI/Scripted Baseline Profile`.
+8. Commit any Unity-generated `.meta` files so GUIDs are shared.
+9. Optional: with ML-Agents Python installed, run `./Training/scripts/train_herbivore.sh`, set a creature to `LearnedPpo`, press Play, and confirm the trainer connects (`EvoLifeHerbivore`).
+10. Optional: start Backend and toggle `StatsExportLoop.uploadToBackend` once a collector is wired in the scene.

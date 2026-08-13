@@ -26,6 +26,14 @@ namespace EvoLife.AI
 
         public int ActionSize => CreatureActionSchema.ContinuousCount;
 
+        public float LastForward { get; private set; }
+
+        public float LastTurn { get; private set; }
+
+        public float LastSprintOrEffort { get; private set; }
+
+        public int LastInteraction { get; private set; }
+
         public void BindInteractor(ICreatureInteractor value) => interactor = value;
 
         void Awake()
@@ -50,6 +58,10 @@ namespace EvoLife.AI
         {
             CreatureActionSchema.ClampTo(continuousActions, clamped);
             interaction = CreatureActionSchema.ClampInteraction(interaction);
+            LastForward = clamped[CreatureActionSchema.IndexForward];
+            LastTurn = clamped[CreatureActionSchema.IndexTurn];
+            LastSprintOrEffort = clamped[CreatureActionSchema.IndexSprintOrEffort];
+            LastInteraction = interaction;
 
             var rest = interaction == CreatureActionSchema.InteractionRest;
             var walkSpeed = motor != null ? motor.MaxSpeed : moveSpeed;

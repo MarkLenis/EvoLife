@@ -31,8 +31,8 @@ This guide prevents duplicate systems when multiple human or coding agents work 
 | Rewards | **AI** | `IRewardCalculator`, `TrainingRewardCalculator`, `SurvivalRewardCalculator` | Creatures |
 | Scripted baseline vs PPO policy | **AI** | `CreatureBrain`, `ScriptedBaselinePolicy`, `BaselineMotiveEvaluator`, `ScriptedBaselineSettings` / `ScriptedBaselineProfile`, `EvoLifeCreatureAgent`, `PpoPolicyAdapter` (idle fallback) | Simulation |
 | Stats snapshots + HTTP upload | **Analytics** | `SimulationStatsSnapshot`, `BackendClient`, `StatsExportLoop`, `AnalyticsExportController`, collectors, lifetime/generation records | Simulation, UI, Creatures, AI |
-| HUD / presentation | **UI** | `SimulationHud` | Domain modules |
-| Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, `IPolicySeedOwner`, `IExperimentAnalyticsSession`, `IReproductionRequestHandler`, `IEnvironmentalVitalEffects`, `IEnvironmentalPopulationCommands`, IDs, enums | Gameplay behavior |
+| HUD / inspector / dashboard / desktop camera | **UI** | `DesktopDebugUi`, `DesktopCameraController`, `CreatureInspectorPresenter`, `SimulationHud` | Domain modules |
+| Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, `IPolicySeedOwner`, `IExperimentAnalyticsSession`, `IReproductionRequestHandler`, `IEnvironmentalVitalEffects`, `IEnvironmentalPopulationCommands`, `IReadOnlyCreatureAiDebug`, `IEnvironmentalEventCommands`, `ISimulationClockControl`, IDs, enums | Gameplay behavior |
 | REST experiment/stats API | **Backend** | FastAPI `app/` | Unity (except DTO field alignment) |
 | PPO YAML / train scripts | **Training** | `Training/configs`, `Training/scripts`, `Training/experiments` | Unity runtime folders |
 
@@ -50,7 +50,7 @@ Agents can work simultaneously if they stay in lane:
 | D — AI | Obs/action/reward, ML-Agents Agent class | Reads vitals/resources; never owns them |
 | E — Simulation | Spawn balancing, config, world bootstrap | Calls into A/B/C; does not implement brains |
 | F — Analytics + Backend | Metrics, API, schemas | DTO parity with Unity snapshot |
-| G — UI | HUD, controls | Bind to Analytics/Simulation read APIs |
+| G — UI | HUD, inspector, dashboard, camera, AI debug overlay | Bind to Analytics/Simulation/Common read APIs; see [UI_DEBUG.md](UI_DEBUG.md) |
 | H — Training | YAML, eval scripts | Behavior names must match AI Agent |
 
 **Conflict zones** (serialize changes or pair up):
@@ -91,6 +91,7 @@ Agents can work simultaneously if they stay in lane:
 5. **UI buttons** that directly modify hunger/health instead of calling Creatures APIs  
 6. **Duplicating** `BackendClient` in Training scripts that scrape Unity logs — extend Analytics/Backend instead  
 7. **XR / VR** assemblies or scenes — out of scope  
+8. **Rewriting the presentation scene** from the UI lane — world visuals belong to the presentation agent; UI should add camera/overlay components only  
 
 ---
 
@@ -123,3 +124,4 @@ After Unity-side changes, a human (or Unity-equipped runner) should confirm:
 - [ ] Environment EditMode tests pass (`PlantResourceTests`, `DayNightCycleTests`, `EnvironmentalEventTests`)
 - [ ] Experiment EditMode tests pass (`ExperimentConfigurationTests`, `ExperimentLifecycleTests`) — initialization stays paused until `BeginRunning`; environment applicator/placement happens once per orchestrated start
 - [ ] Analytics export retention tests pass (`AnalyticsExportControllerTests`)  
+- [ ] Desktop UI presenter tests pass (`DesktopUiPresenterTests`)  

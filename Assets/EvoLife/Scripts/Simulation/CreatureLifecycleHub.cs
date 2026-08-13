@@ -9,7 +9,7 @@ namespace EvoLife.Simulation
     /// Simulation-owned spawn/death fan-out. Unregisters population on death.
     /// Analytics may subscribe; this class does not upload or score fitness.
     /// </summary>
-    public sealed class CreatureLifecycleHub : MonoBehaviour, ICreatureLifecycleEvents
+    public sealed class CreatureLifecycleHub : MonoBehaviour, ICreatureLifecycleEvents, ILiveCreatureCatalog
     {
         [SerializeField] PopulationTracker populationTracker;
 
@@ -64,6 +64,23 @@ namespace EvoLife.Simulation
                 if (entry.Instance != null)
                 {
                     destination.Add(entry.Instance);
+                }
+            }
+        }
+
+        public void CopyLiveViews(IList<IAnalyticsCreatureView> destination)
+        {
+            if (destination == null)
+            {
+                return;
+            }
+
+            destination.Clear();
+            foreach (var entry in live.Values)
+            {
+                if (entry.Instance != null && entry.View != null)
+                {
+                    destination.Add(entry.View);
                 }
             }
         }

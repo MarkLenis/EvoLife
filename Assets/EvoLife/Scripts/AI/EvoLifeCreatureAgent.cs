@@ -78,6 +78,21 @@ namespace EvoLife.AI
 
         public int CompletedEpisodeCount => completedEpisodeCount;
 
+        public bool TryCopyLastObservations(float[] destination)
+        {
+            if (destination == null || destination.Length < observationBuffer.Length)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < observationBuffer.Length; i++)
+            {
+                destination[i] = observationBuffer[i];
+            }
+
+            return true;
+        }
+
         public void Bind(
             IObservationSource observationSource,
             IEpisodeRewardCalculator rewardCalculator,

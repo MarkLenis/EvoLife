@@ -32,6 +32,14 @@ namespace EvoLife.AI
 
         public int LastInteraction { get; private set; }
 
+        public BaselineSensedWorld LastSensedWorld { get; private set; }
+
+        public float LastForward => actions[CreatureActionSchema.IndexForward];
+
+        public float LastTurn => actions[CreatureActionSchema.IndexTurn];
+
+        public float LastSprintOrEffort => actions[CreatureActionSchema.IndexSprintOrEffort];
+
         public ScriptedBaselineSettings Settings => settings;
 
         public CreatureRole Role => role;
@@ -74,6 +82,7 @@ namespace EvoLife.AI
             }
 
             var world = BaselineSensedWorld.FromObservations(observationScratch);
+            LastSensedWorld = world;
             var decision = evaluator.Evaluate(world, memory, settings, role, ResolveDeltaTime());
 
             actions[CreatureActionSchema.IndexForward] = decision.Forward;

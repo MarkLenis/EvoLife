@@ -47,6 +47,7 @@ pytest -q
 - [Genetics](Docs/GENETICS.md)
 - [Development](Docs/DEVELOPMENT.md)
 - [Agent boundaries](Docs/AGENT_BOUNDARIES.md) — for parallel human/AI contributors
+- [Desktop UI / inspector / AI debug](Docs/UI_DEBUG.md)
 
 ## Design principles
 

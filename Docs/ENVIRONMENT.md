@@ -95,7 +95,7 @@ Optional `IDayNightLightingHook` sinks can react to updates. No lighting impleme
 - active events (kind, start, end)
 - normalized temperature
 
-Analytics may read these contracts later. They are not posted on the v1 `/stats` snapshot in this change.
+Analytics may read these contracts later. They are not posted on the v1 `/stats` snapshot in this change. Desktop UI reads them through the same contracts; see [UI_DEBUG.md](UI_DEBUG.md).
 
 ## Configuration
 

@@ -111,11 +111,11 @@ pytest -q
 
 1. Open Window → General → Test Runner.
 2. Select **EditMode**.
-3. Run EditMode `ExperimentConfigurationTests`, `GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `AnalyticsCollectorTests`, `AnalyticsExportControllerTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureProximitySelectionTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`, `BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`, `ReproductionTests`, `PlantResourceTests`, `EnvironmentalEventTests`.
+3. Run EditMode `ExperimentConfigurationTests`, `GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `AnalyticsCollectorTests`, `AnalyticsExportControllerTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureProximitySelectionTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`, `BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`, `ReproductionTests`, `PlantResourceTests`, `EnvironmentalEventTests`, `DesktopUiPresenterTests`.
 
 ### Unity PlayMode
 
-PlayMode assembly includes `EvoLifeCreatureAgentPlayModeTests` (schema-sized observations; Agent sizes without a trained model).
+PlayMode assembly includes `EvoLifeCreatureAgentPlayModeTests` and `DesktopUiPlayModeTests` (camera focus / selection clear). Unity Editor is required.
 
 ### What this environment can verify
 
@@ -159,7 +159,7 @@ See [ENVIRONMENT.md](ENVIRONMENT.md) and [ENVIRONMENT_EVENTS.md](ENVIRONMENT_EVE
 2. Update the collector (`PopulationStatisticCollector` or a new focused collector).
 3. Mirror the field in Backend schemas (`Backend/app/schemas/`) — extend v1 optionally, or the extended snapshot/creature/generation models.
 4. Add/adjust Backend tests in `Backend/tests/` and Unity EditMode tests for pure collectors (`AnalyticsCollectorTests`).
-5. Optionally display in `SimulationHud`.
+5. Optionally display in `DesktopDebugUi` / leftover `SimulationHud`. See [UI_DEBUG.md](UI_DEBUG.md).
 6. Avoid computing domain rules inside Analytics — only aggregate what Simulation/Creatures already expose via Common contracts. See [ANALYTICS.md](ANALYTICS.md).
 
 ---

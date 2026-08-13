@@ -71,7 +71,7 @@ If the bridge is missing, resource events still run; damage/spawn/remove become 
 
 ## Analytics
 
-Each `IReadOnlyEnvironmentalEvent` exposes kind, start time, end time, and active flag. `IReadOnlyEnvironmentState` includes the active list plus resource abundance. No dashboard is provided.
+`IReadOnlyEnvironmentalEvent` exposes kind, start time, end time, and active flag. `IReadOnlyEnvironmentState` includes the active list plus resource abundance. Desktop display is in [UI_DEBUG.md](UI_DEBUG.md); UI only calls `IEnvironmentalEventCommands.Trigger`.
 
 ## Tests
 
