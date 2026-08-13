@@ -10,7 +10,7 @@ namespace EvoLife.AI
     /// Policy entry point attached to a creature. Selects scripted vs learned PPO control.
     /// Only one control policy is active at a time. Does not own vitals or genetics.
     /// </summary>
-    public sealed class CreatureBrain : MonoBehaviour, IPolicyKindOwner, IEpisodeMetrics
+    public sealed class CreatureBrain : MonoBehaviour, IPolicyKindOwner, IEpisodeMetrics, IPolicySeedOwner
     {
         [SerializeField] AgentPolicyKind policyKind = AgentPolicyKind.ScriptedBaseline;
         [SerializeField] CreatureVitals vitals;
@@ -26,6 +26,9 @@ namespace EvoLife.AI
         [Tooltip("If enabled, ignore role defaults and use the inline settings below (when no profile is assigned).")]
         [SerializeField] bool useInlineBaselineSettings;
         [SerializeField] ScriptedBaselineSettings baselineSettings = new ScriptedBaselineSettings();
+
+        int policySeed;
+        bool hasPolicySeed;
 
         IObservationSource observations;
         IEpisodeRewardCalculator rewards;
@@ -100,6 +103,16 @@ namespace EvoLife.AI
             ApplyControlMode();
         }
 
+        public void SetPolicySeed(int seed)
+        {
+            policySeed = seed;
+            hasPolicySeed = true;
+            if (controlMode == CreatureControlMode.ScriptedBaseline)
+            {
+                policy = CreateScriptedBaseline();
+            }
+        }
+
         void FixedUpdate()
         {
             if (controlMode == CreatureControlMode.LearnedPpo)
@@ -141,7 +154,7 @@ namespace EvoLife.AI
         ICreaturePolicy CreateScriptedBaseline()
         {
             var role = identity != null ? identity.Role : CreatureRole.Herbivore;
-            var seed = identity != null ? identity.Id.Value : 1;
+            var seed = hasPolicySeed ? policySeed : identity != null ? identity.Id.Value : 1;
             return new ScriptedBaselinePolicy(ResolveBaselineSettings(role), role, seed);
         }
 

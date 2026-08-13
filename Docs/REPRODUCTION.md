@@ -118,6 +118,8 @@ Invalid or untimely requests do not mutate biology.
 
 Create **EvoLife → Simulation → Reproduction Config** and assign it on `ReproductionSystem` / `EcosystemManager`.
 
+`ExperimentConfiguration` can override mutation probability/magnitude for a run; `EcosystemManager.ApplyExperimentSettings` copies those onto `ReproductionSettings` and reseeds the reproduction RNG from `DeterministicSeeds.Reproduction`. See [EXPERIMENTS.md](EXPERIMENTS.md).
+
 `SimulationConfig.Ecosystem` holds mode, caps, training floors, spawn radius, and species ids. Prefabs stay on `EcosystemManager` / `ReproductionSystem`.
 
 Add `TrainingRespawnController` to `SimulationRunner`’s tick list when using training-support mode.

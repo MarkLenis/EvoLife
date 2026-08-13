@@ -134,15 +134,21 @@ namespace EvoLife.Analytics
             return PostJsonAsync($"/api/v1/runs/{runId}/generations", AnalyticsJson.Serialize(payload));
         }
 
-        public Task<bool> FinishRunAsync(string runId, string status = "completed")
+        public Task<bool> FinishRunAsync(string runId, string status = "completed", string stopReason = null)
         {
             if (!enableUploads || string.IsNullOrEmpty(runId))
             {
                 return Task.FromResult(false);
             }
 
-            var json = "{\"status\":\"" + (status ?? "completed") + "\"}";
-            return PostJsonAsync($"/api/v1/runs/{runId}/finish", json);
+            var payload = "{\"status\":\"" + (status ?? "completed") + "\"";
+            if (!string.IsNullOrEmpty(stopReason))
+            {
+                payload += ",\"stop_reason\":\"" + stopReason + "\"";
+            }
+
+            payload += "}";
+            return PostJsonAsync($"/api/v1/runs/{runId}/finish", payload);
         }
 
         async Task<bool> PostJsonAsync(string path, string json)

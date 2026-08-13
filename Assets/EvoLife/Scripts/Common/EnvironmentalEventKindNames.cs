@@ -38,6 +38,62 @@ namespace EvoLife.Common
             }
         }
 
+        public static bool TryParse(string wireName, out EnvironmentalEventKind kind)
+        {
+            if (string.Equals(wireName, Drought, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(wireName, "Drought", StringComparison.OrdinalIgnoreCase))
+            {
+                kind = EnvironmentalEventKind.Drought;
+                return true;
+            }
+
+            if (string.Equals(wireName, Wildfire, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(wireName, "Wildfire", StringComparison.OrdinalIgnoreCase))
+            {
+                kind = EnvironmentalEventKind.Wildfire;
+                return true;
+            }
+
+            if (string.Equals(wireName, HeatWave, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(wireName, "HeatWave", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(wireName, "Heat Wave", StringComparison.OrdinalIgnoreCase))
+            {
+                kind = EnvironmentalEventKind.HeatWave;
+                return true;
+            }
+
+            if (string.Equals(wireName, FoodBoom, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(wireName, "FoodBoom", StringComparison.OrdinalIgnoreCase))
+            {
+                kind = EnvironmentalEventKind.FoodBoom;
+                return true;
+            }
+
+            if (string.Equals(wireName, DiseasePressure, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(wireName, "DiseasePressure", StringComparison.OrdinalIgnoreCase))
+            {
+                kind = EnvironmentalEventKind.DiseasePressure;
+                return true;
+            }
+
+            if (string.Equals(wireName, PredatorIntroduction, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(wireName, "PredatorIntroduction", StringComparison.OrdinalIgnoreCase))
+            {
+                kind = EnvironmentalEventKind.PredatorIntroduction;
+                return true;
+            }
+
+            if (string.Equals(wireName, PredatorRemoval, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(wireName, "PredatorRemoval", StringComparison.OrdinalIgnoreCase))
+            {
+                kind = EnvironmentalEventKind.PredatorRemoval;
+                return true;
+            }
+
+            kind = EnvironmentalEventKind.Drought;
+            return false;
+        }
+
         static string Unreachable(EnvironmentalEventKind kind)
         {
             throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unhandled EnvironmentalEventKind.");

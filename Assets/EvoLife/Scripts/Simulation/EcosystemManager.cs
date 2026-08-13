@@ -44,6 +44,12 @@ namespace EvoLife.Simulation
                 resourceManager != null ? resourceManager.TemperatureNormalized : 0f);
         }
 
+        public bool SpawnFoundersOnStart
+        {
+            get => spawnFoundersOnStart;
+            set => spawnFoundersOnStart = value;
+        }
+
         public void Configure(
             SimulationConfig simulationConfig,
             SimulationClock simulationClock,
@@ -83,26 +89,34 @@ namespace EvoLife.Simulation
             }
 
             clock?.SetTimeScale(config.DefaultTimeScale);
-            spawner?.SetSeed(config.RandomSeed);
+            var experiment = config.ToExperimentConfiguration();
+            var seeds = experiment.Seeds;
+            spawner?.SetSeed(seeds.FounderGenomes);
+            spawner?.SetPolicyMasterSeed(experiment.RandomSeed);
+            spawner?.SetPredatorSpeedBias(experiment.PredatorSpeedBias);
             spawner?.Configure(populationTracker, lifecycleHub, reproduction);
+            var reproductionSettings = reproductionConfig != null
+                ? reproductionConfig.Settings
+                : reproduction != null ? reproduction.Settings : new ReproductionSettings();
+            experiment.ApplyMutationTo(reproductionSettings);
             reproduction?.Configure(
                 spawner,
                 populationTracker,
                 lifecycleHub,
                 clock,
-                reproductionConfig != null ? reproductionConfig.Settings : new ReproductionSettings(),
+                reproductionSettings,
                 config.Ecosystem,
                 config,
                 herbivorePrefab,
                 predatorPrefab);
-            reproduction?.SetSeed(config.RandomSeed);
+            reproduction?.SetSeed(seeds.Reproduction);
             trainingRespawn?.Configure(
                 spawner,
                 populationTracker,
                 config,
                 herbivorePrefab,
                 predatorPrefab,
-                config.RandomSeed + 31);
+                seeds.TrainingRespawn);
             environmentalCreatures?.Configure(
                 spawner,
                 lifecycleHub,
@@ -111,7 +125,13 @@ namespace EvoLife.Simulation
                 herbivorePrefab,
                 predatorPrefab,
                 transform,
-                config.RandomSeed + 53);
+                seeds.EnvironmentalCreatures);
+            ExperimentEnvironmentApplicator.Apply(
+                experiment,
+                resourceManager,
+                dayNight,
+                environmentalEvents,
+                eventConfig: null);
             environmentalEvents?.Bind(
                 resourceManager,
                 environmentalCreatures,

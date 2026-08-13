@@ -20,8 +20,14 @@ namespace EvoLife.Simulation
         readonly IGeneticOperators geneticOperators = new DefaultGeneticOperators();
         readonly IGenomeDecoder genomeDecoder = new CanonicalGenomeDecoder();
         System.Random random = new System.Random(1);
+        int policyMasterSeed = 1;
+        float predatorSpeedBias;
 
         public void SetSeed(int seed) => random = new System.Random(seed);
+
+        public void SetPolicyMasterSeed(int seed) => policyMasterSeed = seed;
+
+        public void SetPredatorSpeedBias(float bias) => predatorSpeedBias = bias;
 
         public void Configure(
             PopulationTracker tracker,
@@ -42,8 +48,15 @@ namespace EvoLife.Simulation
         /// Resolves the genome used at spawn. Simulation may supply one; otherwise Genetics
         /// creates a founder from the canonical schema. Does not choose gene layout.
         /// </summary>
-        public Genome ResolveSpawnGenome(Genome provided = null) =>
-            provided?.Clone() ?? geneticOperators.CreateFounder(random);
+        public Genome ResolveSpawnGenome(Genome provided = null, CreatureRole role = CreatureRole.Herbivore)
+        {
+            if (provided != null)
+            {
+                return provided.Clone();
+            }
+
+            return FounderGenomeAdjuster.Apply(geneticOperators.CreateFounder(random), role, predatorSpeedBias);
+        }
 
         public GameObject Spawn(
             GameObject prefab,
@@ -78,7 +91,7 @@ namespace EvoLife.Simulation
             }
 
             var creatureGenome = instance.GetComponent<CreatureGenome>();
-            var resolved = ResolveSpawnGenome(genome);
+            var resolved = ResolveSpawnGenome(genome, role);
             if (creatureGenome != null)
             {
                 creatureGenome.Initialize(resolved, genomeDecoder);
@@ -92,6 +105,8 @@ namespace EvoLife.Simulation
 
             var policyOwner = instance.GetComponent<IPolicyKindOwner>();
             policyOwner?.SetPolicyKind(policyKind);
+            var seedOwner = instance.GetComponent<IPolicySeedOwner>();
+            seedOwner?.SetPolicySeed(DeterministicSeeds.ScriptedWander(policyMasterSeed, id.Value));
 
             populationTracker?.Register(id, role);
             lifecycleHub?.RegisterSpawned(instance);

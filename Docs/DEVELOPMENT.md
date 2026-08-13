@@ -44,7 +44,7 @@ chmod +x Training/scripts/*.sh
 ./Training/scripts/train_herbivore.sh
 ```
 
-Do not expect a trained production policy; the Agent wiring and YAML are development starters. See [AI_ML_AGENTS.md](AI_ML_AGENTS.md) and [Training/README.md](../Training/README.md).
+Do not expect a trained production policy; the Agent wiring and YAML are development starters. See [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [TRAINING_CURRICULUM.md](TRAINING_CURRICULUM.md), [EXPERIMENTS.md](EXPERIMENTS.md), and [Training/README.md](../Training/README.md).
 
 ---
 
@@ -92,6 +92,13 @@ File name matches primary type name (`Genome.cs` → `Genome`).
 
 ## How to run tests
 
+### Offline Python (genetics + experiments)
+
+```bash
+pip install -e ".[dev]"
+pytest -q
+```
+
 ### Backend (automated in CI-friendly environments)
 
 ```bash
@@ -104,7 +111,7 @@ pytest -q
 
 1. Open Window → General → Test Runner.
 2. Select **EditMode**.
-3. Run `EvoLife.Tests.EditMode` tests (`GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `AnalyticsCollectorTests`, `AnalyticsExportControllerTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureProximitySelectionTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`, `BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`, `ReproductionTests`, `PlantResourceTests`, `EnvironmentalEventTests`).
+3. Run EditMode `ExperimentConfigurationTests`, `GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `AnalyticsCollectorTests`, `AnalyticsExportControllerTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureProximitySelectionTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`, `BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`, `ReproductionTests`, `PlantResourceTests`, `EnvironmentalEventTests`.
 
 ### Unity PlayMode
 
