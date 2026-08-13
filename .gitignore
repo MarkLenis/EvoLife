@@ -1,0 +1,62 @@
+# Unity generated
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# Asset meta noise / IDE
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+.vs/
+.idea/
+*.DotSettings.user
+
+# Packed Addressables / streaming
+**/ServerData/
+**/StreamingAssets/aa*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python / Backend
+Backend/.venv/
+Backend/venv/
+Backend/**/__pycache__/
+Backend/**/*.py[cod]
+Backend/.pytest_cache/
+Backend/.mypy_cache/
+Backend/.ruff_cache/
+Backend/dist/
+Backend/*.egg-info/
+.env
+.env.*
+!.env.example
+
+# ML-Agents / Training outputs
+Training/results/
+Training/runs/
+*.onnx
+*.pt
+*.pth
+ml-agents.log
+
+# Cursor / local agent
+.cursor/

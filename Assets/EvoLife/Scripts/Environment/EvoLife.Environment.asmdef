@@ -1,0 +1,16 @@
+{
+  "name": "EvoLife.Environment",
+  "rootNamespace": "EvoLife.Environment",
+  "references": [
+    "EvoLife.Common"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

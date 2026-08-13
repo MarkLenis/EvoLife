@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!129 &1
+PlayerSettings:
+  productName: EvoLife
+  companyName: EvoLife
+  bundleVersion: 0.1.0
+  defaultScreenWidth: 1920
+  defaultScreenHeight: 1080
+  defaultIsNativeResolution: 1
+  runInBackground: 1
+  captureSingleScreen: 0
+  usePlayerLog: 1
+  resizeableWindow: 1
+  visibleInBackground: 1
+  allowFullscreenSwitch: 1
+  fullscreenMode: 1
+  xboxPIXTextureCapture: 0
+  xboxEnableAvatar: 0
+  xboxEnableKinect: 0
+  xboxEnableKinectAutoTracking: 0
+  xboxEnableFitness: 0
+  visibleInBackground: 1
+  allowHDRDisplaySupport: 0
+  useFlipModelSwapchain: 1
+  gpuSkinning: 1
+  xboxPIXTextureCapture: 0
+  forceSingleInstance: 0
+  useFlipModelSwapchain: 1
+  dedicatedServerOptimizations: 0
+  macRetinaSupport: 1
+  metroTargetDeviceFamilies: {}
+  scriptingRuntimeVersion: 1
+  gcIncremental: 1
+  apiCompatibilityLevelPerPlatform: {}
+  apiCompatibilityLevel: 6
+  activeInputHandler: 0

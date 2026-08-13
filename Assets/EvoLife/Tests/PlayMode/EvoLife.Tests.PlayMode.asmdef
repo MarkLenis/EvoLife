@@ -1,0 +1,31 @@
+{
+  "name": "EvoLife.Tests.PlayMode",
+  "rootNamespace": "EvoLife.Tests",
+  "references": [
+    "EvoLife.Common",
+    "EvoLife.Creatures",
+    "EvoLife.Genetics",
+    "EvoLife.Environment",
+    "EvoLife.Simulation",
+    "EvoLife.AI",
+    "EvoLife.Analytics",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
