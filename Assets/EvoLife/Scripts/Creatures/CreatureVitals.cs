@@ -41,6 +41,7 @@ namespace EvoLife.Creatures
 
         public void Initialize(SpeciesVitalsDefinition vitalsDefinition)
         {
+            UnwireEvents(biology);
             definition = vitalsDefinition;
             if (definition == null)
             {
@@ -50,6 +51,15 @@ namespace EvoLife.Creatures
 
             biology = new CreatureBiology(definition.ToMetabolicRates());
             WireEvents(biology);
+        }
+
+        /// <summary>
+        /// Rebuilds biology from the serialized species definition. Used for local episode
+        /// reset during training; does not reset the rest of the ecosystem.
+        /// </summary>
+        public void Reinitialize()
+        {
+            Initialize(definition);
         }
 
         void OnDestroy()

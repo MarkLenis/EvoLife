@@ -33,7 +33,8 @@ namespace EvoLife.Simulation
             Vector3 position,
             string speciesId,
             CreatureRole role,
-            Genome genome = null)
+            Genome genome = null,
+            AgentPolicyKind policyKind = AgentPolicyKind.ScriptedBaseline)
         {
             if (prefab == null)
             {
@@ -68,6 +69,9 @@ namespace EvoLife.Simulation
             {
                 motor.ApplyPhenotype(creatureGenome);
             }
+
+            var policyOwner = instance.GetComponent<IPolicyKindOwner>();
+            policyOwner?.SetPolicyKind(policyKind);
 
             populationTracker?.Register(id, role);
             return instance;

@@ -1,7 +1,11 @@
-# Default PPO training placeholder for EvoLife herbivores.
-# Wire to ML-Agents YAML when behaviors are named in Unity.
+# EvoLife herbivore PPO — development starter config.
+# Behavior name MUST match Unity Behavior Parameters / EvoLifeCreatureAgent.
+#
+# Observation size: 28 (CreatureObservationSchema v1)
+# Action space: 2 continuous (move_x, move_z)
+# These hyperparameters are reasonable starters, not claimed optima.
 behaviors:
-  Herbivore:
+  EvoLifeHerbivore:
     trainer_type: ppo
     hyperparameters:
       batch_size: 1024
@@ -20,6 +24,9 @@ behaviors:
       extrinsic:
         gamma: 0.99
         strength: 1.0
-    max_steps: 500000
+    keep_checkpoints: 5
+    checkpoint_interval: 50000
+    max_steps: 1000000
     time_horizon: 64
     summary_freq: 10000
+    threaded: false

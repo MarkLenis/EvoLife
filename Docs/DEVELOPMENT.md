@@ -44,7 +44,7 @@ chmod +x Training/scripts/*.sh
 ./Training/scripts/train_herbivore.sh
 ```
 
-Do not expect training to succeed until a real ML-Agents `Agent` behavior is wired to `PpoPolicyAdapter`.
+Do not expect a trained production policy; the Agent wiring and YAML are development starters. See [AI_ML_AGENTS.md](AI_ML_AGENTS.md) and [Training/README.md](../Training/README.md).
 
 ---
 
@@ -104,11 +104,11 @@ pytest -q
 
 1. Open Window → General → Test Runner.
 2. Select **EditMode**.
-3. Run `EvoLife.Tests.EditMode` tests (`GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`).
+3. Run `EvoLife.Tests.EditMode` tests (`GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`).
 
 ### Unity PlayMode
 
-PlayMode assembly is reserved; add tests under `Assets/EvoLife/Tests/PlayMode/` with an asmdef when integration coverage begins.
+PlayMode assembly includes `EvoLifeCreatureAgentPlayModeTests` (schema-sized observations; Agent sizes without a trained model).
 
 ### What this environment can verify
 
@@ -124,7 +124,7 @@ Cloud/agent Linux VMs typically **cannot** run the Unity Editor compiler. Backen
    - `CreatureVitals`
    - `CreatureGenome`
    - `CreatureCapabilityMotor`
-   - `CreatureBrain` + `PlanarMoveActionExecutor`
+   - `CreatureBrain` + `PlanarMoveActionExecutor` + `EvoLifeCreatureAgent` (for PPO)
 3. **Role:** Set herbivore vs predator on identity / spawn call (`CreatureRole`).
 4. **Simulation:** Extend spawn setup / `SimulationConfig` (or a species table SO) to include initial counts and prefab references.
 5. **AI:** If observation needs change, extend `IObservationSource` implementations carefully and keep sizes documented for ML-Agents.

@@ -8,11 +8,27 @@ namespace EvoLife.Environment
     public sealed class WaterSource : MonoBehaviour, IResourceNode
     {
         [SerializeField] float drinkAmountPerRequest = 10f;
+        [SerializeField] ResourceRegistry registry;
 
         public ResourceKind Kind => ResourceKind.Water;
         public Vector3 Position => transform.position;
         public float AvailableAmount => float.PositiveInfinity;
         public bool IsDepleted => false;
+
+        void OnEnable()
+        {
+            if (registry == null)
+            {
+                registry = FindObjectOfType<ResourceRegistry>();
+            }
+
+            registry?.Register(this);
+        }
+
+        void OnDisable()
+        {
+            registry?.Unregister(this);
+        }
 
         public float TryConsume(float requestedAmount)
         {

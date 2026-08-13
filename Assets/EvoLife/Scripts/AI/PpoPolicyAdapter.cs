@@ -3,13 +3,14 @@ using EvoLife.Common;
 namespace EvoLife.AI
 {
     /// <summary>
-    /// Seam for Unity ML-Agents PPO. When the ML-Agents package is present, replace the
-    /// body of Collect/Apply with an Agent subclass (see Docs/ARCHITECTURE.md).
-    /// This adapter keeps EvoLife.AI compiling and testable without requiring a trained model.
+    /// Compile-safe PPO fallback used only when <see cref="EvoLifeCreatureAgent"/> is unavailable
+    /// (ML-Agents package missing, or the Agent component was not added).
+    /// This is not a second PPO implementation: it applies idle locomotion so a misconfigured
+    /// LearnedPpo creature does not also run the scripted baseline.
     /// </summary>
     public sealed class PpoPolicyAdapter : ICreaturePolicy
     {
-        readonly float[] lastActions = new float[2];
+        readonly float[] lastActions = new float[CreatureActionSchema.ContinuousCount];
 
         public void Step(
             IObservationSource observationSource,
@@ -17,24 +18,12 @@ namespace EvoLife.AI
             IRewardCalculator rewardCalculator,
             IReadOnlyVitalState vitals)
         {
-            if (observationSource == null || actionExecutor == null)
+            if (actionExecutor == null)
             {
                 return;
             }
 
-            var obs = new float[observationSource.ObservationSize];
-            observationSource.WriteObservations(obs);
-
-#if EVOLIFE_MLAGENTS
-            // Integration point: forward obs to ML-Agents Agent.CollectObservations /
-            // OnActionReceived. Keep reward calculation in IRewardCalculator.
-#endif
-            // Until a trained policy is wired, stay idle so baselines remain the evaluation default.
-            for (var i = 0; i < lastActions.Length; i++)
-            {
-                lastActions[i] = 0f;
-            }
-
+            CreatureActionSchema.ClampTo(null, lastActions);
             actionExecutor.ApplyActions(lastActions);
             _ = rewardCalculator?.CalculateReward(vitals, vitals != null && !vitals.IsAlive);
         }

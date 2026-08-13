@@ -9,6 +9,7 @@
     "EvoLife.Simulation",
     "EvoLife.AI",
     "EvoLife.Analytics",
+    "Unity.MLAgents",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"
   ],
@@ -23,7 +24,13 @@
   "defineConstraints": [
     "UNITY_INCLUDE_TESTS"
   ],
-  "versionDefines": [],
+  "versionDefines": [
+    {
+      "name": "com.unity.ml-agents",
+      "expression": "2.0.0",
+      "define": "EVOLIFE_MLAGENTS"
+    }
+  ],
   "noEngineReferences": false,
   "optionalUnityReferences": [
     "TestAssemblies"
