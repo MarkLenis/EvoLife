@@ -156,16 +156,17 @@ Dedicated test/debug scene: `Assets/EvoLife/Scenes/UiDebug.unity`.
 
 Keyboard: **F1** hide/show overlay, **F3** AI debug.
 
-## Final presentation-scene wiring (after parallel merge)
+## Final presentation-scene wiring (`EvoLifeDemo`)
 
-Another agent owns terrain, biomes, creature appearance, ShaderGraph, and the final demo-scene visual composition. **Do not rewrite that scene in this PR.**
+`Assets/EvoLife/Scenes/EvoLifeDemo.unity` now exists (Presentation PR). Do **not** rewrite terrain, biomes, creature meshes, or ShaderGraph.
 
-After that scene lands, add only:
+Additive attach points already in that scene:
 
-1. `DesktopCameraController` + `CreatureSelectionController` on the presentation camera (or a dedicated observer camera if the cinematic camera must stay untouched).
-2. One `DesktopDebugUi` object; drag existing Simulation/Environment/Analytics references if Find is too slow.
-3. Confirm creature visual prefabs still have a collider, or add `CreatureSelectable` without changing meshes/materials.
-4. Keep time-scale buttons off during recorded evaluation runs (demo scrubbing is not experiment output). See [EXPERIMENTS.md](EXPERIMENTS.md).
+1. `Main Camera` / `Agent10_CameraRigHook` — add `DesktopCameraController` + `CreatureSelectionController` on the existing Main Camera (or parent the rig under the hook). **Do not enable a second camera.**
+2. `Agent10_UiCanvasHook` — add a `DesktopDebugUi` object here (`DesktopDebugUi` + `CreatureAiDebugVisualizer`). The overlay builds a Canvas at runtime; parenting under the hook keeps hierarchy tidy.
+3. Assign clock / population / lifecycle / event manager if Find is too slow.
+4. Creature visual prefabs already have colliders; use them. Add `CreatureSelectable` only if a visual prefab has none. Do not change meshes/materials.
+5. Keep time-scale buttons off during recorded evaluation runs (demo scrubbing is not experiment output). See [EXPERIMENTS.md](EXPERIMENTS.md) and [PRESENTATION.md](PRESENTATION.md).
 
 ## Tests
 

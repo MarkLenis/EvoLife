@@ -111,7 +111,7 @@ pytest -q
 
 1. Open Window → General → Test Runner.
 2. Select **EditMode**.
-3. Run EditMode `ExperimentConfigurationTests`, `GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `AnalyticsCollectorTests`, `AnalyticsExportControllerTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureProximitySelectionTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`, `BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`, `ReproductionTests`, `PlantResourceTests`, `EnvironmentalEventTests`, `DesktopUiPresenterTests`.
+3. Run EditMode `ExperimentConfigurationTests`, `GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `AnalyticsCollectorTests`, `AnalyticsExportControllerTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureProximitySelectionTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`, `BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`, `ReproductionTests`, `PlantResourceTests`, `EnvironmentalEventTests`, `PresentationTests`, `DesktopUiPresenterTests`.
 
 ### Unity PlayMode
 

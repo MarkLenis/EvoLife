@@ -71,7 +71,8 @@ namespace EvoLife.Simulation
             GameObject predator,
             ResourceManager resources = null,
             DayNightManager dayNightManager = null,
-            EnvironmentalEventManager events = null)
+            EnvironmentalEventManager events = null,
+            EnvironmentalCreatureBridge creatureBridge = null)
         {
             config = simulationConfig;
             clock = simulationClock;
@@ -95,6 +96,11 @@ namespace EvoLife.Simulation
             if (events != null)
             {
                 environmentalEvents = events;
+            }
+
+            if (creatureBridge != null)
+            {
+                environmentalCreatures = creatureBridge;
             }
         }
 

@@ -32,6 +32,7 @@ This guide prevents duplicate systems when multiple human or coding agents work 
 | Scripted baseline vs PPO policy | **AI** | `CreatureBrain`, `ScriptedBaselinePolicy`, `BaselineMotiveEvaluator`, `ScriptedBaselineSettings` / `ScriptedBaselineProfile`, `EvoLifeCreatureAgent`, `PpoPolicyAdapter` (idle fallback) | Simulation |
 | Stats snapshots + HTTP upload | **Analytics** | `SimulationStatsSnapshot`, `BackendClient`, `StatsExportLoop`, `AnalyticsExportController`, collectors, lifetime/generation records | Simulation, UI, Creatures, AI |
 | HUD / inspector / dashboard / desktop camera | **UI** | `DesktopDebugUi`, `DesktopCameraController`, `CreatureInspectorPresenter`, `SimulationHud` | Domain modules |
+| Demo world visuals, biome/plant/water/creature appearance, optional lighting/event cues | **Presentation** | `PresentationDemoBootstrap`, `CreaturePresentationFactory`, `DayNightLightingPresenter`, `EnvironmentalEventVisualAdapter` | UI (camera/inspector/dashboard), Environment biome *mechanics*, AI |
 | Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, `IPolicySeedOwner`, `IExperimentAnalyticsSession`, `IReproductionRequestHandler`, `IEnvironmentalVitalEffects`, `IEnvironmentalPopulationCommands`, `IReadOnlyCreatureAiDebug`, `IEnvironmentalEventCommands`, `ISimulationClockControl`, IDs, enums | Gameplay behavior |
 | REST experiment/stats API | **Backend** | FastAPI `app/` | Unity (except DTO field alignment) |
 | PPO YAML / train scripts | **Training** | `Training/configs`, `Training/scripts`, `Training/experiments` | Unity runtime folders |
@@ -50,7 +51,8 @@ Agents can work simultaneously if they stay in lane:
 | D — AI | Obs/action/reward, ML-Agents Agent class | Reads vitals/resources; never owns them |
 | E — Simulation | Spawn balancing, config, world bootstrap | Calls into A/B/C; does not implement brains |
 | F — Analytics + Backend | Metrics, API, schemas | DTO parity with Unity snapshot |
-| G — UI | HUD, inspector, dashboard, camera, AI debug overlay | Bind to Analytics/Simulation/Common read APIs; see [UI_DEBUG.md](UI_DEBUG.md) |
+| G — UI | HUD, inspector, dashboard, camera, event UI, AI debug overlay | Bind to Analytics/Simulation/Common read APIs; see [UI_DEBUG.md](UI_DEBUG.md) |
+| P — Presentation | Demo scene, terrain/biome visuals, creature/resource appearance, cheap lighting/event cues | Prefabs + `IDayNightLightingHook`; do not add a second camera or HUD |
 | H — Training | YAML, eval scripts | Behavior names must match AI Agent |
 
 **Conflict zones** (serialize changes or pair up):
@@ -59,7 +61,7 @@ Agents can work simultaneously if they stay in lane:
 - Changing `SimulationStatsSnapshot` fields (Analytics + Backend + UI)
 - Changing creature lifetime / generation upload DTOs (Analytics + Backend)
 - Changing `CanonicalGenomeSchema` traits (Genetics + Creatures phenotype consumers + ML observation size)
-- Adding components required on creature prefabs (Simulation spawn + AI + Creatures)
+- Adding components required on creature prefabs (Simulation spawn + AI + Creatures + Presentation visuals under `Visual/`)
 
 ---
 
@@ -78,7 +80,7 @@ Agents can work simultaneously if they stay in lane:
 | Run a reproducible experiment | `ExperimentConfiguration` + `ExperimentOrchestrator` (see [EXPERIMENTS.md](EXPERIMENTS.md)) |
 | Count births for graphs | Analytics collector + Backend schema (see [ANALYTICS.md](ANALYTICS.md)) |
 | Compare PPO vs scripted | `AgentPolicyKind` on `CreatureBrain` / `SimulationConfig`; Analytics records `policy_kind` (see [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md), [ANALYTICS.md](ANALYTICS.md)) |
-| Add sexual reproduction / generations | `ReproductionSystem` + `IGeneticOperators` (see [REPRODUCTION.md](REPRODUCTION.md)) |
+| Make the demo world readable | Presentation (`EvoLifeDemo`, biome/creature visuals). Camera/HUD stay in UI (`Agent10_CameraRigHook` / `Agent10_UiCanvasHook`) |
 
 ---
 
@@ -121,7 +123,8 @@ After Unity-side changes, a human (or Unity-equipped runner) should confirm:
 - [ ] Action space is 3 continuous + 1 discrete branch of size 6 (`CreatureActionSchema` v2)
 - [ ] Scripted baseline EditMode tests pass (`BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`)
 - [ ] Reproduction EditMode tests pass (`ReproductionTests`, `EcosystemLifecycleTests`), including spawn-failure commit tests (no energy/health/cooldown on `SpawnFailed`)
-- [ ] Environment EditMode tests pass (`PlantResourceTests`, `DayNightCycleTests`, `EnvironmentalEventTests`)
+- [ ] Environment EditMode tests pass (`PlantResourceTests`, `DayNightCycleTests`, `EnvironmentalEventTests`, resource census cache tests)
+- [ ] Presentation EditMode tests pass (`PresentationTests`) — prefab component contract, visual-only scale, event adapter does not mutate resources
 - [ ] Experiment EditMode tests pass (`ExperimentConfigurationTests`, `ExperimentLifecycleTests`) — initialization stays paused until `BeginRunning`; environment applicator/placement happens once per orchestrated start
 - [ ] Analytics export retention tests pass (`AnalyticsExportControllerTests`)  
 - [ ] Desktop UI presenter tests pass (`DesktopUiPresenterTests`)  

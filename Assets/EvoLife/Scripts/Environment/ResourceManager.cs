@@ -26,6 +26,9 @@ namespace EvoLife.Environment
         readonly List<GameObject> spawned = new List<GameObject>();
         bool placed;
         bool modifiersDirty = true;
+        ResourceCensus cachedCensus;
+        int cachedCensusFrame = int.MinValue;
+        bool censusCached;
 
         public ResourceRegistry Registry => registry;
         public BiomeMap Biomes => biomeMap;
@@ -41,14 +44,34 @@ namespace EvoLife.Environment
             set => placeOnStart = value;
         }
 
-        public int PlantCount => CaptureCensus().PlantCount;
-        public int WaterSourceCount => CaptureCensus().WaterSourceCount;
-        public float TotalPlantFoodRemaining => CaptureCensus().TotalPlantFoodRemaining;
-        public float TotalPlantCapacity => CaptureCensus().TotalPlantCapacity;
-        public float PlantAbundance => CaptureCensus().PlantAbundance;
-        public float PlantDensity => CaptureCensus().PlantDensity;
+        /// <summary>
+        /// Frame-cached census fields. Prefer <see cref="CaptureCensus"/> for a live snapshot.
+        /// Cache lifetime: the current Unity frame (<c>Time.frameCount</c>), invalidated on
+        /// tick, placement, tracking, and event resource mutations.
+        /// </summary>
+        public int PlantCount => CachedCensus.PlantCount;
+        public int WaterSourceCount => CachedCensus.WaterSourceCount;
+        public float TotalPlantFoodRemaining => CachedCensus.TotalPlantFoodRemaining;
+        public float TotalPlantCapacity => CachedCensus.TotalPlantCapacity;
+        public float PlantAbundance => CachedCensus.PlantAbundance;
+        public float PlantDensity => CachedCensus.PlantDensity;
         public float WorldArea => SpawnSettings.WorldArea;
         public float TemperatureNormalized => ComputeTemperature();
+
+        ResourceCensus CachedCensus
+        {
+            get
+            {
+                if (!censusCached || cachedCensusFrame != Time.frameCount)
+                {
+                    cachedCensus = CaptureCensusUncached();
+                    censusCached = true;
+                    cachedCensusFrame = Time.frameCount;
+                }
+
+                return cachedCensus;
+            }
+        }
 
         public void Configure(
             ResourceRegistry resourceRegistry,
@@ -85,6 +108,13 @@ namespace EvoLife.Environment
                 BiomeMap.DefaultTemperatureFor(BiomeKind.Grassland),
                 SpawnSettings.DefaultDensity);
             modifiersDirty = true;
+            InvalidateCensus();
+        }
+
+        public void SetPresentationPrefabs(GameObject plant, GameObject water)
+        {
+            plantPrefab = plant;
+            waterPrefab = water;
         }
 
         void Awake()
@@ -134,12 +164,14 @@ namespace EvoLife.Environment
             placed = true;
             modifiersDirty = true;
             RefreshModifiers();
+            InvalidateCensus();
         }
 
         public void Tick(float deltaTimeSeconds)
         {
             EnsurePlaced();
             RefreshModifiers();
+            InvalidateCensus();
 
             if (deltaTimeSeconds <= 0f)
             {
@@ -172,6 +204,7 @@ namespace EvoLife.Environment
 
             modifiersDirty = true;
             RefreshModifiers();
+            InvalidateCensus();
         }
 
         public void TrackWater(WaterSource water)
@@ -189,9 +222,18 @@ namespace EvoLife.Environment
 
             modifiersDirty = true;
             RefreshModifiers();
+            InvalidateCensus();
         }
 
         public ResourceCensus CaptureCensus()
+        {
+            cachedCensus = CaptureCensusUncached();
+            censusCached = true;
+            cachedCensusFrame = Time.frameCount;
+            return cachedCensus;
+        }
+
+        ResourceCensus CaptureCensusUncached()
         {
             if (registry != null)
             {
@@ -236,11 +278,13 @@ namespace EvoLife.Environment
         public void BoostPlantAvailability(float amount, BiomeKind[] biomes)
         {
             ForMatchingPlants(biomes, plant => plant.AddAvailable(amount));
+            InvalidateCensus();
         }
 
         public void DepletePlants(float fraction, BiomeKind[] biomes)
         {
             ForMatchingPlants(biomes, plant => plant.DepleteByFraction(fraction));
+            InvalidateCensus();
         }
 
         public EnvironmentStateSnapshot CaptureState(
@@ -537,6 +581,12 @@ namespace EvoLife.Environment
             plants.Clear();
             waters.Clear();
             placed = false;
+            InvalidateCensus();
+        }
+
+        void InvalidateCensus()
+        {
+            censusCached = false;
         }
 
         void OnDestroy()
