@@ -7,10 +7,14 @@ namespace EvoLife.Common
     public interface IReadOnlyVitalState
     {
         float Health { get; }
+        float MaxHealth { get; }
         float Hunger { get; }
         float Thirst { get; }
         float Energy { get; }
+        float MaxEnergy { get; }
         float Age { get; }
+        float MaxAge { get; }
         bool IsAlive { get; }
+        DeathCause? CauseOfDeath { get; }
     }
 }

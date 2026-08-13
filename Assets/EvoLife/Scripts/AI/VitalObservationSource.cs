@@ -1,5 +1,6 @@
 using EvoLife.Common;
 using EvoLife.Creatures;
+using UnityEngine;
 
 namespace EvoLife.AI
 {
@@ -21,13 +22,15 @@ namespace EvoLife.AI
                 return;
             }
 
-            // Values are already roughly 0–100 in the skeleton; normalize lightly.
-            buffer[0] = vitals.Health / 100f;
-            buffer[1] = vitals.Hunger / 100f;
-            buffer[2] = vitals.Thirst / 100f;
-            buffer[3] = vitals.Energy / 100f;
-            buffer[4] = vitals.Age / 100f;
+            buffer[0] = Normalize(vitals.Health, vitals.MaxHealth);
+            buffer[1] = Normalize(vitals.Hunger, 100f);
+            buffer[2] = Normalize(vitals.Thirst, 100f);
+            buffer[3] = Normalize(vitals.Energy, vitals.MaxEnergy);
+            buffer[4] = Normalize(vitals.Age, vitals.MaxAge);
         }
+
+        static float Normalize(float value, float max) =>
+            max <= 0f ? 0f : Mathf.Clamp01(value / max);
     }
 
     /// <summary>
@@ -48,11 +51,14 @@ namespace EvoLife.AI
             }
 
             var comfort = 1f
-                          - (vitals.Hunger / 100f) * 0.25f
-                          - (vitals.Thirst / 100f) * 0.25f
-                          + (vitals.Energy / 100f) * 0.1f;
+                          - Normalize(vitals.Hunger, 100f) * 0.25f
+                          - Normalize(vitals.Thirst, 100f) * 0.25f
+                          + Normalize(vitals.Energy, vitals.MaxEnergy) * 0.1f;
 
             return episodeEnded ? comfort : comfort * 0.01f;
         }
+
+        static float Normalize(float value, float max) =>
+            max <= 0f ? 0f : Mathf.Clamp01(value / max);
     }
 }
