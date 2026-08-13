@@ -6,6 +6,8 @@ This document describes the architectural skeleton established in the repository
 
 Environment resources, biomes, day/night, and ecological events: [ENVIRONMENT.md](ENVIRONMENT.md), [ENVIRONMENT_EVENTS.md](ENVIRONMENT_EVENTS.md).
 
+Experiments and training curriculum: [EXPERIMENTS.md](EXPERIMENTS.md), [TRAINING_CURRICULUM.md](TRAINING_CURRICULUM.md).
+
 ## Unity version
 
 The repository previously contained only a README (no Unity project). The scaffold targets:
@@ -124,6 +126,7 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
 | `AnalyticsSnapshotBuilder` / `CreatureLifetimeFactory` / `GenerationAggregator` | Analytics | Pure experiment metrics |
 | `CreatureLifecycleHub` | Simulation | Spawn/death fan-out for observers |
 | `ReproductionSystem` / `EcosystemManager` | Simulation | Local mating, offspring spawn, founder population, extinction report |
+| `ExperimentConfiguration` / `ExperimentOrchestrator` | Simulation | Serializable experiment document, start/stop lifecycle (not a god manager) |
 | `IReproductionRequestHandler` | Common | AI request seam; Simulation implements success/failure |
 | `IAnalyticsCreatureView` / `ICreatureLineage` / `IReadOnlyGenomeTraits` / `IEpisodeMetrics` | Common | Read-only analytics observation |
 | `GeneticObservationProvider` | Genetics | Normalized [0,1] genome vector for ML observations (`CreatureObservationSchema` indices 6–14) |
@@ -134,7 +137,7 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
 ## Expected Unity data flow
 
 1. **Bootstrap / config**  
-   `SimulationConfig` (ScriptableObject) supplies seed, initial counts, policy kinds, time scale.
+   `SimulationConfig` / `ExperimentConfiguration` supplies seed, initial counts, policy kinds, resources, events, and stop rules. `ExperimentOrchestrator` loads that document, asks existing owners to initialize, and ends the run. See [EXPERIMENTS.md](EXPERIMENTS.md).
 
 2. **Spawn**  
    `CreatureSpawner` instantiates a prefab, assigns `CreatureId`, initializes `CreatureVitals`, creates/assigns `Genome` via Genetics operators, decodes phenotype, applies it through `CreatureCapabilityMotor`, and sets `IPolicyKindOwner` from the requested `AgentPolicyKind`.
@@ -242,7 +245,8 @@ Default persistence is **SQLite**. See [ANALYTICS.md](ANALYTICS.md) and [Backend
 | Day/night or biome | Environment `DayNightManager` / `BiomeMap` | PPO observation size — use `EnvironmentObservationSource` until the schema is bumped |
 | New gene | `CanonicalGenomeSchema` + decoder | Phenotype consumers in Creatures; bump schema version if observation size changes |
 | New statistic | Analytics (+ Backend schema) | UI display optional |
-| PPO training | AI Agent wiring + Training configs | Reward calculator only for shaping |
+| PPO training | AI Agent wiring + Training configs + curriculum stages | Reward calculator only for shaping; see [TRAINING_CURRICULUM.md](TRAINING_CURRICULUM.md) |
+| Evaluation experiment | Simulation `ExperimentConfiguration` / `ExperimentOrchestrator` | Analytics records only; see [EXPERIMENTS.md](EXPERIMENTS.md) |
 | Scripted baseline heuristic | AI `ScriptedBaselinePolicy` / settings profile | Observation schema, Creatures/Environment APIs |
 | Reproduction / generations | Simulation `ReproductionSystem` + Genetics operators | Creature prefab request bridge; analytics lineage |
 

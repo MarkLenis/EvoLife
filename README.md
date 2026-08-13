@@ -37,6 +37,8 @@ pytest -q
 ## Documentation
 
 - [Architecture](Docs/ARCHITECTURE.md)
+- [Experiments](Docs/EXPERIMENTS.md)
+- [Training curriculum](Docs/TRAINING_CURRICULUM.md)
 - [Reproduction / ecosystem lifecycle](Docs/REPRODUCTION.md)
 - [Environment](Docs/ENVIRONMENT.md)
 - [Environmental events](Docs/ENVIRONMENT_EVENTS.md)

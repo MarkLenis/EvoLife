@@ -2,7 +2,7 @@
 
 Analytics **observes** the simulation. It does not control biology, genetics, spawning, or policy behavior.
 
-Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [GENETICS.md](GENETICS.md), [REPRODUCTION.md](REPRODUCTION.md), [ENVIRONMENT.md](ENVIRONMENT.md), [Backend/README.md](../Backend/README.md).
+Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), [EXPERIMENTS.md](EXPERIMENTS.md), [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [GENETICS.md](GENETICS.md), [REPRODUCTION.md](REPRODUCTION.md), [ENVIRONMENT.md](ENVIRONMENT.md), [Backend/README.md](../Backend/README.md).
 
 ## Metric families
 
@@ -19,7 +19,10 @@ There is **no global genetic fitness score**. Selection is whatever emerges from
 ## Experiment lifecycle
 
 ```
-SimulationConfig (seed, policies, counts, optional scenario/model ids)
+ExperimentConfiguration / SimulationConfig
+        │
+        v
+ExperimentOrchestrator  (load, init env/population, stop conditions)
         │
         v
 ExperimentSession  --POST /api/v1/runs-->  FastAPI SimulationRun
@@ -100,8 +103,11 @@ Stored on the run, not a dump of the Unity ScriptableObject:
 - experiment name, random seed, timestamp
 - herbivore/predator policy kinds
 - initial herbivore/predator counts, time scale
+- resource abundance, plant regen, mutation, day length, enabled events
+- derived deterministic seeds (founders, reproduction, resources, events, wander)
 - ecosystem mode (`persistent_ecosystem` / `training_support`) and whether training respawn is enabled
-- optional `scenario_id`, optional `training_model_id`
+- optional `scenario_id`, optional `training_model_id` / curriculum stage
+- stop reason when the run finishes (`max_simulation_time`, extinction, `manual_stop`)
 
 ## Upload frequency / batching
 

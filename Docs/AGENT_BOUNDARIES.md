@@ -24,17 +24,17 @@ This guide prevents duplicate systems when multiple human or coding agents work 
 | Reproduction eligibility, local mating, offspring spawn | **Simulation** | `ReproductionSystem`, `ReproductionEligibility`, `OffspringComposer`, `CreatureReproductionBridge` | Creatures (no mating in `CreatureVitals`), AI (request only), Genetics (operators only) |
 | Founder population / extinction report | **Simulation** | `InitialPopulationSpawner`, `EcosystemManager`, `ExtinctionEvaluator` | Analytics |
 | Training-support respawn | **Simulation** | `TrainingRespawnController` | Creatures, AI |
-| Experiment/sim config assets | **Simulation** | `SimulationConfig`, `EcosystemSettings`, `ReproductionConfig` | Backend (Backend stores experiment *records*) |
-| Tick fan-out | **Simulation** | `SimulationRunner` | — keep this thin |
+| Experiment/sim config assets | **Simulation** | `SimulationConfig`, `ExperimentConfiguration`, `EcosystemSettings`, `ReproductionConfig`, `ExperimentOrchestrator` | Backend (Backend stores experiment *records*) |
+| Tick fan-out | **Simulation** | `SimulationRunner` | — keep this thin; `ExperimentOrchestrator` owns run start/stop only |
 | Observations | **AI** | `IObservationSource`, `VitalObservationSource`, `CompositeObservationSource`, `CreatureObservationSchema`, optional `EnvironmentObservationSource` (not in PPO v2) | Creatures, Environment |
 | Actions / locomotion intent | **AI** | `IActionExecutor`, `PlanarMoveActionExecutor`, `CreatureActionSchema`, `LocalCreatureInteractor` | Simulation (Simulation owns whether `reproduce_request` succeeds) |
 | Rewards | **AI** | `IRewardCalculator`, `TrainingRewardCalculator`, `SurvivalRewardCalculator` | Creatures |
 | Scripted baseline vs PPO policy | **AI** | `CreatureBrain`, `ScriptedBaselinePolicy`, `BaselineMotiveEvaluator`, `ScriptedBaselineSettings` / `ScriptedBaselineProfile`, `EvoLifeCreatureAgent`, `PpoPolicyAdapter` (idle fallback) | Simulation |
 | Stats snapshots + HTTP upload | **Analytics** | `SimulationStatsSnapshot`, `BackendClient`, `StatsExportLoop`, `AnalyticsExportController`, collectors, lifetime/generation records | Simulation, UI, Creatures, AI |
 | HUD / presentation | **UI** | `SimulationHud` | Domain modules |
-| Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, `IReproductionRequestHandler`, `IEnvironmentalVitalEffects`, `IEnvironmentalPopulationCommands`, IDs, enums | Gameplay behavior |
+| Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, `IPolicySeedOwner`, `IExperimentAnalyticsSession`, `IReproductionRequestHandler`, `IEnvironmentalVitalEffects`, `IEnvironmentalPopulationCommands`, IDs, enums | Gameplay behavior |
 | REST experiment/stats API | **Backend** | FastAPI `app/` | Unity (except DTO field alignment) |
-| PPO YAML / train scripts | **Training** | `Training/configs`, `Training/scripts` | Unity runtime folders |
+| PPO YAML / train scripts | **Training** | `Training/configs`, `Training/scripts`, `Training/experiments` | Unity runtime folders |
 
 ---
 
@@ -75,6 +75,7 @@ Agents can work simultaneously if they stay in lane:
 | Add time-of-day to PPO | Do **not** silently grow schema v2 (size 31). Use `EnvironmentObservationSource`, then bump schema + Training YAML |
 | Change RL reward for eating | `IRewardCalculator` implementation |
 | Speed up the sim | `SimulationClock` / `SimulationConfig` |
+| Run a reproducible experiment | `ExperimentConfiguration` + `ExperimentOrchestrator` (see [EXPERIMENTS.md](EXPERIMENTS.md)) |
 | Count births for graphs | Analytics collector + Backend schema (see [ANALYTICS.md](ANALYTICS.md)) |
 | Compare PPO vs scripted | `AgentPolicyKind` on `CreatureBrain` / `SimulationConfig`; Analytics records `policy_kind` (see [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md), [ANALYTICS.md](ANALYTICS.md)) |
 | Add sexual reproduction / generations | `ReproductionSystem` + `IGeneticOperators` (see [REPRODUCTION.md](REPRODUCTION.md)) |
@@ -120,4 +121,5 @@ After Unity-side changes, a human (or Unity-equipped runner) should confirm:
 - [ ] Scripted baseline EditMode tests pass (`BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`)
 - [ ] Reproduction EditMode tests pass (`ReproductionTests`, `EcosystemLifecycleTests`)
 - [ ] Environment EditMode tests pass (`PlantResourceTests`, `DayNightCycleTests`, `EnvironmentalEventTests`)
+- [ ] Experiment EditMode tests pass (`ExperimentConfigurationTests`)
 - [ ] Analytics export retention tests pass (`AnalyticsExportControllerTests`)  

@@ -1,0 +1,44 @@
+{
+  "experiment_name": "curriculum_stage6_reproduction_events_combined",
+  "random_seed": 42,
+  "initial_herbivores": 20,
+  "initial_predators": 5,
+  "resource_abundance": 1.0,
+  "plant_regeneration_multiplier": 1.0,
+  "mutation_probability": 0.15,
+  "mutation_magnitude_scale": 1.0,
+  "day_length_seconds": 120.0,
+  "enabled_environmental_events": [
+    "drought",
+    "food_boom"
+  ],
+  "scheduled_events": [
+    {
+      "kind": "drought",
+      "at_simulation_time": 120.0
+    },
+    {
+      "kind": "food_boom",
+      "at_simulation_time": 240.0
+    }
+  ],
+  "herbivore_policy": "learned_ppo",
+  "predator_policy": "learned_ppo",
+  "max_herbivores": 80,
+  "max_predators": 24,
+  "min_herbivores": 0,
+  "min_predators": 0,
+  "ecosystem_mode": "persistent_ecosystem",
+  "training_respawn_enabled": false,
+  "training_respawn_interval_seconds": 2.0,
+  "founder_spawn_radius": 12.0,
+  "default_time_scale": 1.0,
+  "scenario_id": "stage6_reproduction_events",
+  "model_id": "",
+  "curriculum_stage_id": "stage6_reproduction_events",
+  "predator_speed_bias": 0.0,
+  "max_simulation_time_seconds": 900.0,
+  "stop_on_ecosystem_extinction": true,
+  "stop_on_herbivore_extinction": false,
+  "stop_on_predator_extinction": false
+}

@@ -10,7 +10,7 @@ namespace EvoLife.Analytics
     /// Creates a backend run with enough metadata to reproduce/identify the experiment.
     /// Failures are logged; the simulation continues.
     /// </summary>
-    public sealed class ExperimentSession : MonoBehaviour
+    public sealed class ExperimentSession : MonoBehaviour, IExperimentAnalyticsSession
     {
         [SerializeField] SimulationConfig config;
         [SerializeField] BackendClient backendClient;
@@ -21,6 +21,13 @@ namespace EvoLife.Analytics
         public ExperimentRunMetadata Metadata { get; private set; }
         public bool RunReady { get; private set; }
         public bool StartupComplete { get; private set; }
+
+        public void SetAutoStart(bool enabled) => createRunOnStart = enabled;
+
+        public void Bind(SimulationConfig simulationConfig)
+        {
+            config = simulationConfig;
+        }
 
         void Start()
         {
@@ -69,6 +76,22 @@ namespace EvoLife.Analytics
             {
                 StartupComplete = true;
             }
+        }
+
+        public async Task<bool> FinishAsync(string status, string stopReason)
+        {
+            if (Metadata != null)
+            {
+                Metadata.StopReason = stopReason;
+                Metadata.RunId = RunId;
+            }
+
+            if (backendClient == null || string.IsNullOrEmpty(RunId) || !RunReady)
+            {
+                return false;
+            }
+
+            return await backendClient.FinishRunAsync(RunId, status, stopReason);
         }
     }
 }
