@@ -31,9 +31,9 @@ This guide prevents duplicate systems when multiple human or coding agents work 
 | Rewards | **AI** | `IRewardCalculator`, `TrainingRewardCalculator`, `SurvivalRewardCalculator` | Creatures |
 | Scripted baseline vs PPO policy | **AI** | `CreatureBrain`, `ScriptedBaselinePolicy`, `BaselineMotiveEvaluator`, `ScriptedBaselineSettings` / `ScriptedBaselineProfile`, `EvoLifeCreatureAgent`, `PpoPolicyAdapter` (idle fallback) | Simulation |
 | Stats snapshots + HTTP upload | **Analytics** | `SimulationStatsSnapshot`, `BackendClient`, `StatsExportLoop`, `AnalyticsExportController`, collectors, lifetime/generation records | Simulation, UI, Creatures, AI |
-| HUD / presentation | **UI** | `SimulationHud` | Domain modules |
+| HUD / inspector / dashboard / desktop camera | **UI** | `DesktopDebugUi`, `DesktopCameraController`, `CreatureInspectorPresenter`, `SimulationHud` | Domain modules |
 | Demo world visuals, biome/plant/water/creature appearance, optional lighting/event cues | **Presentation** | `PresentationDemoBootstrap`, `CreaturePresentationFactory`, `DayNightLightingPresenter`, `EnvironmentalEventVisualAdapter` | UI (camera/inspector/dashboard), Environment biome *mechanics*, AI |
-| Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, `IPolicySeedOwner`, `IExperimentAnalyticsSession`, `IReproductionRequestHandler`, `IEnvironmentalVitalEffects`, `IEnvironmentalPopulationCommands`, IDs, enums | Gameplay behavior |
+| Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, `IPolicySeedOwner`, `IExperimentAnalyticsSession`, `IReproductionRequestHandler`, `IEnvironmentalVitalEffects`, `IEnvironmentalPopulationCommands`, `IReadOnlyCreatureAiDebug`, `IEnvironmentalEventCommands`, `ISimulationClockControl`, IDs, enums | Gameplay behavior |
 | REST experiment/stats API | **Backend** | FastAPI `app/` | Unity (except DTO field alignment) |
 | PPO YAML / train scripts | **Training** | `Training/configs`, `Training/scripts`, `Training/experiments` | Unity runtime folders |
 
@@ -51,7 +51,7 @@ Agents can work simultaneously if they stay in lane:
 | D — AI | Obs/action/reward, ML-Agents Agent class | Reads vitals/resources; never owns them |
 | E — Simulation | Spawn balancing, config, world bootstrap | Calls into A/B/C; does not implement brains |
 | F — Analytics + Backend | Metrics, API, schemas | DTO parity with Unity snapshot |
-| G — UI | HUD, camera, inspector, dashboard, event UI, AI debug overlays | Bind to Analytics/Simulation read APIs |
+| G — UI | HUD, inspector, dashboard, camera, event UI, AI debug overlay | Bind to Analytics/Simulation/Common read APIs; see [UI_DEBUG.md](UI_DEBUG.md) |
 | P — Presentation | Demo scene, terrain/biome visuals, creature/resource appearance, cheap lighting/event cues | Prefabs + `IDayNightLightingHook`; do not add a second camera or HUD |
 | H — Training | YAML, eval scripts | Behavior names must match AI Agent |
 
@@ -80,7 +80,7 @@ Agents can work simultaneously if they stay in lane:
 | Run a reproducible experiment | `ExperimentConfiguration` + `ExperimentOrchestrator` (see [EXPERIMENTS.md](EXPERIMENTS.md)) |
 | Count births for graphs | Analytics collector + Backend schema (see [ANALYTICS.md](ANALYTICS.md)) |
 | Compare PPO vs scripted | `AgentPolicyKind` on `CreatureBrain` / `SimulationConfig`; Analytics records `policy_kind` (see [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md), [ANALYTICS.md](ANALYTICS.md)) |
-| Make the demo world readable | Presentation (`EvoLifeDemo`, biome/creature visuals). Do not add a second camera or HUD |
+| Make the demo world readable | Presentation (`EvoLifeDemo`, biome/creature visuals). Camera/HUD stay in UI (`Agent10_CameraRigHook` / `Agent10_UiCanvasHook`) |
 
 ---
 
@@ -93,6 +93,7 @@ Agents can work simultaneously if they stay in lane:
 5. **UI buttons** that directly modify hunger/health instead of calling Creatures APIs  
 6. **Duplicating** `BackendClient` in Training scripts that scrape Unity logs — extend Analytics/Backend instead  
 7. **XR / VR** assemblies or scenes — out of scope  
+8. **Rewriting the presentation scene** from the UI lane — world visuals belong to the presentation agent; UI should add camera/overlay components only  
 
 ---
 
@@ -126,3 +127,4 @@ After Unity-side changes, a human (or Unity-equipped runner) should confirm:
 - [ ] Presentation EditMode tests pass (`PresentationTests`) — prefab component contract, visual-only scale, event adapter does not mutate resources
 - [ ] Experiment EditMode tests pass (`ExperimentConfigurationTests`, `ExperimentLifecycleTests`) — initialization stays paused until `BeginRunning`; environment applicator/placement happens once per orchestrated start
 - [ ] Analytics export retention tests pass (`AnalyticsExportControllerTests`)  
+- [ ] Desktop UI presenter tests pass (`DesktopUiPresenterTests`)  

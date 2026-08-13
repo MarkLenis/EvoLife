@@ -9,7 +9,7 @@ namespace EvoLife.Environment
     /// Configurable ecological events. Mutates resources through Environment APIs and
     /// creatures only through injected Simulation ports — never hidden biology state.
     /// </summary>
-    public sealed class EnvironmentalEventManager : MonoBehaviour, ISimulationTickable
+    public sealed class EnvironmentalEventManager : MonoBehaviour, ISimulationTickable, IEnvironmentalEventCommands
     {
         [SerializeField] EnvironmentalEventConfig config;
         [SerializeField] ResourceManager resourceManager;

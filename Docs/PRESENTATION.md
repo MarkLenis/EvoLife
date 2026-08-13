@@ -123,22 +123,21 @@ Instead:
 
 Simulation remains functional if shaders fail to import.
 
-## Integration after Agent 10 (desktop UI) merges
+## Integration with desktop UI
 
-This PR intentionally does **not** own camera controls, selection, inspector, dashboard, Canvas, event UI, or AI debug overlays.
+Presentation does **not** own camera controls, selection, inspector, dashboard, Canvas, event UI, or AI debug overlays.
 
-Hooks already in `EvoLifeDemo.unity`:
+Hooks in `EvoLifeDemo.unity`:
 
-1. `Main Camera` — static overview only. Do **not** add a second enabled camera. Parent or replace this with Agent 10’s rig; empty `Agent10_CameraRigHook` is the intended attach point.
-2. `Agent10_UiCanvasHook` — parent the UI Canvas here.
-3. Wire HUD/inspector to existing `SimulationClock`, `PopulationTracker`, `EcosystemManager`, `EnvironmentalEventManager`. Add `PopulationStatisticCollector` if the HUD needs snapshots.
+1. `Main Camera` / `Agent10_CameraRigHook` — attach `DesktopCameraController` + `CreatureSelectionController` on the existing camera. Do **not** add a second enabled camera.
+2. `Agent10_UiCanvasHook` — parent or place `DesktopDebugUi` here (runtime Canvas).
+3. Wire HUD/inspector to existing `SimulationClock`, `PopulationTracker`, `EcosystemManager`, `EnvironmentalEventManager`. See [UI_DEBUG.md](UI_DEBUG.md).
 4. Keep `PresentationDemoBootstrap` / world visuals. Do not duplicate `DayNightLightingPresenter` as a second sun controller.
-5. Prefer one small merge pass: drop in Canvas + camera controller, fix camera clear flags / audio listener so only one listener remains.
+5. One audio listener on Main Camera.
 
-Shared files this PR avoided so Agent 10 can own them:
+Shared files Presentation avoided so UI can own them:
 
-- `Assets/EvoLife/Scripts/UI/SimulationHud.cs` and the UI assembly
-- camera / selection / inspector / dashboard / debug overlay scripts (none existed on `main`; do not add competing ones here)
+- `Assets/EvoLife/Scripts/UI/` (including `SimulationHud`, camera, selection, inspector, dashboard, debug overlay)
 
 ## Manual Unity inspection
 

@@ -30,7 +30,7 @@ Assets/EvoLife/Scripts/
   Simulation/    Time, population, spawning, config, tick runner
   AI/            Observations, actions, rewards, policies
   Analytics/     Stats capture + backend HTTP client
-  UI/            Presentation only (HUD / Agent 10 desktop UI)
+  UI/            HUD, inspector, desktop camera, debug overlays
   Presentation/  Demo world visuals, materials, lighting/event sinks
 ```
 
@@ -62,7 +62,7 @@ Each Unity module has an **assembly definition** (`EvoLife.*.asmdef`) so compile
 | **Simulation** | Clock, time scale, population registry, spawning, reproduction, ecosystem mode, experiment config, tick fan-out | Observation vectors, HTTP |
 | **AI** | Observations, action execution, reward calculation, scripted vs PPO policy selection | Mutating vitals directly, genome operators |
 | **Analytics** | Snapshots, export loop, backend transport | Simulation rules |
-| **UI** | HUD / controls presentation | Domain logic |
+| **UI** | HUD, inspector, dashboard, desktop camera, AI debug overlay | Domain logic |
 | **Presentation** | Demo terrain/biome/plant/water/creature visuals, optional lighting and event cues | Camera/inspector/dashboard, AI, biology, experiment lifecycle |
 | **Backend** | Experiment records, stats persistence API | Unity runtime |
 | **Training** | PPO configs / train scripts | Runtime creature state |
@@ -131,6 +131,8 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
 | `EvoLifeCreatureAgent` | AI | ML-Agents Agent bridge (`EvoLifeHerbivore` / `EvoLifePredator`) |
 | `CreatureObservationSchema` | AI | Documented observation size/order (v2, size 31) |
 | `IStatisticCollector` | Analytics | Snapshot production |
+| `IReadOnlyCreatureAiDebug` / `IReadOnlyCreatureActivity` / `ISimulationClockControl` / `IEnvironmentalEventCommands` / `ILiveCreatureCatalog` | Common | Desktop inspector, overlay, pause/speed, manual event trigger, live creature copy |
+| `DesktopDebugUi` / `DesktopCameraController` / `CreatureInspectorPresenter` | UI | Observe-only desktop tools; see [UI_DEBUG.md](UI_DEBUG.md) |
 | `AnalyticsSnapshotBuilder` / `CreatureLifetimeFactory` / `GenerationAggregator` | Analytics | Pure experiment metrics |
 | `CreatureLifecycleHub` | Simulation | Spawn/death fan-out for observers |
 | `ReproductionSystem` / `EcosystemManager` | Simulation | Local mating, offspring spawn, founder population, extinction report. Costs/cooldowns commit only after spawn succeeds. `EcosystemManager` wires population systems; orchestrated environment application is owned by `ExperimentOrchestrator`. |
@@ -163,7 +165,7 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
    `PopulationStatisticCollector` builds `SimulationStatsSnapshot`. `CreatureLifetimeRecorder` observes spawn/death via `CreatureLifecycleHub` (Common contracts). `StatsExportLoop` batches POSTs to FastAPI via `BackendClient` (v1 `/stats` or extended run/snapshot/creature/generation endpoints). Failed POSTs retain pending records until a later successful flush (bounded FIFO overflow). See [ANALYTICS.md](ANALYTICS.md).
 
 7. **Present**  
-   `SimulationHud` (UI module) renders collector/clock data only. The demo world is drawn by `Presentation` (`EvoLifeDemo` scene). See [PRESENTATION.md](PRESENTATION.md).
+   `DesktopDebugUi` (and leftover `SimulationHud`) render collector/clock/environment data only. Camera, inspector, and AI overlays observe Common contracts. The demo world is drawn by `Presentation` (`EvoLifeDemo` scene). See [UI_DEBUG.md](UI_DEBUG.md) and [PRESENTATION.md](PRESENTATION.md).
 
 ---
 
@@ -252,7 +254,7 @@ Default persistence is **SQLite**. See [ANALYTICS.md](ANALYTICS.md) and [Backend
 | Ecological event | Environment `EnvironmentalEventManager` + Simulation `EnvironmentalCreatureBridge` | Do not mutate `CreatureBiology` fields; do not bypass `CreatureSpawner` |
 | Day/night or biome | Environment `DayNightManager` / `BiomeMap` | PPO observation size — use `EnvironmentObservationSource` until the schema is bumped |
 | New gene | `CanonicalGenomeSchema` + decoder | Phenotype consumers in Creatures; bump schema version if observation size changes |
-| New statistic | Analytics (+ Backend schema) | UI display optional |
+| New statistic | Analytics (+ Backend schema) | UI display optional; see [UI_DEBUG.md](UI_DEBUG.md) |
 | PPO training | AI Agent wiring + Training configs + curriculum stages | Reward calculator only for shaping; see [TRAINING_CURRICULUM.md](TRAINING_CURRICULUM.md) |
 | Evaluation experiment | Simulation `ExperimentConfiguration` / `ExperimentOrchestrator` | Analytics records only; see [EXPERIMENTS.md](EXPERIMENTS.md) |
 | Scripted baseline heuristic | AI `ScriptedBaselinePolicy` / settings profile | Observation schema, Creatures/Environment APIs |

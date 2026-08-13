@@ -8,7 +8,7 @@ namespace EvoLife.Simulation
     /// Experiment pause/unpause authority lives on <c>ExperimentOrchestrator</c>:
     /// initialization stays paused until <c>BeginRunning</c>.
     /// </summary>
-    public sealed class SimulationClock : MonoBehaviour, ISimulationClock
+    public sealed class SimulationClock : MonoBehaviour, ISimulationClock, ISimulationClockControl
     {
         [SerializeField] float timeScale = 1f;
         [SerializeField] bool isPaused;
