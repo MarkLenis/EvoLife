@@ -627,6 +627,8 @@ namespace EvoLife.Tests
                     ExperimentEnvironmentApplicator.BaselineRegenPerSecond * 2f,
                     resources.SpawnSettings.DefaultRegenPerSecond,
                     0.0001f);
+                Assert.AreEqual(0, resources.PlaceResourcesCallCount);
+                Assert.IsFalse(resources.HasPlaced);
             }
             finally
             {

@@ -318,6 +318,123 @@ namespace EvoLife.Tests
             Assert.IsTrue(ReproductionEligibility.IsEligible(highEnergy, ReproductionSettings.ForTests(), 0f));
         }
 
+        [Test]
+        public void MissingSpawner_DoesNotChargeParentsOrStartCooldown()
+        {
+            fixture.Settings.HealthCost = 4f;
+            var a = fixture.SpawnAdult("herbivore", CreatureRole.Herbivore, Vector3.zero);
+            var b = fixture.SpawnAdult("herbivore", CreatureRole.Herbivore, new Vector3(1f, 0f, 0f));
+            var before = fixture.CaptureCosts(a, b);
+            fixture.Reproduction.Configure(
+                null,
+                fixture.Tracker,
+                fixture.Hub,
+                fixture.Clock,
+                fixture.Settings,
+                new EcosystemSettings { MaxHerbivores = 80, MaxPredators = 24 },
+                herbivore: fixture.Prefab,
+                predator: fixture.Prefab);
+
+            var result = fixture.RequestFrom(a);
+
+            Assert.IsFalse(result.Succeeded);
+            Assert.AreEqual(ReproductionFailureReason.SpawnFailed, result.Failure);
+            fixture.AssertParentsUnchanged(a, b, before);
+            Assert.AreEqual(0, fixture.Reproduction.LastRequestOffspringCount);
+            Assert.AreEqual(before.Births, fixture.Tracker.Births);
+        }
+
+        [Test]
+        public void MissingPrefab_DoesNotChargeParentsOrStartCooldown()
+        {
+            fixture.Settings.HealthCost = 4f;
+            var a = fixture.SpawnAdult("herbivore", CreatureRole.Herbivore, Vector3.zero);
+            var b = fixture.SpawnAdult("herbivore", CreatureRole.Herbivore, new Vector3(1f, 0f, 0f));
+            var before = fixture.CaptureCosts(a, b);
+            fixture.Reproduction.SetPrefabs(null, null);
+
+            var result = fixture.RequestFrom(a);
+
+            Assert.IsFalse(result.Succeeded);
+            Assert.AreEqual(ReproductionFailureReason.SpawnFailed, result.Failure);
+            fixture.AssertParentsUnchanged(a, b, before);
+            Assert.AreEqual(before.Births, fixture.Tracker.Births);
+        }
+
+        [Test]
+        public void SimulatedSpawnFailure_DoesNotChargeParentsOrStartCooldown()
+        {
+            fixture.Settings.HealthCost = 4f;
+            var a = fixture.SpawnAdult("herbivore", CreatureRole.Herbivore, Vector3.zero);
+            var b = fixture.SpawnAdult("herbivore", CreatureRole.Herbivore, new Vector3(1f, 0f, 0f));
+            var before = fixture.CaptureCosts(a, b);
+            fixture.Reproduction.ForceNextSpawnFailure();
+
+            var result = fixture.RequestFrom(a);
+
+            Assert.IsFalse(result.Succeeded);
+            Assert.AreEqual(ReproductionFailureReason.SpawnFailed, result.Failure);
+            fixture.AssertParentsUnchanged(a, b, before);
+            Assert.AreEqual(0, fixture.Reproduction.LastRequestOffspringCount);
+            Assert.AreEqual(before.Births, fixture.Tracker.Births);
+
+            var retry = fixture.RequestFrom(a);
+            Assert.IsTrue(retry.Succeeded, retry.Failure.ToString());
+            fixture.Track(retry.Offspring);
+            Assert.AreEqual(before.Births + 1, fixture.Tracker.Births);
+        }
+
+        [Test]
+        public void SuccessfulSpawn_ChargesOnceAndStartsCooldownForBothParents()
+        {
+            fixture.Settings.HealthCost = 3f;
+            var a = fixture.SpawnAdult("herbivore", CreatureRole.Herbivore, Vector3.zero);
+            var b = fixture.SpawnAdult("herbivore", CreatureRole.Herbivore, new Vector3(1f, 0f, 0f));
+            var before = fixture.CaptureCosts(a, b);
+
+            var result = fixture.RequestFrom(a);
+
+            Assert.IsTrue(result.Succeeded, result.Failure.ToString());
+            fixture.Track(result.Offspring);
+            Assert.AreEqual(1, fixture.Reproduction.LastRequestOffspringCount);
+            Assert.AreEqual(before.Births + 1, fixture.Tracker.Births);
+            Assert.AreEqual(before.EnergyA - fixture.Settings.EnergyCost, a.GetComponent<CreatureVitals>().Energy, 0.0001f);
+            Assert.AreEqual(before.EnergyB - fixture.Settings.EnergyCost, b.GetComponent<CreatureVitals>().Energy, 0.0001f);
+            Assert.AreEqual(before.HealthA - fixture.Settings.HealthCost, a.GetComponent<CreatureVitals>().Health, 0.0001f);
+            Assert.AreEqual(before.HealthB - fixture.Settings.HealthCost, b.GetComponent<CreatureVitals>().Health, 0.0001f);
+            Assert.IsTrue(fixture.Reproduction.HasReproductionTimestamp(a.GetComponent<CreatureIdentity>().Id));
+            Assert.IsTrue(fixture.Reproduction.HasReproductionTimestamp(b.GetComponent<CreatureIdentity>().Id));
+
+            var blockedA = fixture.RequestFrom(a);
+            Assert.IsFalse(blockedA.Succeeded);
+            Assert.AreEqual(ReproductionFailureReason.RequesterIneligible, blockedA.Failure);
+            var blockedB = fixture.RequestFrom(b);
+            Assert.IsFalse(blockedB.Succeeded);
+            Assert.AreEqual(ReproductionFailureReason.RequesterIneligible, blockedB.Failure);
+            Assert.AreEqual(1, fixture.Reproduction.LastRequestOffspringCount);
+            Assert.AreEqual(before.Births + 1, fixture.Tracker.Births);
+        }
+
+        [Test]
+        public void LethalReproductionCost_DoesNotRollbackSuccessfulOffspring()
+        {
+            fixture.Settings.HealthCost = 1000f;
+            var a = fixture.SpawnAdult("herbivore", CreatureRole.Herbivore, Vector3.zero);
+            var b = fixture.SpawnAdult("herbivore", CreatureRole.Herbivore, new Vector3(1f, 0f, 0f));
+            var birthsBefore = fixture.Tracker.Births;
+
+            var result = fixture.RequestFrom(a);
+
+            Assert.IsTrue(result.Succeeded, result.Failure.ToString());
+            Assert.IsNotNull(result.Offspring);
+            fixture.Track(result.Offspring);
+            Assert.AreEqual(1, fixture.Reproduction.LastRequestOffspringCount);
+            Assert.AreEqual(birthsBefore + 1, fixture.Tracker.Births);
+            Assert.IsFalse(a.GetComponent<CreatureVitals>().IsAlive);
+            Assert.IsFalse(b.GetComponent<CreatureVitals>().IsAlive);
+            Assert.IsTrue(result.Offspring.GetComponent<CreatureVitals>().IsAlive);
+        }
+
         sealed class ReproductionFixture
         {
             readonly List<GameObject> objects = new List<GameObject>();
@@ -389,6 +506,30 @@ namespace EvoLife.Tests
                 return Reproduction.TryReproduce(identity.Id);
             }
 
+            public ParentCostSnapshot CaptureCosts(GameObject a, GameObject b)
+            {
+                var vitalsA = a.GetComponent<CreatureVitals>();
+                var vitalsB = b.GetComponent<CreatureVitals>();
+                return new ParentCostSnapshot(
+                    vitalsA.Energy,
+                    vitalsB.Energy,
+                    vitalsA.Health,
+                    vitalsB.Health,
+                    Tracker.Births);
+            }
+
+            public void AssertParentsUnchanged(GameObject a, GameObject b, ParentCostSnapshot before)
+            {
+                var vitalsA = a.GetComponent<CreatureVitals>();
+                var vitalsB = b.GetComponent<CreatureVitals>();
+                Assert.AreEqual(before.EnergyA, vitalsA.Energy, 0.0001f);
+                Assert.AreEqual(before.EnergyB, vitalsB.Energy, 0.0001f);
+                Assert.AreEqual(before.HealthA, vitalsA.Health, 0.0001f);
+                Assert.AreEqual(before.HealthB, vitalsB.Health, 0.0001f);
+                Assert.IsFalse(Reproduction.HasReproductionTimestamp(a.GetComponent<CreatureIdentity>().Id));
+                Assert.IsFalse(Reproduction.HasReproductionTimestamp(b.GetComponent<CreatureIdentity>().Id));
+            }
+
             public void Track(GameObject instance)
             {
                 if (instance != null && !objects.Contains(instance))
@@ -431,6 +572,24 @@ namespace EvoLife.Tests
                 prefab.AddComponent<CreatureReproductionBridge>();
                 return prefab;
             }
+        }
+
+        public readonly struct ParentCostSnapshot
+        {
+            public ParentCostSnapshot(float energyA, float energyB, float healthA, float healthB, int births)
+            {
+                EnergyA = energyA;
+                EnergyB = energyB;
+                HealthA = healthA;
+                HealthB = healthB;
+                Births = births;
+            }
+
+            public float EnergyA { get; }
+            public float EnergyB { get; }
+            public float HealthA { get; }
+            public float HealthB { get; }
+            public int Births { get; }
         }
     }
 

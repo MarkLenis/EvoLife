@@ -60,18 +60,30 @@ Create with `ExperimentScenarios.Create("drought")` or load the matching JSON.
 
 `ExperimentOrchestrator` is a thin lifecycle owner. It does **not** replace `SimulationRunner`, `EcosystemManager`, or `ExperimentSession`.
 
+Pause/unpause authority lives on the orchestrator:
+
+- `Awake`, `Load`, and initialization methods pause `SimulationClock`
+- phases `Loaded`, `EnvironmentInitialized`, `PopulationInitialized`, and `AnalyticsStarted` stay paused
+- **only** `BeginRunning()` transitions the coordinator to `Running` and unpauses the clock
+- `FinishAsync` pauses again
+
+Manual `Load` also pauses so a previous run cannot keep progressing.
+
+### Initialization order
+
 ```
-Load ExperimentConfiguration
-        │ validate
-        v
-Apply onto SimulationConfig
-        │
-        ├─ ExperimentEnvironmentApplicator  (plants, day length, event schedule)
-        ├─ EcosystemManager.ApplyExperimentSettings  (seeds, mutation, respawn)
-        └─ EcosystemManager.SpawnFounders
-        │
-        v
-IExperimentAnalyticsSession.BeginAsync   (ExperimentSession)
+1. Pause SimulationClock
+2. Validate / load ExperimentConfiguration
+3. Apply onto SimulationConfig (deterministic seed streams included)
+4. ExperimentEnvironmentApplicator.Apply  (resource knobs, day length, event schedule)
+5. EcosystemManager.ApplyExperimentSettings  (clock scale, spawner, policy seeds,
+   predator founder bias, reproduction, training respawn, environmental creature bridge,
+   event Bind — not a second environment Apply)
+6. ResourceManager.EnsurePlaced  (exactly once)
+7. Spawn founders exactly once
+8. IExperimentAnalyticsSession.BeginAsync  (ExperimentSession; still paused)
+9. Mark AnalyticsStarted
+10. BeginRunning: coordinator → Running, then unpause SimulationClock
         │
         v
 Tick until ExperimentStopEvaluator says stop
@@ -81,9 +93,28 @@ Tick until ExperimentStopEvaluator says stop
 Pause clock + FinishAsync(status, stop_reason)
 ```
 
-When the orchestrator auto-starts, it disables `EcosystemManager.SpawnFoundersOnStart` and `ExperimentSession` auto-create so founders and the backend run are not started twice.
+`ExperimentOrchestrator.InitializeEnvironment()` is the experiment-time caller of `ExperimentEnvironmentApplicator.Apply()`. `EcosystemManager.ApplyExperimentSettings()` configures population/lifecycle systems only.
 
-`SimulationRunner` still only fans out ticks.
+Standalone/demo scenes without an orchestrator may still call `EcosystemManager.ApplyStandaloneEnvironment()` from `Start` when `ApplyEnvironmentOnStart` is true. The orchestrator disables that flag, `SpawnFoundersOnStart`, `ResourceManager.PlaceOnStart`, and `ExperimentSession` auto-create so Unity `Start` order cannot double-place resources or double-spawn founders.
+
+`SimulationRunner` still only fans out ticks. A paused clock yields `DeltaTimeSeconds == 0`, so tickables do not advance during initialization (including async analytics startup).
+
+### Analytics startup failure
+
+If `IExperimentAnalyticsSession.BeginAsync` returns false or throws:
+
+- the clock remains paused
+- the coordinator does **not** enter `Running`
+- the failure is logged
+- the scene is consumed; reload before another run
+
+A missing analytics session is optional (local tests). `ExperimentSession` without a backend client is local-dev success (`RunReady = false`) and may still enter `Running`. A backend create that was attempted and failed is a startup failure.
+
+### Second BeginAsync / restart
+
+This orchestrator does **not** reset the scene. Calling `BeginAsync` a second time (including after `Finished`, while `Running`/`Stopping`, or after a failed analytics start) is **rejected**. Reload the scene before another experiment run. There is no restart UI in this layer.
+
+Do not stack a second founder population, resource placement, event schedule, or analytics run on top of the first.
 
 ## Reproducibility
 
@@ -130,3 +161,7 @@ Treat paired runs as **matched configurations**, not bit-identical replays.
 5. Stop on time or extinction; inspect `population-series`, `survival`, and `policy-comparison`.
 
 Presentation/demo scenes can reuse the same prefabs with a HUD and a free camera. Do not mix demo time-scale scrubbing into evaluation logs.
+
+## Tests
+
+EditMode: `ExperimentConfigurationTests`, `ExperimentLifecycleTests` (JSON/seeds/scenarios/stop conditions, initialization pause, unpause only at Running, failed analytics never Running, FinishAsync pauses, second BeginAsync rejected, one environment placement, founders spawned once).

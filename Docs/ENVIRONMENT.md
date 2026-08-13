@@ -106,6 +106,8 @@ Create assets:
 
 Wire in the scene: `ResourceRegistry`, `ResourceManager`, `DayNightManager`, `EnvironmentalEventManager`, plus Simulation `EnvironmentalCreatureBridge`. Add those tickables to `SimulationRunner`. `EcosystemManager` binds the creature bridge when present.
 
+During **orchestrated experiments**, `ExperimentOrchestrator.InitializeEnvironment()` is the single caller of `ExperimentEnvironmentApplicator.Apply()`. That applies plant/day-night/event knobs; `ResourceManager.EnsurePlaced()` then places resources once. `EcosystemManager.ApplyExperimentSettings()` does not re-apply that configuration. Standalone/demo scenes without an orchestrator use `EcosystemManager.ApplyStandaloneEnvironment()` instead. See [EXPERIMENTS.md](EXPERIMENTS.md).
+
 ## Tests
 
-EditMode: `PlantResourceTests`, `WaterSourceTests`, `DayNightCycleTests`, `BiomeMapTests`, `ResourceManagerTests`, `EnvironmentalEventTests`, plus `CreatureObservationSchemaTests.EnvironmentObservationSource_IsNotPartOfPpoSchema`.
+EditMode: `PlantResourceTests`, `WaterSourceTests`, `DayNightCycleTests`, `BiomeMapTests`, `ResourceManagerTests`, `EnvironmentalEventTests`, `ExperimentLifecycleTests` (orchestrated environment applied once), plus `CreatureObservationSchemaTests.EnvironmentObservationSource_IsNotPartOfPpoSchema`.

@@ -15,9 +15,9 @@ Unity Editor is not available in typical cloud agent environments. After pulling
    - `CreatureActionSchemaTests` (3 continuous + interaction branch, clamp, local forward/turn, invalid no-ops)
    - `TrainingRewardCalculatorTests` (death terminate, relief, critical-need)
    - `BaselineMotiveEvaluatorTests` / `ScriptedBaselinePolicyTests` (scripted heuristic priorities, canonical action path, no vital mutation)
-   - `ReproductionTests` / `EcosystemLifecycleTests` (mating eligibility, lineage, mutation bounds, training vs persistent respawn)
+   - `ReproductionTests` / `EcosystemLifecycleTests` (mating eligibility, lineage, mutation bounds, training vs persistent respawn, spawn-failure does not charge energy/health or start cooldown, success commits costs/cooldown once)
    - `PlantResourceTests` / `DayNightCycleTests` / `EnvironmentalEventTests` (depletion, regen, drought/food boom, event restore, no double death, lifecycle spawn/remove)
-   - `ExperimentConfigurationTests` (JSON round-trip, seeds, scenarios, stop conditions, metadata, extinct rates, policy selection, validation)
+   - `ExperimentConfigurationTests` / `ExperimentLifecycleTests` (JSON round-trip, seeds, scenarios, stop conditions, metadata, extinct rates, policy selection, validation, initialization pause until `BeginRunning`, failed analytics never Running, FinishAsync pauses, second `BeginAsync` rejected, environment applied/placed once, founders spawned once)
    - `AnalyticsExportControllerTests` (failed upload retains records, success dequeues, bounded overflow)
    - `PopulationTrackerTests`
    - `AnalyticsCollectorTests` (snapshot math, lifetime records, generation aggregates, policy classification, empty-population safety)

@@ -33,6 +33,13 @@ namespace EvoLife.Environment
         public IReadOnlyList<PlantResource> Plants => plants;
         public IReadOnlyList<WaterSource> Waters => waters;
         public bool HasPlaced => placed;
+        public int PlaceResourcesCallCount { get; private set; }
+
+        public bool PlaceOnStart
+        {
+            get => placeOnStart;
+            set => placeOnStart = value;
+        }
 
         public int PlantCount => CaptureCensus().PlantCount;
         public int WaterSourceCount => CaptureCensus().WaterSourceCount;
@@ -110,6 +117,7 @@ namespace EvoLife.Environment
 
         public void PlaceResources()
         {
+            PlaceResourcesCallCount++;
             if (registry == null)
             {
                 registry = GetComponent<ResourceRegistry>() ?? gameObject.AddComponent<ResourceRegistry>();

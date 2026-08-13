@@ -9,8 +9,8 @@ namespace EvoLife.Simulation
 {
     /// <summary>
     /// Simulation-owned reproduction executor. Policies only request; this class
-    /// checks local eligibility, applies biological costs through CreatureVitals APIs,
-    /// and spawns offspring through <see cref="CreatureSpawner"/>.
+    /// checks local eligibility, spawns offspring through <see cref="CreatureSpawner"/>,
+    /// and applies biological costs through CreatureVitals APIs only after a successful spawn.
     /// </summary>
     public sealed class ReproductionSystem : MonoBehaviour
     {
@@ -29,6 +29,7 @@ namespace EvoLife.Simulation
         IGeneticOperators geneticOperators;
         System.Random random = new System.Random(1);
         bool requestInFlight;
+        bool forceNextSpawnFailure;
         EcosystemSettings ecosystem = new EcosystemSettings();
 
         public ReproductionResult LastResult { get; private set; }
@@ -75,6 +76,21 @@ namespace EvoLife.Simulation
             settings = reproductionSettings ?? new ReproductionSettings();
             geneticOperators = new DefaultGeneticOperators(settings.ToGeneticsConfig());
         }
+
+        public void SetPrefabs(GameObject herbivore, GameObject predator)
+        {
+            herbivorePrefab = herbivore;
+            predatorPrefab = predator;
+        }
+
+        /// <summary>
+        /// Test seam: the next spawn attempt returns null after prepare succeeds.
+        /// Costs and cooldown are not committed.
+        /// </summary>
+        public void ForceNextSpawnFailure() => forceNextSpawnFailure = true;
+
+        public bool HasReproductionTimestamp(CreatureId id) =>
+            lastReproductionTime.ContainsKey(id.Value);
 
         void OnEnable()
         {
@@ -160,32 +176,62 @@ namespace EvoLife.Simulation
 
         ReproductionResult ReproduceOnce(CreatureId requesterId)
         {
+            if (!TryPrepareBirth(requesterId, out var prepared))
+            {
+                return prepared.Failure;
+            }
+
+            var offspring = SpawnPrepared(prepared);
+            if (offspring == null)
+            {
+                return ReproductionResult.Fail(ReproductionFailureReason.SpawnFailed);
+            }
+
+            CommitBirth(prepared);
+            LastRequestOffspringCount = 1;
+            var identity = offspring.GetComponent<CreatureIdentity>();
+            var offspringId = identity != null ? identity.Id : default;
+            return ReproductionResult.Success(offspring, offspringId, prepared.Blueprint.Genome);
+        }
+
+        bool TryPrepareBirth(CreatureId requesterId, out PreparedBirth prepared)
+        {
+            prepared = default;
             if (!participants.TryGetValue(requesterId.Value, out var requester))
             {
-                return ReproductionResult.Fail(ReproductionFailureReason.RequesterMissing);
+                prepared = PreparedBirth.Failed(ReproductionResult.Fail(ReproductionFailureReason.RequesterMissing));
+                return false;
             }
 
             var now = Now();
             if (!IsParticipantEligible(requester, now))
             {
-                return ReproductionResult.Fail(ReproductionFailureReason.RequesterIneligible);
+                prepared = PreparedBirth.Failed(ReproductionResult.Fail(ReproductionFailureReason.RequesterIneligible));
+                return false;
             }
 
             var mate = FindNearestEligibleMate(requester, now);
             if (mate == null)
             {
-                return ReproductionResult.Fail(ReproductionFailureReason.NoCompatibleMate);
+                prepared = PreparedBirth.Failed(ReproductionResult.Fail(ReproductionFailureReason.NoCompatibleMate));
+                return false;
             }
 
             if (IsAtCap(requester.Identity.Role))
             {
-                return ReproductionResult.Fail(ReproductionFailureReason.PopulationCapped);
+                prepared = PreparedBirth.Failed(ReproductionResult.Fail(ReproductionFailureReason.PopulationCapped));
+                return false;
             }
 
-            lastReproductionTime[requester.Id.Value] = now;
-            lastReproductionTime[mate.Id.Value] = now;
-            ApplyReproductionCost(requester);
-            ApplyReproductionCost(mate);
+            var operators = geneticOperators ?? new DefaultGeneticOperators(settings.ToGeneticsConfig());
+            geneticOperators = operators;
+
+            var prefab = PrefabFor(requester.Identity.Role);
+            if (prefab == null || spawner == null)
+            {
+                prepared = PreparedBirth.Failed(ReproductionResult.Fail(ReproductionFailureReason.SpawnFailed));
+                return false;
+            }
 
             var position = Midpoint(requester, mate);
             var policy = ResolvePolicy(requester);
@@ -200,17 +246,29 @@ namespace EvoLife.Simulation
                 requester.Identity.Role,
                 position,
                 policy,
-                geneticOperators ?? new DefaultGeneticOperators(settings.ToGeneticsConfig()),
+                operators,
                 random);
 
-            var prefab = PrefabFor(blueprint.Role);
-            if (spawner == null || prefab == null)
+            prepared = PreparedBirth.Ready(requester, mate, blueprint, prefab, now);
+            return true;
+        }
+
+        GameObject SpawnPrepared(PreparedBirth prepared)
+        {
+            if (forceNextSpawnFailure)
             {
-                return ReproductionResult.Fail(ReproductionFailureReason.SpawnFailed);
+                forceNextSpawnFailure = false;
+                return null;
             }
 
-            var offspring = spawner.Spawn(
-                prefab,
+            if (spawner == null || prepared.Prefab == null)
+            {
+                return null;
+            }
+
+            var blueprint = prepared.Blueprint;
+            return spawner.Spawn(
+                prepared.Prefab,
                 blueprint.Position,
                 blueprint.SpeciesId,
                 blueprint.Role,
@@ -219,16 +277,14 @@ namespace EvoLife.Simulation
                 blueprint.Generation,
                 blueprint.ParentA,
                 blueprint.ParentB);
+        }
 
-            if (offspring == null)
-            {
-                return ReproductionResult.Fail(ReproductionFailureReason.SpawnFailed);
-            }
-
-            LastRequestOffspringCount = 1;
-            var identity = offspring.GetComponent<CreatureIdentity>();
-            var offspringId = identity != null ? identity.Id : default;
-            return ReproductionResult.Success(offspring, offspringId, blueprint.Genome);
+        void CommitBirth(PreparedBirth prepared)
+        {
+            lastReproductionTime[prepared.Requester.Id.Value] = prepared.Now;
+            lastReproductionTime[prepared.Mate.Id.Value] = prepared.Now;
+            ApplyReproductionCost(prepared.Requester);
+            ApplyReproductionCost(prepared.Mate);
         }
 
         bool IsParticipantEligible(ReproductionParticipant participant, float now)
@@ -392,6 +448,43 @@ namespace EvoLife.Simulation
         void OnDied(CreatureDeathNotice notice, IAnalyticsCreatureView view)
         {
             Unregister(notice.Id);
+        }
+
+        readonly struct PreparedBirth
+        {
+            PreparedBirth(
+                ReproductionResult failure,
+                ReproductionParticipant requester,
+                ReproductionParticipant mate,
+                OffspringBlueprint blueprint,
+                GameObject prefab,
+                float now)
+            {
+                Failure = failure;
+                Requester = requester;
+                Mate = mate;
+                Blueprint = blueprint;
+                Prefab = prefab;
+                Now = now;
+            }
+
+            public ReproductionResult Failure { get; }
+            public ReproductionParticipant Requester { get; }
+            public ReproductionParticipant Mate { get; }
+            public OffspringBlueprint Blueprint { get; }
+            public GameObject Prefab { get; }
+            public float Now { get; }
+
+            public static PreparedBirth Failed(ReproductionResult failure) =>
+                new PreparedBirth(failure, null, null, default, null, 0f);
+
+            public static PreparedBirth Ready(
+                ReproductionParticipant requester,
+                ReproductionParticipant mate,
+                OffspringBlueprint blueprint,
+                GameObject prefab,
+                float now) =>
+                new PreparedBirth(default, requester, mate, blueprint, prefab, now);
         }
 
         sealed class ReproductionParticipant
