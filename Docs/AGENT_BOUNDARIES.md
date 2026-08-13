@@ -15,7 +15,9 @@ This guide prevents duplicate systems when multiple human or coding agents work 
 | Apply phenotype to speed/metabolism/senses | **Creatures** | `CreatureCapabilityMotor` | Genetics (Genetics only *produces* phenotype) |
 | Genome data, crossover, mutation | **Genetics** | `Genome`, `IGeneticOperators` | Creatures, AI, Simulation (Simulation may *call* operators when spawning or reproducing) |
 | Phenotype decode | **Genetics** | `IGenomeDecoder`, `Phenotype`, `CreatureGenome` | Creatures, AI |
-| Plants, water, resource regen / query | **Environment** | `IResourceNode`, `PlantResource`, `WaterSource`, `ResourceRegistry` | Creatures, AI |
+| Plants, water, resource regen / query, biomes, day/night | **Environment** | `IResourceNode`, `PlantResource`, `WaterSource`, `ResourceRegistry`, `ResourceManager`, `BiomeMap`, `DayNightManager` | Creatures, AI |
+| Ecological event orchestration | **Environment** | `EnvironmentalEventManager`, `EnvironmentalEventConfig` | Creatures (use vitals APIs via Simulation port), AI |
+| Event damage / spawn / remove | **Simulation** | `EnvironmentalCreatureBridge` | Environment must not reference Creatures |
 | Simulation time, pause, time scale | **Simulation** | `SimulationClock` | Anywhere else |
 | Population counts registry | **Simulation** | `PopulationTracker` | Analytics (Analytics only *reads*) |
 | Spawning / initial wiring of components | **Simulation** | `CreatureSpawner` | AI, Genetics |
@@ -24,13 +26,13 @@ This guide prevents duplicate systems when multiple human or coding agents work 
 | Training-support respawn | **Simulation** | `TrainingRespawnController` | Creatures, AI |
 | Experiment/sim config assets | **Simulation** | `SimulationConfig`, `EcosystemSettings`, `ReproductionConfig` | Backend (Backend stores experiment *records*) |
 | Tick fan-out | **Simulation** | `SimulationRunner` | — keep this thin |
-| Observations | **AI** | `IObservationSource`, `VitalObservationSource`, `CompositeObservationSource`, `CreatureObservationSchema` | Creatures, Environment |
+| Observations | **AI** | `IObservationSource`, `VitalObservationSource`, `CompositeObservationSource`, `CreatureObservationSchema`, optional `EnvironmentObservationSource` (not in PPO v2) | Creatures, Environment |
 | Actions / locomotion intent | **AI** | `IActionExecutor`, `PlanarMoveActionExecutor`, `CreatureActionSchema`, `LocalCreatureInteractor` | Simulation (Simulation owns whether `reproduce_request` succeeds) |
 | Rewards | **AI** | `IRewardCalculator`, `TrainingRewardCalculator`, `SurvivalRewardCalculator` | Creatures |
 | Scripted baseline vs PPO policy | **AI** | `CreatureBrain`, `ScriptedBaselinePolicy`, `BaselineMotiveEvaluator`, `ScriptedBaselineSettings` / `ScriptedBaselineProfile`, `EvoLifeCreatureAgent`, `PpoPolicyAdapter` (idle fallback) | Simulation |
 | Stats snapshots + HTTP upload | **Analytics** | `SimulationStatsSnapshot`, `BackendClient`, `StatsExportLoop`, `AnalyticsExportController`, collectors, lifetime/generation records | Simulation, UI, Creatures, AI |
 | HUD / presentation | **UI** | `SimulationHud` | Domain modules |
-| Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, `IReproductionRequestHandler`, IDs, enums | Gameplay behavior |
+| Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, `IReproductionRequestHandler`, `IEnvironmentalVitalEffects`, `IEnvironmentalPopulationCommands`, IDs, enums | Gameplay behavior |
 | REST experiment/stats API | **Backend** | FastAPI `app/` | Unity (except DTO field alignment) |
 | PPO YAML / train scripts | **Training** | `Training/configs`, `Training/scripts` | Unity runtime folders |
 
@@ -44,7 +46,7 @@ Agents can work simultaneously if they stay in lane:
 |------|------------|--------------------|
 | A — Creatures | Vitals formulas, species assets, motor | Consumes `IReadOnlyPhenotype`; exposes `IReadOnlyVitalState` |
 | B — Genetics | Operators, decoder, gene layout versioning | Outputs phenotype; used by Spawner |
-| C — Environment | Resources, events hooks | `IResourceNode` for AI queries |
+| C — Environment | Resources, biomes, day/night, events | `IResourceNode` for AI queries; creature ports in Common |
 | D — AI | Obs/action/reward, ML-Agents Agent class | Reads vitals/resources; never owns them |
 | E — Simulation | Spawn balancing, config, world bootstrap | Calls into A/B/C; does not implement brains |
 | F — Analytics + Backend | Metrics, API, schemas | DTO parity with Unity snapshot |
@@ -69,6 +71,8 @@ Agents can work simultaneously if they stay in lane:
 | Make offspring differ from parents | `IGeneticOperators` |
 | Make genes affect top speed | `IGenomeDecoder` + `CreatureCapabilityMotor` |
 | Add berries as food | New `IResourceNode` in Environment |
+| Add drought / wildfire | `EnvironmentalEventConfig` + Environment manager; Simulation bridge for damage/spawn |
+| Add time-of-day to PPO | Do **not** silently grow schema v2 (size 31). Use `EnvironmentObservationSource`, then bump schema + Training YAML |
 | Change RL reward for eating | `IRewardCalculator` implementation |
 | Speed up the sim | `SimulationClock` / `SimulationConfig` |
 | Count births for graphs | Analytics collector + Backend schema (see [ANALYTICS.md](ANALYTICS.md)) |
@@ -111,8 +115,9 @@ After Unity-side changes, a human (or Unity-equipped runner) should confirm:
 - [ ] Creature prefab has exactly one owner component per concern (vitals, genome, brain)  
 - [ ] ML-Agents package imports and `EVOLIFE_MLAGENTS` define appears when expected
 - [ ] `EvoLifeCreatureAgent` Behavior Parameters names are `EvoLifeHerbivore` / `EvoLifePredator`
-- [ ] Observation vector size is 31 (`CreatureObservationSchema` v2)
+- [ ] Observation vector size is 31 (`CreatureObservationSchema` v2). Time-of-day is **not** in that vector.
 - [ ] Action space is 3 continuous + 1 discrete branch of size 6 (`CreatureActionSchema` v2)
 - [ ] Scripted baseline EditMode tests pass (`BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`)
 - [ ] Reproduction EditMode tests pass (`ReproductionTests`, `EcosystemLifecycleTests`)
+- [ ] Environment EditMode tests pass (`PlantResourceTests`, `DayNightCycleTests`, `EnvironmentalEventTests`)
 - [ ] Analytics export retention tests pass (`AnalyticsExportControllerTests`)  

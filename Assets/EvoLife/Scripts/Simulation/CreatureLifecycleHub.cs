@@ -43,8 +43,29 @@ namespace EvoLife.Simulation
             }
 
             relay.Bind(this, id);
-            live[id] = new LiveCreature(view, relay, deathSource);
+            live[id] = new LiveCreature(instance, view, relay, deathSource);
             Spawned?.Invoke(view);
+        }
+
+        /// <summary>
+        /// Copies currently live instances. Callers must not mutate creature state through this list
+        /// except via Creatures / spawn APIs.
+        /// </summary>
+        public void CopyLiveInstances(List<GameObject> destination)
+        {
+            if (destination == null)
+            {
+                return;
+            }
+
+            destination.Clear();
+            foreach (var entry in live.Values)
+            {
+                if (entry.Instance != null)
+                {
+                    destination.Add(entry.Instance);
+                }
+            }
         }
 
         public void NotifyRemoved(int creatureIdValue)
@@ -90,15 +111,18 @@ namespace EvoLife.Simulation
         readonly struct LiveCreature
         {
             public LiveCreature(
+                GameObject instance,
                 CreatureObservationView view,
                 CreatureLifecycleRelay relay,
                 ICreatureDeathObservable deathSource)
             {
+                Instance = instance;
                 View = view;
                 Relay = relay;
                 DeathSource = deathSource;
             }
 
+            public GameObject Instance { get; }
             public CreatureObservationView View { get; }
             public CreatureLifecycleRelay Relay { get; }
             public ICreatureDeathObservable DeathSource { get; }

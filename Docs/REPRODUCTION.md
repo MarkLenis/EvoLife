@@ -2,7 +2,7 @@
 
 Simulation owns mating, birth, population caps, founder spawning, and optional training respawn. AI only **requests** reproduction. Genetics only supplies crossover, mutation, and clamping. Creatures only expose vitals APIs.
 
-Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), [GENETICS.md](GENETICS.md), [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md), [ANALYTICS.md](ANALYTICS.md).
+Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), [GENETICS.md](GENETICS.md), [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md), [ANALYTICS.md](ANALYTICS.md), [ENVIRONMENT.md](ENVIRONMENT.md).
 
 ## Authority
 

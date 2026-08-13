@@ -2,7 +2,7 @@
 
 This document describes the AI module’s Unity ML-Agents PPO wiring. Rewards, observations, and actions live in **AI**. Creature vitals and genomes stay in **Creatures** / **Genetics**. The non-learning control group is documented in [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md).
 
-Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), [Training/README.md](../Training/README.md).
+Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), [Training/README.md](../Training/README.md), [ENVIRONMENT.md](ENVIRONMENT.md).
 
 ## Agent class
 
@@ -35,6 +35,8 @@ It does **not** mutate `CreatureVitals` fields. Locomotion is local-forward + ya
 ## Observation vector (CreatureObservationSchema v2)
 
 Contract: `CreatureObservationSchema` (version **2**, size **31**). Tests fail if `Names.Length`, genetics trait count, or indices drift. This is the only runtime observation layout; v1 is not retained.
+
+**PPO schema is unchanged by the Environment module.** Time of day and temperature are available on `EnvironmentObservationSource` (2 optional floats) and `IReadOnlyDayNightState` / `IReadOnlyEnvironmentState`. They are not concatenated into `CompositeObservationSource`. Adding them to training requires a documented schema bump, Training YAML updates, and test updates.
 
 | Index | Name | Range | Source |
 |------:|------|-------|--------|
@@ -192,6 +194,7 @@ Do not treat these as production values:
 
 - Nearby-creature sensing needs colliders; otherwise those eight slots stay zero.
 - `reproduce_request` asks Simulation to attempt local mating. PPO is not given a mating curriculum; it shares eligibility and the executor with the scripted baseline. See [REPRODUCTION.md](REPRODUCTION.md).
+- Time-of-day is not in the 31-float PPO vector. See [ENVIRONMENT.md](ENVIRONMENT.md).
 - No trained ONNX is shipped. Do not commit model binaries unless required.
 - Unity Editor is required to compile/run ML-Agents PlayMode tests.
 - This document does not claim PPO is better than the scripted baseline.

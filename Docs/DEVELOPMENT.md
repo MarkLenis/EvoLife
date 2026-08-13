@@ -20,7 +20,7 @@ On first open:
 
 1. Let Package Manager resolve packages from `Packages/manifest.json`.
 2. Confirm `com.unity.ml-agents`, Test Framework, and Newtonsoft JSON imported.
-3. Create a Bootstrap scene under `Assets/EvoLife/Scenes/` if one is not yet assigned (wire `SimulationClock`, `SimulationRunner`, `PopulationTracker`, `CreatureSpawner`, `ReproductionSystem`, `EcosystemManager`, analytics components).
+3. Create a Bootstrap scene under `Assets/EvoLife/Scenes/` if one is not yet assigned (wire `SimulationClock`, `SimulationRunner`, `PopulationTracker`, `CreatureSpawner`, `ReproductionSystem`, `EcosystemManager`, `ResourceManager`, `DayNightManager`, `EnvironmentalEventManager`, analytics components).
 4. Unity will generate `.meta` files — **commit them** with assets so GUIDs stay stable across machines.
 
 ### Backend setup
@@ -104,7 +104,7 @@ pytest -q
 
 1. Open Window → General → Test Runner.
 2. Select **EditMode**.
-3. Run `EvoLife.Tests.EditMode` tests (`GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `AnalyticsCollectorTests`, `AnalyticsExportControllerTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureProximitySelectionTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`, `BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`, `ReproductionTests`).
+3. Run `EvoLife.Tests.EditMode` tests (`GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `AnalyticsCollectorTests`, `AnalyticsExportControllerTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureProximitySelectionTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`, `BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`, `ReproductionTests`, `PlantResourceTests`, `EnvironmentalEventTests`).
 
 ### Unity PlayMode
 
@@ -135,11 +135,14 @@ Cloud/agent Linux VMs typically **cannot** run the Unity Editor compiler. Backen
 ## How to add an environmental resource
 
 1. Implement `IResourceNode` in **Environment** (see `PlantResource`, `WaterSource`).
-2. Add regen/tick behavior via `ISimulationTickable` if needed; register with `SimulationRunner`.
+2. Add regen/tick behavior via `ISimulationTickable` if needed; register with `SimulationRunner` or let `ResourceManager` tick owned nodes.
 3. Register instances in `ResourceRegistry` on enable/spawn.
-4. Prefab under `Prefabs/Environment/`.
-5. If agents should sense it, add observations in **AI** (not in Environment).
+4. Prefab under `Prefabs/Environment/` (optional; `ResourceManager` can spawn empty nodes).
+5. If agents should sense it, add observations in **AI** (not in Environment). Do not grow CreatureObservationSchema v2 without a documented bump.
 6. Consumption must go through `TryConsume` + Creatures APIs (`ConsumeFood` / `Drink`).
+7. Ecological events that change availability must call Environment APIs (`IEnvironmentEffectHost`), not rewrite plant fields from Simulation or AI.
+
+See [ENVIRONMENT.md](ENVIRONMENT.md) and [ENVIRONMENT_EVENTS.md](ENVIRONMENT_EVENTS.md).
 
 ---
 

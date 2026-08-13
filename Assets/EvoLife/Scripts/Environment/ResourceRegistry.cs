@@ -4,7 +4,7 @@ using UnityEngine;
 namespace EvoLife.Environment
 {
     /// <summary>
-    /// Lightweight registry for spatial resource queries used by AI observations later.
+    /// Lightweight registry for spatial resource queries used by AI observations and analytics.
     /// </summary>
     public sealed class ResourceRegistry : MonoBehaviour
     {
@@ -50,6 +50,48 @@ namespace EvoLife.Environment
             }
 
             return best;
+        }
+
+        public ResourceCensus CaptureCensus(float worldArea)
+        {
+            var plants = 0;
+            var water = 0;
+            var remaining = 0f;
+            var capacity = 0f;
+
+            for (var i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                if (node == null)
+                {
+                    continue;
+                }
+
+                switch (node.Kind)
+                {
+                    case ResourceKind.Plant:
+                        plants++;
+                        remaining += FiniteOrZero(node.AvailableAmount);
+                        capacity += FiniteOrZero(node.Capacity);
+                        break;
+                    case ResourceKind.Water:
+                        water++;
+                        break;
+                    default:
+                        Unreachable(node.Kind);
+                        continue;
+                }
+            }
+
+            return new ResourceCensus(plants, water, remaining, capacity, worldArea);
+        }
+
+        static float FiniteOrZero(float value) =>
+            float.IsNaN(value) || float.IsInfinity(value) ? 0f : (value < 0f ? 0f : value);
+
+        static void Unreachable(ResourceKind kind)
+        {
+            throw new System.ArgumentOutOfRangeException(nameof(kind), kind, "Unhandled ResourceKind.");
         }
     }
 }

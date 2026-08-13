@@ -76,5 +76,19 @@ namespace EvoLife.Tests
                 Object.DestroyImmediate(go);
             }
         }
+
+        [Test]
+        public void EnvironmentObservationSource_IsNotPartOfPpoSchema()
+        {
+            var source = new EnvironmentObservationSource();
+            Assert.AreEqual(2, source.ObservationSize);
+            Assert.AreEqual(31, CreatureObservationSchema.Size);
+            Assert.AreNotEqual(CreatureObservationSchema.Size, source.ObservationSize);
+
+            var buffer = new float[source.ObservationSize];
+            source.WriteObservations(buffer);
+            Assert.AreEqual(0f, buffer[EnvironmentObservationSource.IndexTimeOfDay]);
+            Assert.AreEqual(0f, buffer[EnvironmentObservationSource.IndexTemperature]);
+        }
     }
 }

@@ -4,6 +4,8 @@ EvoLife is a desktop Unity ecosystem simulator centered on **AI** (ML-Agents / P
 
 This document describes the architectural skeleton established in the repository. Implementations are intentionally thin seams, not finished gameplay or trained policies.
 
+Environment resources, biomes, day/night, and ecological events: [ENVIRONMENT.md](ENVIRONMENT.md), [ENVIRONMENT_EVENTS.md](ENVIRONMENT_EVENTS.md).
+
 ## Unity version
 
 The repository previously contained only a README (no Unity project). The scaffold targets:
@@ -22,7 +24,7 @@ Assets/EvoLife/Scripts/
   Common/        Shared IDs, enums, read-only contracts
   Creatures/     Biological vitals + capability application
   Genetics/      Genome, crossover, mutation, phenotype decode
-  Environment/   Plants, water, resource registry
+  Environment/   Plants, water, biomes, day/night, resource registry, event effects on resources
   Simulation/    Time, population, spawning, config, tick runner
   AI/            Observations, actions, rewards, policies
   Analytics/     Stats capture + backend HTTP client
@@ -51,7 +53,7 @@ Each Unity module has an **assembly definition** (`EvoLife.*.asmdef`) so compile
 | **Common** | IDs, enums, `IReadOnly*` contracts, tick interfaces | Gameplay logic |
 | **Creatures** | Health, hunger, thirst, energy, age; applying phenotype multipliers to motors/vitals | Genomes, rewards, spawning policy |
 | **Genetics** | Genome storage, crossover, mutation, phenotype decoding | Vital drain formulas, RL rewards |
-| **Environment** | Plant/water resources, regeneration, resource queries | Creature brains, population counts |
+| **Environment** | Plant/water resources, regeneration, biomes, day/night, ecological event resource effects, resource queries | Creature brains, population counts, vitals mutation |
 | **Simulation** | Clock, time scale, population registry, spawning, reproduction, ecosystem mode, experiment config, tick fan-out | Observation vectors, HTTP |
 | **AI** | Observations, action execution, reward calculation, scripted vs PPO policy selection | Mutating vitals directly, genome operators |
 | **Analytics** | Snapshots, export loop, backend transport | Simulation rules |
@@ -92,6 +94,8 @@ Concrete asmdef rules:
 
 **Forbidden:** Creatures → AI; Genetics → Simulation; Environment → Creatures; circular asmdef references.
 
+Environment talks to creatures only through Common ports (`IEnvironmentalVitalEffects`, `IEnvironmentalPopulationCommands`) implemented by Simulation.
+
 Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not accumulate unrelated systems.
 
 ---
@@ -108,6 +112,10 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
 | `ISimulationTickable` | Common | Sim-time step hook |
 | `IGenomeDecoder` / `IGeneticOperators` | Genetics | Inheritance pipeline (`CanonicalGenomeSchema` v1) |
 | `IResourceNode` | Environment | Consumable world resources |
+| `IReadOnlyResourceCensus` / `IReadOnlyEnvironmentState` / `IReadOnlyDayNightState` | Common | Analytics/AI read plants, events, time-of-day without mutation |
+| `IEnvironmentalVitalEffects` / `IEnvironmentalPopulationCommands` | Common | Event manager ports; Simulation implements via vitals + lifecycle |
+| `DayNightManager` / `ResourceManager` / `EnvironmentalEventManager` | Environment | Sim-time cycle, seeded resources, config-driven events |
+| `EnvironmentalCreatureBridge` | Simulation | Applies event damage/spawn/remove through existing owners |
 | `IObservationSource` / `IActionExecutor` / `IRewardCalculator` | AI | RL plumbing |
 | `ICreaturePolicy` | AI | Scripted vs PPO step API (`ScriptedBaselinePolicy` heuristic, `EvoLifeCreatureAgent` / `PpoPolicyAdapter`) |
 | `EvoLifeCreatureAgent` | AI | ML-Agents Agent bridge (`EvoLifeHerbivore` / `EvoLifePredator`) |
@@ -132,7 +140,7 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
    `CreatureSpawner` instantiates a prefab, assigns `CreatureId`, initializes `CreatureVitals`, creates/assigns `Genome` via Genetics operators, decodes phenotype, applies it through `CreatureCapabilityMotor`, and sets `IPolicyKindOwner` from the requested `AgentPolicyKind`.
 
 3. **Tick**  
-   `SimulationClock` advances sim time. `SimulationRunner` calls `ISimulationTickable.Tick` on registered systems (vitals, plants, etc.).
+   `SimulationClock` advances sim time. `SimulationRunner` calls `ISimulationTickable.Tick` on registered systems (vitals, plants, day/night, events, etc.). Day/night and events use that delta, not wall-clock time.
 
 4. **Decide**  
    `CreatureBrain` selects exclusive control: `ScriptedBaselinePolicy` or `EvoLifeCreatureAgent` (learned PPO). Policy reads observations (vitals + genetics + optional local sensors), computes/receives actions, applies them via `IActionExecutor`. Scripted and PPO never run on the same creature at once. The scripted baseline is a utility/priority heuristic over the same observation schema; see [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md).
@@ -230,6 +238,8 @@ Default persistence is **SQLite**. See [ANALYTICS.md](ANALYTICS.md) and [Backend
 |---------|----------------|-----------------|
 | New species | Creatures + Prefabs + Simulation spawn config | AI obs size compatibility |
 | New resource | Environment | AI observations / ResourceRegistry |
+| Ecological event | Environment `EnvironmentalEventManager` + Simulation `EnvironmentalCreatureBridge` | Do not mutate `CreatureBiology` fields; do not bypass `CreatureSpawner` |
+| Day/night or biome | Environment `DayNightManager` / `BiomeMap` | PPO observation size — use `EnvironmentObservationSource` until the schema is bumped |
 | New gene | `CanonicalGenomeSchema` + decoder | Phenotype consumers in Creatures; bump schema version if observation size changes |
 | New statistic | Analytics (+ Backend schema) | UI display optional |
 | PPO training | AI Agent wiring + Training configs | Reward calculator only for shaping |
