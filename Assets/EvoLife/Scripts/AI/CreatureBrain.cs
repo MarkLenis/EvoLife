@@ -10,7 +10,7 @@ namespace EvoLife.AI
     /// Policy entry point attached to a creature. Selects scripted vs learned PPO control.
     /// Only one control policy is active at a time. Does not own vitals or genetics.
     /// </summary>
-    public sealed class CreatureBrain : MonoBehaviour, IPolicyKindOwner
+    public sealed class CreatureBrain : MonoBehaviour, IPolicyKindOwner, IEpisodeMetrics
     {
         [SerializeField] AgentPolicyKind policyKind = AgentPolicyKind.ScriptedBaseline;
         [SerializeField] CreatureVitals vitals;
@@ -30,6 +30,15 @@ namespace EvoLife.AI
         public AgentPolicyKind PolicyKind => policyKind;
 
         public CreatureControlMode ActiveControlMode => controlMode;
+
+        public float EpisodeSurvivalSeconds => vitals != null ? vitals.Age : 0f;
+
+        public bool HasEpisodeReturn =>
+            policyKind == AgentPolicyKind.LearnedPpo && mlAgent != null && mlAgent.HasEpisodeReturn;
+
+        public float EpisodeReturn => HasEpisodeReturn ? mlAgent.EpisodeReturn : 0f;
+
+        public int CompletedEpisodeCount => mlAgent != null ? mlAgent.CompletedEpisodeCount : 0;
 
         void Awake()
         {

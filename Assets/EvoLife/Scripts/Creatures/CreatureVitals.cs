@@ -7,16 +7,23 @@ namespace EvoLife.Creatures
     /// <summary>
     /// Unity-facing owner of biological vitals. Delegates simulation to <see cref="CreatureBiology"/>.
     /// </summary>
-    public sealed class CreatureVitals : MonoBehaviour, IReadOnlyVitalState, ISimulationTickable
+    public sealed class CreatureVitals : MonoBehaviour, IReadOnlyVitalState, ISimulationTickable, ICreatureDeathObservable
     {
         [SerializeField] SpeciesVitalsDefinition definition;
 
         CreatureBiology biology;
         ActivityLevel currentActivity = ActivityLevel.Idle;
+        event Action<CreatureDeathNotice> deathObserved;
 
         public event Action<CreatureDiedEventArgs> Died;
         public event Action<HealthChangedEventArgs> HealthChanged;
         public event Action<CreatureStateChangedEventArgs> StateChanged;
+
+        event Action<CreatureDeathNotice> ICreatureDeathObservable.DeathObserved
+        {
+            add => deathObserved += value;
+            remove => deathObserved -= value;
+        }
 
         public ActivityLevel CurrentActivity
         {
@@ -179,7 +186,17 @@ namespace EvoLife.Creatures
             target.StateChanged -= ForwardStateChanged;
         }
 
-        void ForwardDied(CreatureDiedEventArgs args) => Died?.Invoke(args);
+        void ForwardDied(CreatureDiedEventArgs args)
+        {
+            Died?.Invoke(args);
+            var identity = GetComponent<CreatureIdentity>();
+            var id = identity != null ? identity.Id : default;
+            deathObserved?.Invoke(new CreatureDeathNotice(
+                id,
+                args.Cause,
+                args.FinalState.Age,
+                args.FinalState.MaxAge));
+        }
         void ForwardHealthChanged(HealthChangedEventArgs args) => HealthChanged?.Invoke(args);
         void ForwardStateChanged(CreatureStateChangedEventArgs args) => StateChanged?.Invoke(args);
     }

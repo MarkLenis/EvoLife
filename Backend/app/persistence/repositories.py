@@ -111,17 +111,63 @@ class CreatureRepository:
             self.session.refresh(record)
         return records
 
+    def list_for_run(
+        self,
+        run_id: str,
+        *,
+        species: str | None = None,
+        generation: int | None = None,
+        policy_kind: str | None = None,
+        cause_of_death: str | None = None,
+    ) -> list[CreatureLifeRecordModel]:
+        stmt = select(CreatureLifeRecordModel).where(CreatureLifeRecordModel.run_id == run_id)
+        if species is not None:
+            stmt = stmt.where(CreatureLifeRecordModel.species == species)
+        if generation is not None:
+            stmt = stmt.where(CreatureLifeRecordModel.generation == generation)
+        if policy_kind is not None:
+            stmt = stmt.where(CreatureLifeRecordModel.policy_kind == policy_kind)
+        if cause_of_death is not None:
+            stmt = stmt.where(CreatureLifeRecordModel.cause_of_death == cause_of_death)
+        stmt = stmt.order_by(
+            CreatureLifeRecordModel.generation.asc(),
+            CreatureLifeRecordModel.birth_time.asc(),
+            CreatureLifeRecordModel.id.asc(),
+        )
+        return list(self.session.scalars(stmt).all())
+
 
 class GenerationRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
     def add_many(self, summaries: list[GenerationSummaryModel]) -> list[GenerationSummaryModel]:
-        self.session.add_all(summaries)
-        self.session.commit()
+        upserted: list[GenerationSummaryModel] = []
         for summary in summaries:
+            stmt = select(GenerationSummaryModel).where(
+                GenerationSummaryModel.run_id == summary.run_id,
+                GenerationSummaryModel.species == summary.species,
+                GenerationSummaryModel.generation == summary.generation,
+            )
+            existing = self.session.scalar(stmt)
+            if existing is None:
+                self.session.add(summary)
+                upserted.append(summary)
+                continue
+
+            existing.population_count = summary.population_count
+            existing.average_genome_traits = summary.average_genome_traits
+            existing.average_lifespan = summary.average_lifespan
+            existing.reproduction_rate = summary.reproduction_rate
+            existing.offspring_per_parent = summary.offspring_per_parent
+            existing.notes = summary.notes
+            existing.extra_statistics = summary.extra_statistics
+            upserted.append(existing)
+
+        self.session.commit()
+        for summary in upserted:
             self.session.refresh(summary)
-        return summaries
+        return upserted
 
     def list_for_run(self, run_id: str, species: str | None = None) -> list[GenerationSummaryModel]:
         stmt = select(GenerationSummaryModel).where(GenerationSummaryModel.run_id == run_id)

@@ -14,6 +14,7 @@ Unity Editor is not available in typical cloud agent environments. After pulling
    - `CreatureActionSchemaTests` (clamp / idle PPO fallback)
    - `TrainingRewardCalculatorTests` (death terminate, relief, critical-need)
    - `PopulationTrackerTests`
+   - `AnalyticsCollectorTests` (snapshot math, lifetime records, generation aggregates, policy classification, empty-population safety)
 5. Open `Assets/EvoLife/Scenes/Bootstrap.unity`, add missing component references (`SimulationClock`, `SimulationRunner`, `PopulationTracker`, `CreatureSpawner`, analytics) via the Inspector — the checked-in scene is a minimal placeholder.
 6. Confirm ScriptableObject create menus appear: `EvoLife/Creatures/Species Vitals`, `EvoLife/Simulation/Config`.
 7. Commit any Unity-generated `.meta` files so GUIDs are shared.

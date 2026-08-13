@@ -3,7 +3,7 @@
   "info": {
     "title": "EvoLife Analytics Backend",
     "description": "Experiment records and simulation statistics for EvoLife.",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "paths": {
     "/api/v1/experiments": {
@@ -537,6 +537,111 @@
             }
           }
         }
+      },
+      "get": {
+        "tags": [
+          "creatures"
+        ],
+        "summary": "List Creature Records",
+        "operationId": "list_creature_records_api_v1_runs__run_id__creatures_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "species",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Species"
+            }
+          },
+          {
+            "name": "generation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Generation"
+            }
+          },
+          {
+            "name": "policy_kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Policy Kind"
+            }
+          },
+          {
+            "name": "cause_of_death",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cause Of Death"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatureLifeRecordListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/runs/{run_id}/generations": {
@@ -574,6 +679,62 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GenerationSummaryBatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "generations"
+        ],
+        "summary": "List Generation Summaries",
+        "operationId": "list_generation_summaries_api_v1_runs__run_id__generations_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "species",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Species"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationSummaryListResponse"
                 }
               }
             }
@@ -674,6 +835,206 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EvolutionTimeSeriesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/policy-comparison": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get Policy Comparison",
+        "operationId": "get_policy_comparison_api_v1_runs__run_id__policy_comparison_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyComparisonResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/survival": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get Survival Records",
+        "operationId": "get_survival_records_api_v1_runs__run_id__survival_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "policy_kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Policy Kind"
+            }
+          },
+          {
+            "name": "species",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Species"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurvivalRecordsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/trait-evolution": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get Trait Evolution",
+        "operationId": "get_trait_evolution_api_v1_runs__run_id__trait_evolution_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "trait",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Trait"
+            }
+          },
+          {
+            "name": "species",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Species"
+            }
+          },
+          {
+            "name": "policy_kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Policy Kind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraitEvolutionResponse"
                 }
               }
             }
@@ -837,6 +1198,18 @@
             "type": "object",
             "title": "Genome Traits"
           },
+          "policy_kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Kind"
+          },
           "extra_fields": {
             "additionalProperties": true,
             "type": "object",
@@ -852,6 +1225,32 @@
           "birth_time"
         ],
         "title": "CreatureLifeRecordCreate"
+      },
+      "CreatureLifeRecordListResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/CreatureLifeRecordResponse"
+            },
+            "type": "array",
+            "title": "Records"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "records",
+          "total"
+        ],
+        "title": "CreatureLifeRecordListResponse"
       },
       "CreatureLifeRecordResponse": {
         "properties": {
@@ -935,6 +1334,18 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Genome Traits"
+          },
+          "policy_kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Kind"
           },
           "extra_fields": {
             "additionalProperties": true,
@@ -1260,6 +1671,32 @@
         ],
         "title": "GenerationSummaryCreate"
       },
+      "GenerationSummaryListResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "summaries": {
+            "items": {
+              "$ref": "#/components/schemas/GenerationSummaryResponse"
+            },
+            "type": "array",
+            "title": "Summaries"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "summaries",
+          "total"
+        ],
+        "title": "GenerationSummaryListResponse"
+      },
       "GenerationSummaryResponse": {
         "properties": {
           "species": {
@@ -1368,6 +1805,95 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "PolicyComparisonResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyGroupMetrics"
+            },
+            "type": "array",
+            "title": "Groups"
+          },
+          "total_creatures": {
+            "type": "integer",
+            "title": "Total Creatures",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "groups"
+        ],
+        "title": "PolicyComparisonResponse"
+      },
+      "PolicyGroupMetrics": {
+        "properties": {
+          "policy_kind": {
+            "type": "string",
+            "title": "Policy Kind"
+          },
+          "creature_count": {
+            "type": "integer",
+            "title": "Creature Count",
+            "default": 0
+          },
+          "mean_lifetime": {
+            "type": "number",
+            "title": "Mean Lifetime",
+            "default": 0.0
+          },
+          "mean_generation": {
+            "type": "number",
+            "title": "Mean Generation",
+            "default": 0.0
+          },
+          "mean_offspring": {
+            "type": "number",
+            "title": "Mean Offspring",
+            "default": 0.0
+          },
+          "mean_episode_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Episode Return"
+          },
+          "death_causes": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Death Causes"
+          },
+          "average_genome_traits": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Average Genome Traits"
+          },
+          "species_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Species Counts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "policy_kind"
+        ],
+        "title": "PolicyGroupMetrics"
+      },
       "PopulationTimeSeriesPoint": {
         "properties": {
           "simulation_time": {
@@ -1393,6 +1919,11 @@
           "deaths": {
             "type": "integer",
             "title": "Deaths"
+          },
+          "total_alive": {
+            "type": "integer",
+            "title": "Total Alive",
+            "default": 0
           },
           "average_herbivore_speed": {
             "anyOf": [
@@ -2023,6 +2554,72 @@
           "timestampUtcUnix": {
             "type": "number",
             "title": "Timestamputcunix"
+          },
+          "births": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Births"
+          },
+          "deaths": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deaths"
+          },
+          "populationChange": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Populationchange"
+          },
+          "scriptedAlive": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scriptedalive"
+          },
+          "ppoAlive": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ppoalive"
+          },
+          "maxGeneration": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxgeneration"
           }
         },
         "type": "object",
@@ -2036,6 +2633,168 @@
         ],
         "title": "StatsSnapshotIn",
         "description": "Unity-compatible stats payload (camelCase field names)."
+      },
+      "SurvivalRecord": {
+        "properties": {
+          "creature_id": {
+            "type": "string",
+            "title": "Creature Id"
+          },
+          "species": {
+            "type": "string",
+            "title": "Species"
+          },
+          "policy_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Kind"
+          },
+          "generation": {
+            "type": "integer",
+            "title": "Generation"
+          },
+          "lifetime": {
+            "type": "number",
+            "title": "Lifetime"
+          },
+          "cause_of_death": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cause Of Death"
+          },
+          "birth_time": {
+            "type": "number",
+            "title": "Birth Time"
+          },
+          "death_time": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Death Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "creature_id",
+          "species",
+          "generation",
+          "lifetime",
+          "birth_time"
+        ],
+        "title": "SurvivalRecord"
+      },
+      "SurvivalRecordsResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/SurvivalRecord"
+            },
+            "type": "array",
+            "title": "Records"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "records",
+          "total"
+        ],
+        "title": "SurvivalRecordsResponse"
+      },
+      "TraitEvolutionPoint": {
+        "properties": {
+          "generation": {
+            "type": "integer",
+            "title": "Generation"
+          },
+          "species": {
+            "type": "string",
+            "title": "Species"
+          },
+          "policy_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Kind"
+          },
+          "population_count": {
+            "type": "integer",
+            "title": "Population Count"
+          },
+          "mean": {
+            "type": "number",
+            "title": "Mean",
+            "default": 0.0
+          },
+          "variance": {
+            "type": "number",
+            "title": "Variance",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "generation",
+          "species",
+          "population_count"
+        ],
+        "title": "TraitEvolutionPoint"
+      },
+      "TraitEvolutionResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "trait": {
+            "type": "string",
+            "title": "Trait"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/TraitEvolutionPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "trait",
+          "points"
+        ],
+        "title": "TraitEvolutionResponse"
       },
       "ValidationError": {
         "properties": {

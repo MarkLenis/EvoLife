@@ -43,6 +43,7 @@ class PopulationTimeSeriesPoint(BaseModel):
     plant_count: int
     births: int
     deaths: int
+    total_alive: int = 0
     average_herbivore_speed: float | None = None
     average_predator_speed: float | None = None
     average_vision: float | None = None

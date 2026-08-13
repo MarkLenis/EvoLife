@@ -55,10 +55,20 @@ class V1Service:
             herbivore_population=snapshot.herbivoreCount,
             predator_population=snapshot.predatorCount,
             plant_count=0,
+            births=snapshot.births or 0,
+            deaths=snapshot.deaths or 0,
             extra_metrics={
                 "totalAlive": snapshot.totalAlive,
                 "timestampUtcUnix": snapshot.timestampUtcUnix,
                 "source": "v1",
+                **(
+                    {"population_change": snapshot.populationChange}
+                    if snapshot.populationChange is not None
+                    else {}
+                ),
+                **({"scripted_alive": snapshot.scriptedAlive} if snapshot.scriptedAlive is not None else {}),
+                **({"ppo_alive": snapshot.ppoAlive} if snapshot.ppoAlive is not None else {}),
+                **({"max_generation": snapshot.maxGeneration} if snapshot.maxGeneration is not None else {}),
             },
         )
         self.snapshots.add(model)
@@ -96,4 +106,19 @@ class V1Service:
             predatorCount=model.predator_population,
             totalAlive=int(total_alive),
             timestampUtcUnix=float(timestamp),
+            births=model.births,
+            deaths=model.deaths,
+            populationChange=_optional_int(metrics.get("population_change")),
+            scriptedAlive=_optional_int(metrics.get("scripted_alive")),
+            ppoAlive=_optional_int(metrics.get("ppo_alive")),
+            maxGeneration=_optional_int(metrics.get("max_generation")),
         )
+
+
+def _optional_int(value: object) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None

@@ -1,6 +1,8 @@
 # EvoLife Analytics Backend
 
-Python + FastAPI service for experiment records and simulation statistics. Unity posts population snapshots via the **v1 API**; extended endpoints support richer analytics for graphs and AI evaluation.
+Python + FastAPI service for experiment records and simulation statistics. Unity posts population snapshots via the **v1 API**; extended endpoints support richer analytics for graphs, evolution, and PPO vs scripted evaluation.
+
+See [Docs/ANALYTICS.md](../Docs/ANALYTICS.md) for metric definitions, upload batching, and example workflows.
 
 ## Project layout
 
@@ -60,7 +62,7 @@ python scripts/generate_openapi.py
 
 ## API overview
 
-### Unity v1 (unchanged contracts)
+### Unity v1 (required fields unchanged)
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -71,6 +73,8 @@ python scripts/generate_openapi.py
 | `GET` | `/api/v1/stats` | List stats (`?experiment_id=` optional) |
 
 v1 experiments and stats share the same SQLite persistence as extended runs. An experiment `id` equals a run `run_id`.
+
+Optional v1 snapshot extras (ignored if omitted): `births`, `deaths`, `populationChange`, `scriptedAlive`, `ppoAlive`, `maxGeneration`.
 
 ### Extended analytics
 
@@ -83,9 +87,14 @@ v1 experiments and stats share the same SQLite persistence as extended runs. An 
 | `POST` | `/api/v1/runs/{run_id}/snapshots` | Submit snapshot |
 | `POST` | `/api/v1/runs/{run_id}/snapshots/batch` | Batch snapshots |
 | `POST` | `/api/v1/runs/{run_id}/creatures` | Creature lifetime records |
-| `POST` | `/api/v1/runs/{run_id}/generations` | Generation summaries |
+| `GET` | `/api/v1/runs/{run_id}/creatures` | List/filter creatures (`policy_kind`, `species`, `generation`) |
+| `POST` | `/api/v1/runs/{run_id}/generations` | Generation summaries (upsert) |
+| `GET` | `/api/v1/runs/{run_id}/generations` | List generation summaries |
 | `GET` | `/api/v1/runs/{run_id}/population-series` | Population time series |
 | `GET` | `/api/v1/runs/{run_id}/evolution-series` | Evolution time series |
+| `GET` | `/api/v1/runs/{run_id}/survival` | Creature survival records |
+| `GET` | `/api/v1/runs/{run_id}/policy-comparison` | Scripted vs PPO aggregates |
+| `GET` | `/api/v1/runs/{run_id}/trait-evolution` | Trait mean/variance by generation |
 
 ## Sample Unity payloads (v1)
 
@@ -126,8 +135,36 @@ POST /api/v1/runs/{run_id}/snapshots/batch
       "herbivore_population": 60,
       "predator_population": 12,
       "plant_count": 500,
-      "average_herbivore_speed": 1.0,
-      "average_vision": 14.0
+      "births": 72,
+      "deaths": 0,
+      "extra_metrics": {
+        "scripted_alive": 40,
+        "ppo_alive": 32,
+        "population_change": 0
+      }
+    }
+  ]
+}
+```
+
+**Creature lifetime records:**
+
+```json
+POST /api/v1/runs/{run_id}/creatures
+{
+  "records": [
+    {
+      "creature_id": "14",
+      "species": "herbivore",
+      "generation": 2,
+      "birth_time": 30.0,
+      "death_time": 88.0,
+      "cause_of_death": "predation",
+      "parent_id_1": "3",
+      "parent_id_2": "7",
+      "genome_traits": {"base_movement_speed": 2.1},
+      "policy_kind": "learned_ppo",
+      "extra_fields": {"lifetime": 58.0, "role": "herbivore"}
     }
   ]
 }
@@ -141,11 +178,13 @@ Default store: **SQLite** at `./data/evolife_analytics.db`. Repositories isolate
 export EVOLIFE_DATABASE_URL="postgresql+psycopg://user:pass@localhost/evolife"
 ```
 
+Startup adds missing SQLite columns (currently `creature_life_records.policy_kind`) so older local files keep working.
+
 ## Unity integration flow
 
 1. Start backend locally on port 8000.
 2. Set `BackendClient.baseUrl` in Unity to `http://127.0.0.1:8000`.
-3. Optionally create an experiment via `POST /api/v1/experiments` and set `PopulationStatisticCollector.experimentId` to the returned `id`.
-4. `StatsExportLoop` POSTs snapshots to `/api/v1/stats` during simulation.
-5. Query `/api/v1/runs/{run_id}/population-series` for historical graphs or AI evaluation data.
-6. As genetics/evolution features land, POST creature and generation records to the extended endpoints.
+3. `ExperimentSession` creates `POST /api/v1/runs` (or use v1 experiments). The returned id is the shared run/experiment id.
+4. `StatsExportLoop` batches snapshots, creature deaths, and generation summaries. It does not post every frame.
+5. Query `/api/v1/runs/{run_id}/population-series`, `/survival`, `/policy-comparison`, and `/trait-evolution` for graphs.
+6. If the backend is down, Unity logs a warning and continues simulating.

@@ -25,7 +25,7 @@ This guide prevents duplicate systems when multiple human or coding agents work 
 | Actions / locomotion intent | **AI** | `IActionExecutor`, `PlanarMoveActionExecutor`, `CreatureActionSchema` | Simulation |
 | Rewards | **AI** | `IRewardCalculator`, `TrainingRewardCalculator`, `SurvivalRewardCalculator` | Creatures |
 | Scripted baseline vs PPO policy | **AI** | `CreatureBrain`, `ScriptedBaselinePolicy`, `EvoLifeCreatureAgent`, `PpoPolicyAdapter` (idle fallback) | Simulation |
-| Stats snapshots + HTTP upload | **Analytics** | `SimulationStatsSnapshot`, `BackendClient`, collectors | Simulation, UI |
+| Stats snapshots + HTTP upload | **Analytics** | `SimulationStatsSnapshot`, `BackendClient`, collectors, lifetime/generation records | Simulation, UI, Creatures, AI |
 | HUD / presentation | **UI** | `SimulationHud` | Domain modules |
 | Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, IDs, enums | Gameplay behavior |
 | REST experiment/stats API | **Backend** | FastAPI `app/` | Unity (except DTO field alignment) |
@@ -52,6 +52,7 @@ Agents can work simultaneously if they stay in lane:
 
 - Changing observation vector size (AI + Training + any sensor code)
 - Changing `SimulationStatsSnapshot` fields (Analytics + Backend + UI)
+- Changing creature lifetime / generation upload DTOs (Analytics + Backend)
 - Changing `CanonicalGenomeSchema` traits (Genetics + Creatures phenotype consumers + ML observation size)
 - Adding components required on creature prefabs (Simulation spawn + AI + Creatures)
 
@@ -67,8 +68,8 @@ Agents can work simultaneously if they stay in lane:
 | Add berries as food | New `IResourceNode` in Environment |
 | Change RL reward for eating | `IRewardCalculator` implementation |
 | Speed up the sim | `SimulationClock` / `SimulationConfig` |
-| Count births for graphs | Analytics collector + Backend schema |
-| Compare PPO vs scripted | `AgentPolicyKind` on `CreatureBrain` / `SimulationConfig` (see [AI_ML_AGENTS.md](AI_ML_AGENTS.md)) |
+| Count births for graphs | Analytics collector + Backend schema (see [ANALYTICS.md](ANALYTICS.md)) |
+| Compare PPO vs scripted | `AgentPolicyKind` on `CreatureBrain` / `SimulationConfig`; Analytics records `policy_kind` (see [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [ANALYTICS.md](ANALYTICS.md)) |
 
 ---
 
@@ -102,7 +103,7 @@ After Unity-side changes, a human (or Unity-equipped runner) should confirm:
 
 - [ ] Project opens on the configured Editor version without package errors  
 - [ ] Assemblies compile (no asmdef cycles)  
-- [ ] EditMode tests pass in Test Runner  
+- [ ] EditMode tests pass in Test Runner (`AnalyticsCollectorTests`, `PopulationTrackerTests`, genetics/AI tests)  
 - [ ] Creature prefab has exactly one owner component per concern (vitals, genome, brain)  
 - [ ] ML-Agents package imports and `EVOLIFE_MLAGENTS` define appears when expected
 - [ ] `EvoLifeCreatureAgent` Behavior Parameters names are `EvoLifeHerbivore` / `EvoLifePredator`

@@ -87,6 +87,7 @@ class CreatureLifeRecordModel(Base):
     parent_id_2: Mapped[str | None] = mapped_column(String(64), nullable=True)
     offspring_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     genome_traits: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    policy_kind: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     extra_fields: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
 
     run: Mapped["SimulationRunModel"] = relationship(back_populates="creatures")
