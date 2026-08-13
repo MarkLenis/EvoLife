@@ -1,16 +1,7 @@
+using EvoLife.Common;
+
 namespace EvoLife.AI
 {
-    /// <summary>
-    /// Optional seam for a future reproduction system.
-    /// <see cref="CreatureActionSchema.InteractionReproduceRequest"/> is reserved in action
-    /// schema v2 so trained dimensions do not change when reproduction gameplay is added.
-    /// Unattached handlers are a safe no-op.
-    /// </summary>
-    public interface IReproductionRequestHandler
-    {
-        void HandleReproduceRequest();
-    }
-
     /// <summary>
     /// Local interaction adapter shared by PPO and the scripted baseline.
     /// Implementations must call Creatures / Environment owner APIs
@@ -28,8 +19,9 @@ namespace EvoLife.AI
         void SetResting();
 
         /// <summary>
-        /// Forwards a reproduce request to an optional future reproduction system.
-        /// No-op when no handler is attached.
+        /// Forwards <see cref="CreatureActionSchema.InteractionReproduceRequest"/> to
+        /// Simulation via <see cref="IReproductionRequestHandler"/>. No-op when no
+        /// handler is attached. Does not decide mating success.
         /// </summary>
         void RequestReproduce();
     }

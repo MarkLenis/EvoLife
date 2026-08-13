@@ -46,7 +46,7 @@ namespace EvoLife.Creatures
         public bool IsAlive => biology?.IsAlive ?? false;
         public DeathCause? CauseOfDeath => biology?.CauseOfDeath;
 
-        public void Initialize(SpeciesVitalsDefinition vitalsDefinition)
+        public void Initialize(SpeciesVitalsDefinition vitalsDefinition, float startingAge = 0f)
         {
             UnwireEvents(biology);
             definition = vitalsDefinition;
@@ -56,7 +56,7 @@ namespace EvoLife.Creatures
                 return;
             }
 
-            biology = new CreatureBiology(definition.ToMetabolicRates());
+            biology = new CreatureBiology(definition.ToMetabolicRates(), startingAge: Mathf.Max(0f, startingAge));
             WireEvents(biology);
         }
 

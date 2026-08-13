@@ -346,6 +346,20 @@ namespace EvoLife.Tests
             Assert.Greater(decision.Turn, 0.5f);
         }
 
+        [Test]
+        public void Herbivore_IdleNearSameRole_RequestsReproduce()
+        {
+            var decision = EvaluateHerbivore(BaselineTestObservations.Herbivore(
+                energy: 0.90f,
+                nearby: true,
+                nearbyRole: 0f,
+                nearbyDistance: 0.02f));
+
+            Assert.AreEqual(BaselineMotive.Wander, decision.Motive);
+            Assert.AreEqual(CreatureActionSchema.InteractionReproduceRequest, decision.Interaction);
+            Assert.IsTrue(decision.TryReproduce);
+        }
+
         static BaselineDecision EvaluateHerbivore(float[] observations)
         {
             return new BaselineMotiveEvaluator(seed: 1).Evaluate(

@@ -46,6 +46,7 @@ namespace EvoLife.AI
         public bool TryDrink => Interaction == CreatureActionSchema.InteractionDrink;
         public bool TryAttack => Interaction == CreatureActionSchema.InteractionAttack;
         public bool Rest => Interaction == CreatureActionSchema.InteractionRest;
+        public bool TryReproduce => Interaction == CreatureActionSchema.InteractionReproduceRequest;
     }
 
     /// <summary>

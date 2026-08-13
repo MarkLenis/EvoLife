@@ -32,6 +32,8 @@ namespace EvoLife.AI
         [SerializeField] float chaseAbandonSeconds = 8f;
         [SerializeField] float huntRetryCooldownSeconds = 2f;
         [SerializeField] float interactCooldownSeconds = 0.4f;
+        [Tooltip("Normalized energy at which an idle baseline may request reproduction. Simulation still decides success.")]
+        [SerializeField] float reproduceEnergyThreshold = 0.75f;
 
         [Header("Locomotion scales (clamped to [-1, 1])")]
         [SerializeField] float seekMoveScale = 1f;
@@ -134,6 +136,12 @@ namespace EvoLife.AI
             set => interactCooldownSeconds = value;
         }
 
+        public float ReproduceEnergyThreshold
+        {
+            get => reproduceEnergyThreshold;
+            set => reproduceEnergyThreshold = Mathf.Clamp01(value);
+        }
+
         public float SeekMoveScale
         {
             get => seekMoveScale;
@@ -197,6 +205,7 @@ namespace EvoLife.AI
                 ChaseAbandonSeconds = 8f,
                 HuntRetryCooldownSeconds = 2f,
                 InteractCooldownSeconds = 0.35f,
+                ReproduceEnergyThreshold = 0.75f,
                 SeekMoveScale = 1f,
                 WanderMoveScale = 0.50f,
                 FleeMoveScale = 1f,

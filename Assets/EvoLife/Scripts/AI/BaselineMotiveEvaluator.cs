@@ -74,6 +74,10 @@ namespace EvoLife.AI
             {
                 interaction = CreatureActionSchema.InteractionAttack;
             }
+            else if (canInteract && selected == BaselineMotive.Wander && ShouldRequestReproduce(world, settings, role))
+            {
+                interaction = CreatureActionSchema.InteractionReproduceRequest;
+            }
 
             return new BaselineDecision(
                 selected,
@@ -385,6 +389,27 @@ namespace EvoLife.AI
 
         static bool PreyInAttackRange(in BaselineSensedWorld world, ScriptedBaselineSettings settings) =>
             world.HerbivorePresent && world.HerbivoreDistance <= settings.AttackDistance;
+
+        static bool ShouldRequestReproduce(
+            in BaselineSensedWorld world,
+            ScriptedBaselineSettings settings,
+            CreatureRole role)
+        {
+            if (world.Energy < settings.ReproduceEnergyThreshold)
+            {
+                return false;
+            }
+
+            switch (role)
+            {
+                case CreatureRole.Predator:
+                    return world.PredatorPresent && world.PredatorDistance <= settings.InteractDistance;
+                case CreatureRole.Herbivore:
+                    return world.HerbivorePresent && world.HerbivoreDistance <= settings.InteractDistance;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(role), role, "Unhandled CreatureRole.");
+            }
+        }
 
         readonly struct ScoredMotive
         {

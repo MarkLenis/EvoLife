@@ -2,7 +2,7 @@
 
 Analytics **observes** the simulation. It does not control biology, genetics, spawning, or policy behavior.
 
-Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [GENETICS.md](GENETICS.md), [Backend/README.md](../Backend/README.md).
+Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [GENETICS.md](GENETICS.md), [REPRODUCTION.md](REPRODUCTION.md), [Backend/README.md](../Backend/README.md).
 
 ## Metric families
 
@@ -99,6 +99,7 @@ Stored on the run, not a dump of the Unity ScriptableObject:
 - experiment name, random seed, timestamp
 - herbivore/predator policy kinds
 - initial herbivore/predator counts, time scale
+- ecosystem mode (`persistent_ecosystem` / `training_support`) and whether training respawn is enabled
 - optional `scenario_id`, optional `training_model_id`
 
 ## Upload frequency / batching
@@ -199,7 +200,8 @@ Analytics assembly references **Common + Simulation** only (plus JSON). It does 
 
 ## Limitations
 
-- Founders are generation 0 until Simulation passes parent ids / generation into `CreatureSpawner.Spawn`.
+- Founders are generation 0. Offspring receive `generation = max(parents) + 1` and parent ids from `CreatureSpawner` / `ReproductionSystem`.
+- Experiment metadata includes `ecosystem_mode` (`persistent_ecosystem` vs `training_support`) and `training_respawn_enabled` so analytics can distinguish persistent ecosystems from training-support respawn.
 - Food, water, and kills are not recorded until those quantities are exposed on a read-only contract.
 - Episode return exists only when ML-Agents is present and a PPO episode has completed.
 - Plant counts are not observed.

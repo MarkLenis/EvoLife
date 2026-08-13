@@ -93,7 +93,7 @@ Discrete interaction branch (size 6):
 | 2 | `drink` | Drink from a local water source in range |
 | 3 | `attack` | Damage living prey in local attack range (predators only) |
 | 4 | `rest` | Set `CurrentActivity` to Resting |
-| 5 | `reproduce_request` | Reserved for a future reproduction system; **no-op** until that executor is attached |
+| 5 | `reproduce_request` | Ask Simulation to attempt local mating; **no-op** if no handler or no eligible mate |
 
 ML-Agents `ActionSpec`: 3 continuous actions, 1 discrete branch of size 6.
 
@@ -191,7 +191,7 @@ Do not treat these as production values:
 ## Known limitations
 
 - Nearby-creature sensing needs colliders; otherwise those eight slots stay zero.
-- `reproduce_request` is reserved and does nothing until a reproduction executor is attached.
+- `reproduce_request` asks Simulation to attempt local mating. PPO is not given a mating curriculum; it shares eligibility and the executor with the scripted baseline. See [REPRODUCTION.md](REPRODUCTION.md).
 - No trained ONNX is shipped. Do not commit model binaries unless required.
 - Unity Editor is required to compile/run ML-Agents PlayMode tests.
 - This document does not claim PPO is better than the scripted baseline.

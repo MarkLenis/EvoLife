@@ -20,7 +20,7 @@ On first open:
 
 1. Let Package Manager resolve packages from `Packages/manifest.json`.
 2. Confirm `com.unity.ml-agents`, Test Framework, and Newtonsoft JSON imported.
-3. Create a Bootstrap scene under `Assets/EvoLife/Scenes/` if one is not yet assigned (wire `SimulationClock`, `SimulationRunner`, `PopulationTracker`, `CreatureSpawner`, analytics components).
+3. Create a Bootstrap scene under `Assets/EvoLife/Scenes/` if one is not yet assigned (wire `SimulationClock`, `SimulationRunner`, `PopulationTracker`, `CreatureSpawner`, `ReproductionSystem`, `EcosystemManager`, analytics components).
 4. Unity will generate `.meta` files — **commit them** with assets so GUIDs stay stable across machines.
 
 ### Backend setup
@@ -104,7 +104,7 @@ pytest -q
 
 1. Open Window → General → Test Runner.
 2. Select **EditMode**.
-3. Run `EvoLife.Tests.EditMode` tests (`GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `AnalyticsCollectorTests`, `AnalyticsExportControllerTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureProximitySelectionTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`, `BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`).
+3. Run `EvoLife.Tests.EditMode` tests (`GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `AnalyticsCollectorTests`, `AnalyticsExportControllerTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureProximitySelectionTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`, `BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`, `ReproductionTests`).
 
 ### Unity PlayMode
 

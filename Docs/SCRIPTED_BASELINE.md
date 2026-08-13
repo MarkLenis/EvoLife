@@ -2,7 +2,7 @@
 
 The scripted baseline is a **credible non-learning survival controller**. It is the experimental control group for PPO, not an optimal ecosystem policy.
 
-Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [ANALYTICS.md](ANALYTICS.md), [GENETICS.md](GENETICS.md).
+Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [ANALYTICS.md](ANALYTICS.md), [GENETICS.md](GENETICS.md), [REPRODUCTION.md](REPRODUCTION.md).
 
 ## Purpose
 
@@ -100,7 +100,7 @@ Discrete interaction branch:
 
 - none, eat, drink, attack, rest, reproduce_request
 
-`reproduce_request` is reserved for a later reproduction system and is a no-op until that executor is attached.
+`reproduce_request` asks Simulation to attempt local mating. The baseline may emit it when idle near a same-role neighbor; Simulation still decides success. See [REPRODUCTION.md](REPRODUCTION.md).
 
 `BaselineSteering` converts agent-local target directions into forward + turn. It does not output world X/Z locomotion.
 
@@ -162,6 +162,7 @@ If no profile is assigned, `CreatureBrain` uses `ScriptedBaselineSettings.ForRol
 | `WanderUpdateIntervalSeconds` | How often wander heading is resampled |
 | `SeekMoveScale` / `WanderMoveScale` / `FleeMoveScale` | Locomotion magnitudes (still clamped) |
 | `FoodConsumeRequest` / `FoodEnergyGain` / `DrinkRequest` / `AttackDamage` | Passed to owner APIs |
+| `ReproduceEnergyThreshold` | Idle energy at which the baseline may *request* reproduce (Simulation still decides) |
 
 Do **not** put gene values in these assets. Genetics change capabilities through phenotype (`CreatureCapabilityMotor`, vitals maxima, sensory range).
 
@@ -172,7 +173,7 @@ Do **not** put gene values in these assets. Genetics change capabilities through
 | `vision_range` / sensory multiplier | Sense radius shared with PPO; unseen targets cannot be selected |
 | Movement / sprint multipliers | Speed via `PlanarMoveActionExecutor` / motor, not baseline settings |
 | Metabolism / max energy / max age | Change vitals over time; the heuristic reacts to normalized vitals |
-| Aggression, body size, reproduction | Observed in the vector; not currently special-cased by the heuristic |
+| Aggression, body size, reproduction | Observed in the vector; baseline may *request* reproduce when idle and energy is high, but Simulation owns eligibility |
 
 ## How to select ScriptedBaseline
 
@@ -229,6 +230,6 @@ Decision selection is pure (`BaselineMotiveEvaluator`). The policy never casts `
 - Heuristic, not tuned, not claimed optimal
 - No pathfinding; steering is greedy along sensor directions
 - Nearby sensing still needs colliders (same as PPO)
-- `reproduce_request` is reserved and currently a no-op
+- `reproduce_request` is a request only; Simulation owns mates, cooldown, and birth
 - No dedicated “unreachable” map test beyond depleted/absent sensors and chase abandonment
 - Rest recovery is applied by biology when `CurrentActivity` is `Resting`, not by writing energy fields

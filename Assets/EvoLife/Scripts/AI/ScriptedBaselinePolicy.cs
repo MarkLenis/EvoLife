@@ -83,7 +83,7 @@ namespace EvoLife.AI
             LastInteraction = decision.Interaction;
             actionExecutor.ApplyActions(actions, decision.Interaction);
 
-            if (decision.TryEat || decision.TryDrink || decision.TryAttack)
+            if (decision.TryEat || decision.TryDrink || decision.TryAttack || decision.TryReproduce)
             {
                 memory.BeginInteractCooldown(settings.InteractCooldownSeconds);
             }
