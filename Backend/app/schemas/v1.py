@@ -5,6 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class StatsSnapshotIn(BaseModel):
+    """Unity-compatible stats payload (camelCase field names)."""
+
     model_config = ConfigDict(populate_by_name=True)
 
     experimentId: str
