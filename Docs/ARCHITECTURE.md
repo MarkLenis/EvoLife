@@ -100,17 +100,18 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
 
 | Contract | Module | Purpose |
 |----------|--------|---------|
-| `IReadOnlyVitalState` | Common | AI/UI/Analytics read vitals without mutation rights |
+| `IReadOnlyVitalState` | Common | AI/UI/Analytics read vitals without mutation rights (includes per-creature `MaxHunger` / `MaxThirst`) |
 | `IReadOnlyPhenotype` | Common | Capability multipliers from genetics |
 | `ICreatureIdentity` | Common | Id, role, species |
 | `ISimulationClock` | Common | Time / scale / pause |
 | `IPopulationSnapshot` | Common | Alive counts |
 | `ISimulationTickable` | Common | Sim-time step hook |
-| `IGenomeDecoder` / `IGeneticOperators` | Genetics | Inheritance pipeline |
+| `IGenomeDecoder` / `IGeneticOperators` | Genetics | Inheritance pipeline (`CanonicalGenomeSchema` v1) |
 | `IResourceNode` | Environment | Consumable world resources |
 | `IObservationSource` / `IActionExecutor` / `IRewardCalculator` | AI | RL plumbing |
 | `ICreaturePolicy` | AI | Scripted vs PPO step API |
 | `IStatisticCollector` | Analytics | Snapshot production |
+| `GeneticObservationProvider` | Genetics | Normalized [0,1] genome vector for future ML observations |
 
 ---
 
@@ -160,7 +161,8 @@ Rules:
 
 - PPO / ML-Agents code lives under **AI**, behind `ICreaturePolicy` / future `Agent` subclass.
 - Rewards are computed in `IRewardCalculator`, not inside vitals.
-- Observations may include phenotype-derived sensory range, but **do not** mutate genomes.
+- Observations may include `GeneticObservationProvider` normalized genes and phenotype-derived sensory range, but **do not** mutate genomes.
+- Hunger/thirst observations must use `IReadOnlyVitalState.MaxHunger` / `MaxThirst`, not a hard-coded 100.
 - `PpoPolicyAdapter` is a compile-safe seam; when ML-Agents is imported, `EVOLIFE_MLAGENTS` is defined via asmdef `versionDefines`. Wire `Agent.CollectObservations` / `OnActionReceived` at that seam without moving vitals ownership.
 
 Training configs live in `Training/configs/*.yaml` and must use behavior names that match the Unity Agent behavior name once added.
@@ -178,11 +180,14 @@ Genome  --(IGenomeDecoder)-->  Phenotype (IReadOnlyPhenotype)
                     ┌───────────────┼────────────────┐
                     v               v                v
               max speed      metabolism on     sensory range
-                               CreatureVitals
+              sprint speed     CreatureVitals
+                               (incl. max energy / max age)
 ```
 
-- Gene layout v0: `[speed, metabolism, sensory, reproduction]` in \[0,1\], mapped to multipliers ≈ \[0.5, 1.5\].
-- Reproduction / inheritance: Simulation (or a future dedicated Reproduction service in Genetics+Simulation) calls `IGeneticOperators.Crossover` + `Mutate`, then spawns with the child genome.
+- Canonical genome: **schema v1**, nine named traits (`TraitId` / `CanonicalGenomeSchema`). See [GENETICS.md](GENETICS.md). Unity C# is the runtime; `evolife/genetics/` is the offline reference of the same schema.
+- Decode: `CanonicalGenomeDecoder` maps trait / default → phenotype multipliers (aggression stays raw \[0,1\]).
+- `CreatureSpawner` calls `IGeneticOperators.CreateFounder` — it does not choose gene count or layout.
+- Reproduction / inheritance: Simulation (or a future dedicated Reproduction service) calls `IGeneticOperators.Crossover` + `Mutate`, then spawns with the child genome.
 - Creatures never implement crossover/mutation.
 
 ---
@@ -216,7 +221,7 @@ Backend uses an in-memory store for early development; swap persistence later wi
 |---------|----------------|-----------------|
 | New species | Creatures + Prefabs + Simulation spawn config | AI obs size compatibility |
 | New resource | Environment | AI observations / ResourceRegistry |
-| New gene | Genetics decoder + gene count | Phenotype consumers in Creatures |
+| New gene | `CanonicalGenomeSchema` + decoder | Phenotype consumers in Creatures; bump schema version if observation size changes |
 | New statistic | Analytics (+ Backend schema) | UI display optional |
 | PPO training | AI Agent wiring + Training configs | Reward calculator only for shaping |
 

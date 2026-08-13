@@ -1,31 +1,46 @@
 namespace EvoLife.Genetics
 {
     /// <summary>
-    /// Maps genome genes to phenotype multipliers. Keep decoding rules here — not in Creatures or AI.
-    /// Gene layout (v0): [0]=speed, [1]=metabolism, [2]=sensory, [3]=reproduction.
+    /// Maps genome traits to phenotype multipliers. Keep decoding rules here — not in Creatures or AI.
     /// </summary>
     public interface IGenomeDecoder
     {
         Phenotype Decode(Genome genome);
     }
 
-    public sealed class LinearGenomeDecoder : IGenomeDecoder
+    /// <summary>
+    /// Canonical decoder: multiplier = trait_value / trait_default (aggression stays raw [0,1]).
+    /// </summary>
+    public sealed class CanonicalGenomeDecoder : IGenomeDecoder
     {
         public Phenotype Decode(Genome genome)
         {
-            if (genome == null || genome.Length < 4)
+            if (genome == null)
             {
                 return Phenotype.Neutral;
             }
 
-            // Map [0,1] gene → [0.5, 1.5] multiplier.
-            float Map(float gene) => 0.5f + gene;
-
             return new Phenotype(
-                Map(genome.GetGene(0)),
-                Map(genome.GetGene(1)),
-                Map(genome.GetGene(2)),
-                Map(genome.GetGene(3)));
+                Multiplier(genome, TraitId.BaseMovementSpeed),
+                Multiplier(genome, TraitId.SprintSpeed),
+                Multiplier(genome, TraitId.MetabolismRate),
+                Multiplier(genome, TraitId.VisionRange),
+                Multiplier(genome, TraitId.ReproductionThreshold),
+                Multiplier(genome, TraitId.MaximumEnergy),
+                Multiplier(genome, TraitId.MaximumAge),
+                Multiplier(genome, TraitId.BodySize),
+                genome.Get(TraitId.Aggression));
+        }
+
+        static float Multiplier(Genome genome, TraitId id)
+        {
+            var trait = CanonicalGenomeSchema.Get(id);
+            if (trait.Default == 0f)
+            {
+                return 1f;
+            }
+
+            return genome.Get(id) / trait.Default;
         }
     }
 }

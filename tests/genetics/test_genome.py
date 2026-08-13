@@ -62,7 +62,7 @@ class TestNormalization:
     def test_feature_schema_matches_normalized_keys(self, sample_genome):
         schema = sample_genome.feature_schema()
         features = sample_genome.to_normalized_features()
-        assert sorted(features.keys()) == schema
+        assert list(features.keys()) == schema
 
     def test_clamp_all_enforces_bounds(self, registry):
         genome = generate_random_genome(registry=registry, seed=1)

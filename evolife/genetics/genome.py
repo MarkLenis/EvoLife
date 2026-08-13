@@ -5,7 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from evolife.genetics.traits import TraitDefinition, TraitRegistry, default_trait_registry
+from evolife.genetics.traits import (
+    CANONICAL_SCHEMA_VERSION,
+    TraitDefinition,
+    TraitRegistry,
+    default_trait_registry,
+)
 
 
 @dataclass
@@ -49,7 +54,7 @@ class Genome:
     def to_data(self) -> dict[str, Any]:
         """Full serialization including schema version."""
         return {
-            "version": 1,
+            "version": CANONICAL_SCHEMA_VERSION,
             "traits": self.to_dict(),
         }
 
@@ -80,12 +85,11 @@ class Genome:
         return features
 
     def feature_schema(self) -> list[str]:
-        """Ordered list of trait names in normalized feature output."""
-        return sorted(
-            name
-            for name in self.registry.names()
-            if name in self.traits
-        )
+        """Ordered list of trait names in normalized feature output.
+
+        Order matches Unity CanonicalGenomeSchema / registry insertion order.
+        """
+        return [name for name in self.registry.names() if name in self.traits]
 
     def validate(self) -> None:
         """Ensure all registered traits are present and within bounds."""

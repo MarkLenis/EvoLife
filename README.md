@@ -37,6 +37,7 @@ pytest -q
 ## Documentation
 
 - [Architecture](Docs/ARCHITECTURE.md)
+- [Genetics](Docs/GENETICS.md)
 - [Development](Docs/DEVELOPMENT.md)
 - [Agent boundaries](Docs/AGENT_BOUNDARIES.md) — for parallel human/AI contributors
 

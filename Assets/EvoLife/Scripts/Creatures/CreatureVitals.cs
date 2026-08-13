@@ -29,7 +29,9 @@ namespace EvoLife.Creatures
         public float Health => biology?.Snapshot.Health ?? 0f;
         public float MaxHealth => biology?.Snapshot.MaxHealth ?? 0f;
         public float Hunger => biology?.Snapshot.Hunger ?? 0f;
+        public float MaxHunger => biology?.Snapshot.MaxHunger ?? 0f;
         public float Thirst => biology?.Snapshot.Thirst ?? 0f;
+        public float MaxThirst => biology?.Snapshot.MaxThirst ?? 0f;
         public float Energy => biology?.Snapshot.Energy ?? 0f;
         public float MaxEnergy => biology?.Snapshot.MaxEnergy ?? 0f;
         public float Age => biology?.Snapshot.Age ?? 0f;
@@ -56,6 +58,27 @@ namespace EvoLife.Creatures
         }
 
         /// <summary>
+        /// Applies phenotype-derived metabolic multipliers. Creatures never read genomes.
+        /// Builds a new modifiers object so other creatures cannot share this mutation.
+        /// </summary>
+        public void ApplyPhenotypeModifiers(IReadOnlyPhenotype phenotype)
+        {
+            if (biology == null || phenotype == null)
+            {
+                return;
+            }
+
+            var metabolism = Mathf.Max(0.01f, phenotype.MetabolismMultiplier);
+            biology.ApplyModifiers(
+                biology.Modifiers.With(
+                    maxEnergyMultiplier: Mathf.Max(0.01f, phenotype.MaxEnergyMultiplier),
+                    maxAgeMultiplier: Mathf.Max(0.01f, phenotype.MaxAgeMultiplier),
+                    hungerRateMultiplier: metabolism,
+                    thirstRateMultiplier: metabolism,
+                    energyConsumptionMultiplier: metabolism));
+        }
+
+        /// <summary>
         /// Applied by Genetics after phenotype resolution. Creatures never read genomes directly.
         /// </summary>
         public void ApplyMetabolismMultiplier(float multiplier)
@@ -66,11 +89,11 @@ namespace EvoLife.Creatures
             }
 
             var clamped = Mathf.Max(0.01f, multiplier);
-            var updated = biology.Modifiers;
-            updated.HungerRateMultiplier = clamped;
-            updated.ThirstRateMultiplier = clamped;
-            updated.EnergyConsumptionMultiplier = clamped;
-            biology.ApplyModifiers(updated);
+            biology.ApplyModifiers(
+                biology.Modifiers.With(
+                    hungerRateMultiplier: clamped,
+                    thirstRateMultiplier: clamped,
+                    energyConsumptionMultiplier: clamped));
         }
 
         public void Tick(float deltaTimeSeconds)

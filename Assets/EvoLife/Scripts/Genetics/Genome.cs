@@ -4,42 +4,40 @@ using UnityEngine;
 namespace EvoLife.Genetics
 {
     /// <summary>
-    /// Ordered gene values for one individual. Genetics owns mutation/crossover over this data.
+    /// Canonical genome: named trait values with schema v1 bounds.
+    /// Storage order matches <see cref="CanonicalGenomeSchema"/> / <see cref="TraitId"/> ordinals.
+    /// Access traits by <see cref="TraitId"/> — do not hard-code magic indices in other modules.
     /// </summary>
     [Serializable]
     public sealed class Genome
     {
+        [SerializeField] int schemaVersion = CanonicalGenomeSchema.Version;
         [SerializeField] float[] genes;
 
-        public Genome(int geneCount)
+        public Genome()
+            : this(CanonicalGenomeSchema.DefaultValues())
         {
-            genes = new float[Mathf.Max(1, geneCount)];
-            for (var i = 0; i < genes.Length; i++)
-            {
-                genes[i] = 0.5f;
-            }
         }
 
         public Genome(float[] source)
         {
-            if (source == null || source.Length == 0)
-            {
-                genes = new[] { 0.5f };
-                return;
-            }
-
-            genes = new float[source.Length];
-            Array.Copy(source, genes, source.Length);
+            schemaVersion = CanonicalGenomeSchema.Version;
+            genes = CreateClampedBuffer(source);
         }
 
+        public int SchemaVersion => schemaVersion;
         public int Length => genes.Length;
 
-        public float GetGene(int index) => genes[index];
+        public float Get(TraitId id) => genes[(int)id];
 
-        public void SetGene(int index, float value)
+        public void Set(TraitId id, float value)
         {
-            genes[index] = Mathf.Clamp01(value);
+            var trait = CanonicalGenomeSchema.Get(id);
+            genes[(int)id] = trait.Clamp(value);
         }
+
+        public float GetNormalized(TraitId id) =>
+            CanonicalGenomeSchema.Get(id).Normalize(Get(id));
 
         public float[] ToArray()
         {
@@ -48,6 +46,55 @@ namespace EvoLife.Genetics
             return copy;
         }
 
+        /// <summary>
+        /// Normalized [0, 1] vector in canonical schema order for future ML observations.
+        /// </summary>
+        public float[] ToNormalizedArray()
+        {
+            var normalized = new float[genes.Length];
+            for (var i = 0; i < genes.Length; i++)
+            {
+                normalized[i] = CanonicalGenomeSchema.Get(i).Normalize(genes[i]);
+            }
+
+            return normalized;
+        }
+
         public Genome Clone() => new Genome(genes);
+
+        public static Genome CreateDefault() => new Genome(CanonicalGenomeSchema.DefaultValues());
+
+        public static Genome FromTraitValues(params (TraitId id, float value)[] values)
+        {
+            var genome = CreateDefault();
+            if (values == null)
+            {
+                return genome;
+            }
+
+            for (var i = 0; i < values.Length; i++)
+            {
+                genome.Set(values[i].id, values[i].value);
+            }
+
+            return genome;
+        }
+
+        static float[] CreateClampedBuffer(float[] source)
+        {
+            var buffer = CanonicalGenomeSchema.DefaultValues();
+            if (source == null)
+            {
+                return buffer;
+            }
+
+            var count = Math.Min(source.Length, buffer.Length);
+            for (var i = 0; i < count; i++)
+            {
+                buffer[i] = CanonicalGenomeSchema.Get(i).Clamp(source[i]);
+            }
+
+            return buffer;
+        }
     }
 }

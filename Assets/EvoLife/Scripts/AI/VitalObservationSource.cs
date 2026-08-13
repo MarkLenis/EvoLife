@@ -1,17 +1,17 @@
 using EvoLife.Common;
-using EvoLife.Creatures;
 using UnityEngine;
 
 namespace EvoLife.AI
 {
     /// <summary>
     /// Placeholder observation pack: normalized vitals only. Expand with sensors later.
+    /// Hunger/thirst use per-creature capacities from <see cref="IReadOnlyVitalState"/>.
     /// </summary>
     public sealed class VitalObservationSource : IObservationSource
     {
-        readonly CreatureVitals vitals;
+        readonly IReadOnlyVitalState vitals;
 
-        public VitalObservationSource(CreatureVitals vitals) => this.vitals = vitals;
+        public VitalObservationSource(IReadOnlyVitalState vitals) => this.vitals = vitals;
 
         public int ObservationSize => 5;
 
@@ -23,8 +23,8 @@ namespace EvoLife.AI
             }
 
             buffer[0] = Normalize(vitals.Health, vitals.MaxHealth);
-            buffer[1] = Normalize(vitals.Hunger, 100f);
-            buffer[2] = Normalize(vitals.Thirst, 100f);
+            buffer[1] = Normalize(vitals.Hunger, vitals.MaxHunger);
+            buffer[2] = Normalize(vitals.Thirst, vitals.MaxThirst);
             buffer[3] = Normalize(vitals.Energy, vitals.MaxEnergy);
             buffer[4] = Normalize(vitals.Age, vitals.MaxAge);
         }
@@ -51,8 +51,8 @@ namespace EvoLife.AI
             }
 
             var comfort = 1f
-                          - Normalize(vitals.Hunger, 100f) * 0.25f
-                          - Normalize(vitals.Thirst, 100f) * 0.25f
+                          - Normalize(vitals.Hunger, vitals.MaxHunger) * 0.25f
+                          - Normalize(vitals.Thirst, vitals.MaxThirst) * 0.25f
                           + Normalize(vitals.Energy, vitals.MaxEnergy) * 0.1f;
 
             return episodeEnded ? comfort : comfort * 0.01f;
