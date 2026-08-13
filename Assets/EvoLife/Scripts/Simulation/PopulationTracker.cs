@@ -20,6 +20,19 @@ namespace EvoLife.Simulation
         public int Births => births;
         public int Deaths => deaths;
 
+        public int CountFor(CreatureRole role)
+        {
+            switch (role)
+            {
+                case CreatureRole.Herbivore:
+                    return HerbivoreCount;
+                case CreatureRole.Predator:
+                    return PredatorCount;
+                default:
+                    throw new System.ArgumentOutOfRangeException(nameof(role), role, "Unhandled CreatureRole.");
+            }
+        }
+
         public void Register(CreatureId id, CreatureRole role)
         {
             var wasAlive = herbivores.Contains(id) || predators.Contains(id);

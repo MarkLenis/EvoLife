@@ -18,6 +18,8 @@ namespace EvoLife.Simulation
         public event Action<IAnalyticsCreatureView> Spawned;
         public event Action<CreatureDeathNotice, IAnalyticsCreatureView> Died;
 
+        public void Bind(PopulationTracker tracker) => populationTracker = tracker;
+
         public void RegisterSpawned(GameObject instance)
         {
             if (instance == null)

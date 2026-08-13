@@ -22,6 +22,20 @@ namespace EvoLife.Simulation
 
         public void SetTimeScale(float scale) => timeScale = Mathf.Max(0f, scale);
 
+        /// <summary>
+        /// Advances simulation time without waiting for <c>Update</c>. Used by
+        /// reproduction cooldown tests and any explicit sim-time step.
+        /// </summary>
+        public void Advance(float deltaTimeSeconds)
+        {
+            if (isPaused || deltaTimeSeconds <= 0f)
+            {
+                return;
+            }
+
+            simulationTimeSeconds += deltaTimeSeconds * Mathf.Max(0f, timeScale);
+        }
+
         void Update()
         {
             var dt = DeltaTimeSeconds;

@@ -13,21 +13,24 @@ This guide prevents duplicate systems when multiple human or coding agents work 
 | Health, hunger, thirst, energy, age | **Creatures** | `CreatureVitals`, `SpeciesVitalsDefinition` | AI, Genetics, Simulation, Analytics, UI |
 | Creature id / role / species label | **Creatures** | `CreatureIdentity` | AI, Analytics |
 | Apply phenotype to speed/metabolism/senses | **Creatures** | `CreatureCapabilityMotor` | Genetics (Genetics only *produces* phenotype) |
-| Genome data, crossover, mutation | **Genetics** | `Genome`, `IGeneticOperators` | Creatures, AI, Simulation (Simulation may *call* operators when spawning) |
+| Genome data, crossover, mutation | **Genetics** | `Genome`, `IGeneticOperators` | Creatures, AI, Simulation (Simulation may *call* operators when spawning or reproducing) |
 | Phenotype decode | **Genetics** | `IGenomeDecoder`, `Phenotype`, `CreatureGenome` | Creatures, AI |
 | Plants, water, resource regen / query | **Environment** | `IResourceNode`, `PlantResource`, `WaterSource`, `ResourceRegistry` | Creatures, AI |
 | Simulation time, pause, time scale | **Simulation** | `SimulationClock` | Anywhere else |
 | Population counts registry | **Simulation** | `PopulationTracker` | Analytics (Analytics only *reads*) |
 | Spawning / initial wiring of components | **Simulation** | `CreatureSpawner` | AI, Genetics |
-| Experiment/sim config assets | **Simulation** | `SimulationConfig` | Backend (Backend stores experiment *records*) |
+| Reproduction eligibility, local mating, offspring spawn | **Simulation** | `ReproductionSystem`, `ReproductionEligibility`, `OffspringComposer`, `CreatureReproductionBridge` | Creatures (no mating in `CreatureVitals`), AI (request only), Genetics (operators only) |
+| Founder population / extinction report | **Simulation** | `InitialPopulationSpawner`, `EcosystemManager`, `ExtinctionEvaluator` | Analytics |
+| Training-support respawn | **Simulation** | `TrainingRespawnController` | Creatures, AI |
+| Experiment/sim config assets | **Simulation** | `SimulationConfig`, `EcosystemSettings`, `ReproductionConfig` | Backend (Backend stores experiment *records*) |
 | Tick fan-out | **Simulation** | `SimulationRunner` | — keep this thin |
 | Observations | **AI** | `IObservationSource`, `VitalObservationSource`, `CompositeObservationSource`, `CreatureObservationSchema` | Creatures, Environment |
-| Actions / locomotion intent | **AI** | `IActionExecutor`, `PlanarMoveActionExecutor`, `CreatureActionSchema`, `LocalCreatureInteractor` | Simulation |
+| Actions / locomotion intent | **AI** | `IActionExecutor`, `PlanarMoveActionExecutor`, `CreatureActionSchema`, `LocalCreatureInteractor` | Simulation (Simulation owns whether `reproduce_request` succeeds) |
 | Rewards | **AI** | `IRewardCalculator`, `TrainingRewardCalculator`, `SurvivalRewardCalculator` | Creatures |
 | Scripted baseline vs PPO policy | **AI** | `CreatureBrain`, `ScriptedBaselinePolicy`, `BaselineMotiveEvaluator`, `ScriptedBaselineSettings` / `ScriptedBaselineProfile`, `EvoLifeCreatureAgent`, `PpoPolicyAdapter` (idle fallback) | Simulation |
 | Stats snapshots + HTTP upload | **Analytics** | `SimulationStatsSnapshot`, `BackendClient`, `StatsExportLoop`, `AnalyticsExportController`, collectors, lifetime/generation records | Simulation, UI, Creatures, AI |
 | HUD / presentation | **UI** | `SimulationHud` | Domain modules |
-| Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, IDs, enums | Gameplay behavior |
+| Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, `IReproductionRequestHandler`, IDs, enums | Gameplay behavior |
 | REST experiment/stats API | **Backend** | FastAPI `app/` | Unity (except DTO field alignment) |
 | PPO YAML / train scripts | **Training** | `Training/configs`, `Training/scripts` | Unity runtime folders |
 
@@ -70,6 +73,7 @@ Agents can work simultaneously if they stay in lane:
 | Speed up the sim | `SimulationClock` / `SimulationConfig` |
 | Count births for graphs | Analytics collector + Backend schema (see [ANALYTICS.md](ANALYTICS.md)) |
 | Compare PPO vs scripted | `AgentPolicyKind` on `CreatureBrain` / `SimulationConfig`; Analytics records `policy_kind` (see [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md), [ANALYTICS.md](ANALYTICS.md)) |
+| Add sexual reproduction / generations | `ReproductionSystem` + `IGeneticOperators` (see [REPRODUCTION.md](REPRODUCTION.md)) |
 
 ---
 
@@ -110,4 +114,5 @@ After Unity-side changes, a human (or Unity-equipped runner) should confirm:
 - [ ] Observation vector size is 31 (`CreatureObservationSchema` v2)
 - [ ] Action space is 3 continuous + 1 discrete branch of size 6 (`CreatureActionSchema` v2)
 - [ ] Scripted baseline EditMode tests pass (`BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`)
+- [ ] Reproduction EditMode tests pass (`ReproductionTests`, `EcosystemLifecycleTests`)
 - [ ] Analytics export retention tests pass (`AnalyticsExportControllerTests`)  

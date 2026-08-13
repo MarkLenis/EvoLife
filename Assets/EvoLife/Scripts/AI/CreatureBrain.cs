@@ -154,20 +154,6 @@ namespace EvoLife.AI
 
             var role = identity != null ? identity.Role : CreatureRole.Herbivore;
             var settings = ResolveBaselineSettings(role);
-            IReproductionRequestHandler reproduction = null;
-            var components = GetComponents<MonoBehaviour>();
-            if (components != null)
-            {
-                for (var i = 0; i < components.Length; i++)
-                {
-                    if (components[i] is IReproductionRequestHandler handler)
-                    {
-                        reproduction = handler;
-                        break;
-                    }
-                }
-            }
-
             ICreatureInteractor interactor = vitals != null
                 ? new LocalCreatureInteractor(
                     vitals,
@@ -176,7 +162,7 @@ namespace EvoLife.AI
                     identity,
                     () => CreatureObservationFactory.ResolveSenseRange(motor),
                     settings,
-                    reproduction)
+                    new CreatureReproductionRequestProxy(gameObject))
                 : null;
             actionExecutor.BindInteractor(interactor);
         }
@@ -203,6 +189,43 @@ namespace EvoLife.AI
 #else
             return new PpoPolicyAdapter();
 #endif
+        }
+    }
+
+    /// <summary>
+    /// Resolves the Simulation-owned reproduction handler at request time so spawn
+    /// wiring can bind after <c>Awake</c>. Does not implement mating rules.
+    /// </summary>
+    sealed class CreatureReproductionRequestProxy : IReproductionRequestHandler
+    {
+        readonly GameObject host;
+
+        public CreatureReproductionRequestProxy(GameObject host)
+        {
+            this.host = host;
+        }
+
+        public void HandleReproduceRequest()
+        {
+            if (host == null)
+            {
+                return;
+            }
+
+            var components = host.GetComponents<MonoBehaviour>();
+            if (components == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < components.Length; i++)
+            {
+                if (components[i] is IReproductionRequestHandler handler)
+                {
+                    handler.HandleReproduceRequest();
+                    return;
+                }
+            }
         }
     }
 

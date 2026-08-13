@@ -20,6 +20,10 @@ namespace EvoLife.Analytics
         public float TimeScale;
         public string ScenarioId;
         public string TrainingModelId;
+        public string EcosystemMode;
+        public bool TrainingRespawnEnabled;
+        public int MaxHerbivores;
+        public int MaxPredators;
         public double StartedAtUnix;
 
         public static ExperimentRunMetadata FromConfig(SimulationConfig config, double startedAtUnix)
@@ -31,6 +35,8 @@ namespace EvoLife.Analytics
                     ExperimentName = "unnamed",
                     HerbivorePolicy = PolicyKindNames.ScriptedBaseline,
                     PredatorPolicy = PolicyKindNames.ScriptedBaseline,
+                    EcosystemMode = EcosystemModeNames.Persistent,
+                    TrainingRespawnEnabled = false,
                     StartedAtUnix = startedAtUnix
                 };
             }
@@ -46,6 +52,10 @@ namespace EvoLife.Analytics
                 TimeScale = config.DefaultTimeScale,
                 ScenarioId = config.ScenarioId,
                 TrainingModelId = config.TrainingModelId,
+                EcosystemMode = EcosystemModeNames.ToWireName(config.Ecosystem.Mode),
+                TrainingRespawnEnabled = config.Ecosystem.TrainingRespawnEnabled,
+                MaxHerbivores = config.Ecosystem.MaxHerbivores,
+                MaxPredators = config.Ecosystem.MaxPredators,
                 StartedAtUnix = startedAtUnix
             };
         }
@@ -58,7 +68,13 @@ namespace EvoLife.Analytics
                 ["policy_predator"] = PredatorPolicy ?? PolicyKindNames.ScriptedBaseline,
                 ["initial_herbivores"] = InitialHerbivores,
                 ["initial_predators"] = InitialPredators,
-                ["time_scale"] = TimeScale
+                ["time_scale"] = TimeScale,
+                ["ecosystem_mode"] = string.IsNullOrEmpty(EcosystemMode)
+                    ? EcosystemModeNames.Persistent
+                    : EcosystemMode,
+                ["training_respawn_enabled"] = TrainingRespawnEnabled,
+                ["max_herbivores"] = MaxHerbivores,
+                ["max_predators"] = MaxPredators
             };
 
             if (!string.IsNullOrEmpty(ScenarioId))

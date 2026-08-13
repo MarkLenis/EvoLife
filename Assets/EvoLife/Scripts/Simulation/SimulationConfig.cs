@@ -15,6 +15,7 @@ namespace EvoLife.Simulation
         [SerializeField] AgentPolicyKind predatorPolicy = AgentPolicyKind.ScriptedBaseline;
         [SerializeField] string scenarioId = "";
         [SerializeField] string trainingModelId = "";
+        [SerializeField] EcosystemSettings ecosystem = new EcosystemSettings();
 
         public string ExperimentName => experimentName;
         public int RandomSeed => randomSeed;
@@ -25,5 +26,23 @@ namespace EvoLife.Simulation
         public AgentPolicyKind PredatorPolicy => predatorPolicy;
         public string ScenarioId => scenarioId;
         public string TrainingModelId => trainingModelId;
+        public EcosystemSettings Ecosystem
+        {
+            get
+            {
+                if (ecosystem == null)
+                {
+                    ecosystem = new EcosystemSettings();
+                }
+
+                return ecosystem;
+            }
+        }
+
+        public void SetInitialPopulation(int herbivores, int predators)
+        {
+            initialHerbivores = Mathf.Max(0, herbivores);
+            initialPredators = Mathf.Max(0, predators);
+        }
     }
 }

@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using NUnit.Framework;
+using UnityEngine;
 using EvoLife.Analytics;
 using EvoLife.Common;
+using EvoLife.Simulation;
 
 namespace EvoLife.Tests
 {
@@ -262,6 +264,36 @@ namespace EvoLife.Tests
         public void Classify_NullView_DefaultsToScripted()
         {
             Assert.AreEqual(PolicyKindNames.ScriptedBaseline, PolicyClassifier.Classify((IAnalyticsCreatureView)null));
+        }
+    }
+
+    public sealed class ExperimentRunMetadataTests
+    {
+        [Test]
+        public void FromConfig_RecordsEcosystemModeAndRespawn()
+        {
+            var config = ScriptableObject.CreateInstance<SimulationConfig>();
+            try
+            {
+                config.Ecosystem.Mode = EcosystemMode.TrainingSupport;
+                config.Ecosystem.TrainingRespawnEnabled = true;
+                config.Ecosystem.MaxHerbivores = 40;
+                config.Ecosystem.MaxPredators = 9;
+
+                var metadata = ExperimentRunMetadata.FromConfig(config, 123);
+                var dictionary = metadata.ToConfigurationDictionary();
+
+                Assert.AreEqual(EcosystemModeNames.TrainingSupport, metadata.EcosystemMode);
+                Assert.IsTrue(metadata.TrainingRespawnEnabled);
+                Assert.AreEqual(EcosystemModeNames.TrainingSupport, dictionary["ecosystem_mode"]);
+                Assert.AreEqual(true, dictionary["training_respawn_enabled"]);
+                Assert.AreEqual(40, dictionary["max_herbivores"]);
+                Assert.AreEqual(9, dictionary["max_predators"]);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(config);
+            }
         }
     }
 

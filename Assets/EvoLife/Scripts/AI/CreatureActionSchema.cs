@@ -15,9 +15,8 @@ namespace EvoLife.AI
     /// Discrete interaction branch (size 6):
     /// none, eat, drink, attack, rest, reproduce_request.
     ///
-    /// <see cref="InteractionReproduceRequest"/> is reserved so observation/action dimensions
-    /// do not need to change when a later agent implements reproduction gameplay. Until a
-    /// reproduction executor is attached, the request is a safe no-op.
+    /// <see cref="InteractionReproduceRequest"/> asks Simulation to attempt local mating.
+    /// AI never decides success. Missing handlers are a safe no-op.
     /// </summary>
     public static class CreatureActionSchema
     {

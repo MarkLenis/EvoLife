@@ -52,7 +52,7 @@ Each Unity module has an **assembly definition** (`EvoLife.*.asmdef`) so compile
 | **Creatures** | Health, hunger, thirst, energy, age; applying phenotype multipliers to motors/vitals | Genomes, rewards, spawning policy |
 | **Genetics** | Genome storage, crossover, mutation, phenotype decoding | Vital drain formulas, RL rewards |
 | **Environment** | Plant/water resources, regeneration, resource queries | Creature brains, population counts |
-| **Simulation** | Clock, time scale, population registry, spawning, experiment config, tick fan-out | Observation vectors, HTTP |
+| **Simulation** | Clock, time scale, population registry, spawning, reproduction, ecosystem mode, experiment config, tick fan-out | Observation vectors, HTTP |
 | **AI** | Observations, action execution, reward calculation, scripted vs PPO policy selection | Mutating vitals directly, genome operators |
 | **Analytics** | Snapshots, export loop, backend transport | Simulation rules |
 | **UI** | HUD / controls presentation | Domain logic |
@@ -115,6 +115,8 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
 | `IStatisticCollector` | Analytics | Snapshot production |
 | `AnalyticsSnapshotBuilder` / `CreatureLifetimeFactory` / `GenerationAggregator` | Analytics | Pure experiment metrics |
 | `CreatureLifecycleHub` | Simulation | Spawn/death fan-out for observers |
+| `ReproductionSystem` / `EcosystemManager` | Simulation | Local mating, offspring spawn, founder population, extinction report |
+| `IReproductionRequestHandler` | Common | AI request seam; Simulation implements success/failure |
 | `IAnalyticsCreatureView` / `ICreatureLineage` / `IReadOnlyGenomeTraits` / `IEpisodeMetrics` | Common | Read-only analytics observation |
 | `GeneticObservationProvider` | Genetics | Normalized [0,1] genome vector for ML observations (`CreatureObservationSchema` indices 6–14) |
 | `IPolicyKindOwner` | Common | Simulation can set scripted vs PPO without referencing AI |
@@ -136,7 +138,7 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
    `CreatureBrain` selects exclusive control: `ScriptedBaselinePolicy` or `EvoLifeCreatureAgent` (learned PPO). Policy reads observations (vitals + genetics + optional local sensors), computes/receives actions, applies them via `IActionExecutor`. Scripted and PPO never run on the same creature at once. The scripted baseline is a utility/priority heuristic over the same observation schema; see [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md).
 
 5. **Act / interact**  
-   Movement and eat/drink/attack/rest/reproduce_request use the same canonical `IActionExecutor` path (`PlanarMoveActionExecutor` + `LocalCreatureInteractor`). Eat/drink/attack call Environment `IResourceNode` and Creatures APIs (`ConsumeFood`, `Drink`, `ApplyDamage`). AI does not bypass these or write vital fields. PPO and the scripted baseline share CreatureObservationSchema v2 and CreatureActionSchema v2 ([AI_ML_AGENTS.md](AI_ML_AGENTS.md), [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md)). `reproduce_request` is reserved for a future reproduction system and is a no-op until that executor is attached.
+   Movement and eat/drink/attack/rest/reproduce_request use the same canonical `IActionExecutor` path (`PlanarMoveActionExecutor` + `LocalCreatureInteractor`). Eat/drink/attack call Environment `IResourceNode` and Creatures APIs (`ConsumeFood`, `Drink`, `ApplyDamage`). AI does not bypass these or write vital fields. PPO and the scripted baseline share CreatureObservationSchema v2 and CreatureActionSchema v2 ([AI_ML_AGENTS.md](AI_ML_AGENTS.md), [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md)). `reproduce_request` is forwarded to Simulation (`IReproductionRequestHandler` / `ReproductionSystem`); Simulation decides whether a local eligible mate exists. See [REPRODUCTION.md](REPRODUCTION.md).
 
 6. **Measure**  
    `PopulationStatisticCollector` builds `SimulationStatsSnapshot`. `CreatureLifetimeRecorder` observes spawn/death via `CreatureLifecycleHub` (Common contracts). `StatsExportLoop` batches POSTs to FastAPI via `BackendClient` (v1 `/stats` or extended run/snapshot/creature/generation endpoints). Failed POSTs retain pending records until a later successful flush (bounded FIFO overflow). See [ANALYTICS.md](ANALYTICS.md).
@@ -194,7 +196,7 @@ Genome  --(IGenomeDecoder)-->  Phenotype (IReadOnlyPhenotype)
 - Canonical genome: **schema v1**, nine named traits (`TraitId` / `CanonicalGenomeSchema`). See [GENETICS.md](GENETICS.md). Unity C# is the runtime; `evolife/genetics/` is the offline reference of the same schema.
 - Decode: `CanonicalGenomeDecoder` maps trait / default → phenotype multipliers (aggression stays raw \[0,1\]).
 - `CreatureSpawner` calls `IGeneticOperators.CreateFounder` — it does not choose gene count or layout.
-- Reproduction / inheritance: Simulation (or a future dedicated Reproduction service) calls `IGeneticOperators.Crossover` + `Mutate`, then spawns with the child genome.
+- Reproduction / inheritance: Simulation `ReproductionSystem` calls `IGeneticOperators.Crossover` + `Mutate`, then `CreatureSpawner` with the child genome, generation, and parent ids. See [REPRODUCTION.md](REPRODUCTION.md).
 - Creatures never implement crossover/mutation.
 
 ---
@@ -232,6 +234,7 @@ Default persistence is **SQLite**. See [ANALYTICS.md](ANALYTICS.md) and [Backend
 | New statistic | Analytics (+ Backend schema) | UI display optional |
 | PPO training | AI Agent wiring + Training configs | Reward calculator only for shaping |
 | Scripted baseline heuristic | AI `ScriptedBaselinePolicy` / settings profile | Observation schema, Creatures/Environment APIs |
+| Reproduction / generations | Simulation `ReproductionSystem` + Genetics operators | Creature prefab request bridge; analytics lineage |
 
 ---
 

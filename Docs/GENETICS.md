@@ -18,7 +18,7 @@ Per [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md):
 | Genome storage, founder generation, crossover, mutation | **Genetics** (`IGeneticOperators`, `Genome`, `CanonicalGenomeSchema`) |
 | Phenotype decode | **Genetics** (`IGenomeDecoder`, `Phenotype`, `CreatureGenome`) |
 | Apply phenotype to speed / metabolism / senses / energy / age caps | **Creatures** (`CreatureCapabilityMotor`, `CreatureVitals`) |
-| Call operators when spawning | **Simulation** (`CreatureSpawner`) — may *call* Genetics, must not define gene layout |
+| Call operators when spawning / reproducing | **Simulation** (`CreatureSpawner`, `ReproductionSystem`) — may *call* Genetics, must not define gene layout |
 | Consume normalized genetic values | **AI** (future observation source) — must not crossover/mutate |
 
 Creatures and AI must not implement inheritance. Genetics must not own vital drain formulas.
@@ -143,7 +143,7 @@ Decode rule (Unity):
 - Multiplier traits: `value / traitDefault` so a default genome is `Phenotype.Neutral` (all multipliers 1).
 - `Aggression` is the raw [0, 1] trait, not a multiplier.
 
-Creatures apply locomotion, metabolism, sensory range, max energy, and max age where existing adapters already exist. `reproduction_threshold`, `body_size`, and `aggression` remain on the read-only phenotype for later systems (reproduction / combat). Creatures never read `Genome` internals and never crossover or mutate.
+Creatures apply locomotion, metabolism, sensory range, max energy, and max age where existing adapters already exist. `reproduction_threshold` is consumed by Simulation reproduction eligibility (energy fraction). `body_size` and `aggression` remain on the read-only phenotype for later combat. Creatures never read `Genome` internals and never crossover or mutate.
 
 ## How future ML-Agents should consume genetic values
 

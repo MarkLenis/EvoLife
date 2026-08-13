@@ -14,6 +14,7 @@ namespace EvoLife.Simulation
         [SerializeField] PopulationTracker populationTracker;
         [SerializeField] CreatureLifecycleHub lifecycleHub;
         [SerializeField] SpeciesVitalsDefinition defaultVitals;
+        [SerializeField] ReproductionSystem reproductionSystem;
         [SerializeField] int nextCreatureId = 1;
 
         readonly IGeneticOperators geneticOperators = new DefaultGeneticOperators();
@@ -21,6 +22,21 @@ namespace EvoLife.Simulation
         System.Random random = new System.Random(1);
 
         public void SetSeed(int seed) => random = new System.Random(seed);
+
+        public void Configure(
+            PopulationTracker tracker,
+            CreatureLifecycleHub hub,
+            ReproductionSystem reproduction = null,
+            SpeciesVitalsDefinition vitals = null)
+        {
+            populationTracker = tracker;
+            lifecycleHub = hub;
+            reproductionSystem = reproduction;
+            if (vitals != null)
+            {
+                defaultVitals = vitals;
+            }
+        }
 
         /// <summary>
         /// Resolves the genome used at spawn. Simulation may supply one; otherwise Genetics
@@ -79,6 +95,7 @@ namespace EvoLife.Simulation
 
             populationTracker?.Register(id, role);
             lifecycleHub?.RegisterSpawned(instance);
+            reproductionSystem?.Register(instance);
             return instance;
         }
     }
