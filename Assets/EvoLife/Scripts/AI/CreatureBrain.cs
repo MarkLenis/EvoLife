@@ -90,6 +90,7 @@ namespace EvoLife.AI
                 transform,
                 resourceRegistry);
             rewards = new TrainingRewardCalculator(rewardSettings);
+            BindCanonicalInteractor();
             ApplyControlMode();
         }
 
@@ -140,20 +141,33 @@ namespace EvoLife.AI
         ICreaturePolicy CreateScriptedBaseline()
         {
             var role = identity != null ? identity.Role : CreatureRole.Herbivore;
-            ScriptedBaselineSettings settings;
-            if (baselineProfile != null)
-            {
-                settings = baselineProfile.Settings;
-            }
-            else if (useInlineBaselineSettings && baselineSettings != null)
-            {
-                settings = baselineSettings;
-            }
-            else
-            {
-                settings = ScriptedBaselineSettings.ForRole(role);
-            }
             var seed = identity != null ? identity.Id.Value : 1;
+            return new ScriptedBaselinePolicy(ResolveBaselineSettings(role), role, seed);
+        }
+
+        void BindCanonicalInteractor()
+        {
+            if (actionExecutor == null)
+            {
+                return;
+            }
+
+            var role = identity != null ? identity.Role : CreatureRole.Herbivore;
+            var settings = ResolveBaselineSettings(role);
+            IReproductionRequestHandler reproduction = null;
+            var components = GetComponents<MonoBehaviour>();
+            if (components != null)
+            {
+                for (var i = 0; i < components.Length; i++)
+                {
+                    if (components[i] is IReproductionRequestHandler handler)
+                    {
+                        reproduction = handler;
+                        break;
+                    }
+                }
+            }
+
             ICreatureInteractor interactor = vitals != null
                 ? new LocalCreatureInteractor(
                     vitals,
@@ -161,9 +175,25 @@ namespace EvoLife.AI
                     resourceRegistry,
                     identity,
                     () => CreatureObservationFactory.ResolveSenseRange(motor),
-                    settings)
+                    settings,
+                    reproduction)
                 : null;
-            return new ScriptedBaselinePolicy(settings, role, seed, interactor);
+            actionExecutor.BindInteractor(interactor);
+        }
+
+        ScriptedBaselineSettings ResolveBaselineSettings(CreatureRole role)
+        {
+            if (baselineProfile != null)
+            {
+                return baselineProfile.Settings;
+            }
+
+            if (useInlineBaselineSettings && baselineSettings != null)
+            {
+                return baselineSettings;
+            }
+
+            return ScriptedBaselineSettings.ForRole(role);
         }
 
         ICreaturePolicy CreatePpoFallbackOrNull()

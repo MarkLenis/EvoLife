@@ -3,60 +3,82 @@ using UnityEngine;
 namespace EvoLife.AI
 {
     /// <summary>
-    /// Converts a selected motive plus local sensor directions into legal locomotion.
-    /// Does not write Transform positions.
+    /// Converts a selected motive plus local sensor directions into CreatureActionSchema v2
+    /// locomotion (forward + turn + sprint/effort). Does not write Transform positions and
+    /// does not output world X/Z steering.
     /// </summary>
     public static class BaselineSteering
     {
         const float DeadZone = 0.0001f;
 
-        public static Vector2 Compute(
+        public static BaselineLocomotion Compute(
             BaselineMotive motive,
             in BaselineSensedWorld world,
             BaselineMemory memory,
             ScriptedBaselineSettings settings)
         {
             settings = settings ?? ScriptedBaselineSettings.HerbivoreDefaults();
-            float x;
-            float z;
+            float dirX;
+            float dirZ;
             float scale;
+            float sprint;
 
             switch (motive)
             {
                 case BaselineMotive.Flee:
-                    x = -world.NearbyDirX;
-                    z = -world.NearbyDirZ;
+                    dirX = -world.PredatorDirX;
+                    dirZ = -world.PredatorDirZ;
                     scale = settings.FleeMoveScale;
-                    if (x * x + z * z <= DeadZone)
+                    sprint = 1f;
+                    if (dirX * dirX + dirZ * dirZ <= DeadZone)
                     {
-                        HeadingFromMemory(memory, out x, out z);
+                        HeadingFromMemory(memory, out dirX, out dirZ);
                     }
 
                     break;
                 case BaselineMotive.SeekWater:
-                    x = world.WaterDirX;
-                    z = world.WaterDirZ;
+                    dirX = world.WaterDirX;
+                    dirZ = world.WaterDirZ;
                     scale = settings.SeekMoveScale;
+                    sprint = 0f;
                     break;
                 case BaselineMotive.SeekFood:
-                    x = world.FoodDirX;
-                    z = world.FoodDirZ;
+                    dirX = world.FoodDirX;
+                    dirZ = world.FoodDirZ;
                     scale = settings.SeekMoveScale;
+                    sprint = 0f;
                     break;
                 case BaselineMotive.Hunt:
-                    x = world.NearbyDirX;
-                    z = world.NearbyDirZ;
+                    dirX = world.HerbivoreDirX;
+                    dirZ = world.HerbivoreDirZ;
                     scale = settings.SeekMoveScale;
+                    sprint = 1f;
                     break;
                 case BaselineMotive.Rest:
-                    return Vector2.zero;
+                    return BaselineLocomotion.Zero;
                 default:
-                    HeadingFromMemory(memory, out x, out z);
+                    HeadingFromMemory(memory, out dirX, out dirZ);
                     scale = settings.WanderMoveScale;
+                    sprint = 0f;
                     break;
             }
 
-            return ClampNormalized(x, z, scale);
+            return FromLocalDirection(dirX, dirZ, scale, sprint);
+        }
+
+        public static BaselineLocomotion FromLocalDirection(float dirX, float dirZ, float scale, float sprint)
+        {
+            var magnitude = Mathf.Sqrt(dirX * dirX + dirZ * dirZ);
+            if (magnitude <= DeadZone)
+            {
+                return BaselineLocomotion.Zero;
+            }
+
+            dirX /= magnitude;
+            dirZ /= magnitude;
+            var forward = Mathf.Clamp(dirZ * scale, -1f, 1f);
+            var turn = Mathf.Clamp(dirX * scale, -1f, 1f);
+            return new BaselineLocomotion(forward, turn, Mathf.Clamp01(sprint));
         }
 
         static void HeadingFromMemory(BaselineMemory memory, out float x, out float z)
@@ -71,18 +93,21 @@ namespace EvoLife.AI
             x = 0f;
             z = 1f;
         }
+    }
 
-        static Vector2 ClampNormalized(float x, float z, float scale)
+    public readonly struct BaselineLocomotion
+    {
+        public BaselineLocomotion(float forward, float turn, float sprintOrEffort)
         {
-            var magnitude = Mathf.Sqrt(x * x + z * z);
-            if (magnitude <= DeadZone)
-            {
-                return Vector2.zero;
-            }
-
-            x = x / magnitude * scale;
-            z = z / magnitude * scale;
-            return new Vector2(Mathf.Clamp(x, -1f, 1f), Mathf.Clamp(z, -1f, 1f));
+            Forward = forward;
+            Turn = turn;
+            SprintOrEffort = sprintOrEffort;
         }
+
+        public float Forward { get; }
+        public float Turn { get; }
+        public float SprintOrEffort { get; }
+
+        public static BaselineLocomotion Zero => default;
     }
 }

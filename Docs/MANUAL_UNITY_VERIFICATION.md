@@ -10,10 +10,12 @@ Unity Editor is not available in typical cloud agent environments. After pulling
    - `GeneticOperatorsTests` (canonical schema, founder/crossover/mutation, decode, normalization)
    - `PhenotypeCapabilityBridgeTests`
    - `VitalObservationSourceTests` (non-100 hunger/thirst capacities)
-   - `CreatureObservationSchemaTests` / `CompositeObservationSourceTests` (size 28, order, sensor zeros)
-   - `CreatureActionSchemaTests` (clamp / idle PPO fallback)
+   - `CreatureObservationSchemaTests` / `CompositeObservationSourceTests` (size 31, order, independent herbivore/predator channels, sensor zeros)
+   - `CreatureProximitySelectionTests` (nearest herbivore does not hide predator)
+   - `CreatureActionSchemaTests` (3 continuous + interaction branch, clamp, local forward/turn, invalid no-ops)
    - `TrainingRewardCalculatorTests` (death terminate, relief, critical-need)
-   - `BaselineMotiveEvaluatorTests` / `ScriptedBaselinePolicyTests` (scripted heuristic priorities, legal actions, no vital mutation)
+   - `BaselineMotiveEvaluatorTests` / `ScriptedBaselinePolicyTests` (scripted heuristic priorities, canonical action path, no vital mutation)
+   - `AnalyticsExportControllerTests` (failed upload retains records, success dequeues, bounded overflow)
    - `PopulationTrackerTests`
    - `AnalyticsCollectorTests` (snapshot math, lifetime records, generation aggregates, policy classification, empty-population safety)
 5. Open `Assets/EvoLife/Scenes/Bootstrap.unity`, add missing component references (`SimulationClock`, `SimulationRunner`, `PopulationTracker`, `CreatureSpawner`, analytics) via the Inspector — the checked-in scene is a minimal placeholder.

@@ -48,27 +48,39 @@ namespace EvoLife.AI
             var inAttack = settings.AttackDistance;
             var canInteract = memory.InteractCooldownRemaining <= 0f;
 
-            var tryEat = canInteract
-                         && selected == BaselineMotive.SeekFood
-                         && world.FoodPresent
-                         && world.FoodDistance <= inInteract;
-            var tryDrink = canInteract
-                           && selected == BaselineMotive.SeekWater
-                           && world.WaterPresent
-                           && world.WaterDistance <= inInteract;
-            var tryAttack = canInteract
-                            && selected == BaselineMotive.Hunt
-                            && world.NearbyIsHerbivore
-                            && world.NearbyDistance <= inAttack;
+            var interaction = CreatureActionSchema.InteractionNone;
+            if (selected == BaselineMotive.Rest)
+            {
+                interaction = CreatureActionSchema.InteractionRest;
+            }
+            else if (canInteract
+                     && selected == BaselineMotive.SeekFood
+                     && world.FoodPresent
+                     && world.FoodDistance <= inInteract)
+            {
+                interaction = CreatureActionSchema.InteractionEat;
+            }
+            else if (canInteract
+                     && selected == BaselineMotive.SeekWater
+                     && world.WaterPresent
+                     && world.WaterDistance <= inInteract)
+            {
+                interaction = CreatureActionSchema.InteractionDrink;
+            }
+            else if (canInteract
+                     && selected == BaselineMotive.Hunt
+                     && world.HerbivorePresent
+                     && world.HerbivoreDistance <= inAttack)
+            {
+                interaction = CreatureActionSchema.InteractionAttack;
+            }
 
             return new BaselineDecision(
                 selected,
-                move.x,
-                move.z,
-                tryEat,
-                tryDrink,
-                tryAttack,
-                rest: selected == BaselineMotive.Rest);
+                move.Forward,
+                move.Turn,
+                move.SprintOrEffort,
+                interaction);
         }
 
         static void TickTimers(BaselineMemory memory, float dt)
@@ -114,7 +126,7 @@ namespace EvoLife.AI
             var flee = CanFlee(world, settings);
             if (flee)
             {
-                return new ScoredMotive(BaselineMotive.Flee, 10f + (1f - world.NearbyDistance));
+                return new ScoredMotive(BaselineMotive.Flee, 10f + (1f - world.PredatorDistance));
             }
 
             if (world.Energy <= settings.CriticalEnergyThreshold)
@@ -169,7 +181,7 @@ namespace EvoLife.AI
 
             if (hunt)
             {
-                return new ScoredMotive(BaselineMotive.Hunt, 6f + world.Hunger + (1f - world.NearbyDistance) * 0.25f);
+                return new ScoredMotive(BaselineMotive.Hunt, 6f + world.Hunger + (1f - world.HerbivoreDistance) * 0.25f);
             }
 
             if (CanSeekWater(world, settings, urgentOnly: false))
@@ -241,7 +253,7 @@ namespace EvoLife.AI
                 return;
             }
 
-            memory.HasHuntTarget = world.NearbyIsHerbivore;
+            memory.HasHuntTarget = world.HerbivorePresent;
             memory.ChaseElapsedSeconds += dt;
             if (ShouldAbandonChase(world, memory, settings))
             {
@@ -256,13 +268,13 @@ namespace EvoLife.AI
             BaselineMemory memory,
             ScriptedBaselineSettings settings)
         {
-            if (!world.NearbyIsHerbivore)
+            if (!world.HerbivorePresent)
             {
                 return true;
             }
 
             return memory.ChaseElapsedSeconds >= settings.ChaseAbandonSeconds
-                   && world.NearbyDistance >= settings.ChaseAbandonDistance;
+                   && world.HerbivoreDistance >= settings.ChaseAbandonDistance;
         }
 
         static bool HerbivoreMotiveValid(BaselineMotive motive, in BaselineSensedWorld world, ScriptedBaselineSettings settings)
@@ -312,7 +324,7 @@ namespace EvoLife.AI
             switch (motive)
             {
                 case BaselineMotive.Flee:
-                    return 10f + (1f - world.NearbyDistance);
+                    return 10f + (1f - world.PredatorDistance);
                 case BaselineMotive.SeekWater:
                     return 5f + world.Thirst;
                 case BaselineMotive.SeekFood:
@@ -327,7 +339,7 @@ namespace EvoLife.AI
         }
 
         static bool CanFlee(in BaselineSensedWorld world, ScriptedBaselineSettings settings) =>
-            world.NearbyIsPredator && world.NearbyDistance <= settings.FleeDistance;
+            world.PredatorPresent && world.PredatorDistance <= settings.FleeDistance;
 
         static bool CanSeekWater(in BaselineSensedWorld world, ScriptedBaselineSettings settings, bool urgentOnly)
         {
@@ -350,7 +362,7 @@ namespace EvoLife.AI
                 return false;
             }
 
-            if (!world.NearbyIsHerbivore)
+            if (!world.HerbivorePresent)
             {
                 return false;
             }
@@ -372,7 +384,7 @@ namespace EvoLife.AI
         }
 
         static bool PreyInAttackRange(in BaselineSensedWorld world, ScriptedBaselineSettings settings) =>
-            world.NearbyIsHerbivore && world.NearbyDistance <= settings.AttackDistance;
+            world.HerbivorePresent && world.HerbivoreDistance <= settings.AttackDistance;
 
         readonly struct ScoredMotive
         {

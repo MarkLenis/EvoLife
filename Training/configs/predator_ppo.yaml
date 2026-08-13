@@ -1,5 +1,6 @@
 # EvoLife predator PPO — development starter config.
-# Same observation/action layout as herbivores (CreatureObservationSchema v1, size 28).
+# Same observation/action layout as herbivores (CreatureObservationSchema v2, size 31).
+# Actions: 3 continuous (forward, turn, sprint_or_effort) + discrete interaction branch size 6.
 # Behavior name MUST match Unity Behavior Parameters / EvoLifeCreatureAgent.
 # These hyperparameters are reasonable starters, not claimed optima.
 behaviors:

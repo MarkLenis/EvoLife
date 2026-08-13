@@ -5,8 +5,9 @@ namespace EvoLife.AI
 {
     /// <summary>
     /// Parsed local observation snapshot used by the scripted baseline.
-    /// Layout matches <see cref="CreatureObservationSchema"/> so PPO and the baseline
+    /// Layout matches <see cref="CreatureObservationSchema"/> v2 so PPO and the baseline
     /// share the same sensory constraints. Missing or short buffers read as zeros.
+    /// Herbivore and predator channels are independent.
     /// </summary>
     public readonly struct BaselineSensedWorld
     {
@@ -28,11 +29,14 @@ namespace EvoLife.AI
             float waterDirZ,
             float waterDistance,
             bool waterPresent,
-            float nearbyDirX,
-            float nearbyDirZ,
-            float nearbyDistance,
-            float nearbyRole,
-            bool nearbyPresent)
+            float herbivoreDirX,
+            float herbivoreDirZ,
+            float herbivoreDistance,
+            bool herbivorePresent,
+            float predatorDirX,
+            float predatorDirZ,
+            float predatorDistance,
+            bool predatorPresent)
         {
             Health = health;
             Hunger = hunger;
@@ -48,11 +52,14 @@ namespace EvoLife.AI
             WaterDirZ = waterDirZ;
             WaterDistance = waterDistance;
             WaterPresent = waterPresent;
-            NearbyDirX = nearbyDirX;
-            NearbyDirZ = nearbyDirZ;
-            NearbyDistance = nearbyDistance;
-            NearbyRole = nearbyRole;
-            NearbyPresent = nearbyPresent;
+            HerbivoreDirX = herbivoreDirX;
+            HerbivoreDirZ = herbivoreDirZ;
+            HerbivoreDistance = herbivoreDistance;
+            HerbivorePresent = herbivorePresent;
+            PredatorDirX = predatorDirX;
+            PredatorDirZ = predatorDirZ;
+            PredatorDistance = predatorDistance;
+            PredatorPresent = predatorPresent;
         }
 
         public float Health { get; }
@@ -69,15 +76,14 @@ namespace EvoLife.AI
         public float WaterDirZ { get; }
         public float WaterDistance { get; }
         public bool WaterPresent { get; }
-        public float NearbyDirX { get; }
-        public float NearbyDirZ { get; }
-        public float NearbyDistance { get; }
-        public float NearbyRole { get; }
-        public bool NearbyPresent { get; }
-
-        public bool NearbyIsPredator => NearbyPresent && NearbyRole >= PredatorRoleThreshold;
-
-        public bool NearbyIsHerbivore => NearbyPresent && NearbyRole < PredatorRoleThreshold;
+        public float HerbivoreDirX { get; }
+        public float HerbivoreDirZ { get; }
+        public float HerbivoreDistance { get; }
+        public bool HerbivorePresent { get; }
+        public float PredatorDirX { get; }
+        public float PredatorDirZ { get; }
+        public float PredatorDistance { get; }
+        public bool PredatorPresent { get; }
 
         public CreatureRole SelfRole =>
             Role >= PredatorRoleThreshold ? CreatureRole.Predator : CreatureRole.Herbivore;
@@ -101,11 +107,14 @@ namespace EvoLife.AI
                 ReadSigned(observations, CreatureObservationSchema.IndexWater + CreatureObservationSchema.OffsetDirZ),
                 ReadUnit(observations, CreatureObservationSchema.IndexWater + CreatureObservationSchema.OffsetDistance),
                 ReadPresent(observations, CreatureObservationSchema.IndexWater + CreatureObservationSchema.OffsetPresent),
-                ReadSigned(observations, CreatureObservationSchema.IndexNearbyCreature + CreatureObservationSchema.OffsetDirX),
-                ReadSigned(observations, CreatureObservationSchema.IndexNearbyCreature + CreatureObservationSchema.OffsetDirZ),
-                ReadUnit(observations, CreatureObservationSchema.IndexNearbyCreature + CreatureObservationSchema.OffsetDistance),
-                ReadUnit(observations, CreatureObservationSchema.IndexNearbyCreature + CreatureObservationSchema.OffsetCreatureRole),
-                ReadPresent(observations, CreatureObservationSchema.IndexNearbyCreature + CreatureObservationSchema.OffsetCreaturePresent));
+                ReadSigned(observations, CreatureObservationSchema.IndexHerbivore + CreatureObservationSchema.OffsetDirX),
+                ReadSigned(observations, CreatureObservationSchema.IndexHerbivore + CreatureObservationSchema.OffsetDirZ),
+                ReadUnit(observations, CreatureObservationSchema.IndexHerbivore + CreatureObservationSchema.OffsetDistance),
+                ReadPresent(observations, CreatureObservationSchema.IndexHerbivore + CreatureObservationSchema.OffsetPresent),
+                ReadSigned(observations, CreatureObservationSchema.IndexPredator + CreatureObservationSchema.OffsetDirX),
+                ReadSigned(observations, CreatureObservationSchema.IndexPredator + CreatureObservationSchema.OffsetDirZ),
+                ReadUnit(observations, CreatureObservationSchema.IndexPredator + CreatureObservationSchema.OffsetDistance),
+                ReadPresent(observations, CreatureObservationSchema.IndexPredator + CreatureObservationSchema.OffsetPresent));
         }
 
         static float Read(float[] observations, int index)

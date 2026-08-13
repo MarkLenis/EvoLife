@@ -11,7 +11,7 @@ Unity package: `com.unity.ml-agents` **2.0.1**. Python: `mlagents` compatible wi
 
 These strings must match `MlAgentsBehaviorNames` and the Unity **Behavior Parameters** component on `EvoLifeCreatureAgent`.
 
-Observation vector size: **28**. Action space: **2 continuous** (`move_x`, `move_z`). See [Docs/AI_ML_AGENTS.md](../Docs/AI_ML_AGENTS.md).
+Observation vector size: **31** (`CreatureObservationSchema` v2). Action space: **3 continuous** (`forward`, `turn`, `sprint_or_effort`) plus **1 discrete branch of size 6** (`none`, `eat`, `drink`, `attack`, `rest`, `reproduce_request`). See [Docs/AI_ML_AGENTS.md](../Docs/AI_ML_AGENTS.md).
 
 ## Start training
 

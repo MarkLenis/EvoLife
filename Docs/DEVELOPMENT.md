@@ -104,7 +104,7 @@ pytest -q
 
 1. Open Window → General → Test Runner.
 2. Select **EditMode**.
-3. Run `EvoLife.Tests.EditMode` tests (`GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `AnalyticsCollectorTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`, `BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`).
+3. Run `EvoLife.Tests.EditMode` tests (`GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`, `AnalyticsCollectorTests`, `AnalyticsExportControllerTests`, `CreatureObservationSchemaTests`, `CompositeObservationSourceTests`, `CreatureProximitySelectionTests`, `CreatureActionSchemaTests`, `TrainingRewardCalculatorTests`, `BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`).
 
 ### Unity PlayMode
 

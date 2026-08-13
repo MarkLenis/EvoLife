@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using NUnit.Framework;
 using EvoLife.AI;
 using EvoLife.Common;
@@ -8,7 +9,7 @@ namespace EvoLife.Tests
     public sealed class ScriptedBaselinePolicyTests
     {
         [Test]
-        public void Step_HerbivoreThirst_MovesTowardWater()
+        public void Step_HerbivoreThirst_TurnsTowardLocalWater()
         {
             var policy = new ScriptedBaselinePolicy(
                 ScriptedBaselineSettings.HerbivoreDefaults(),
@@ -34,8 +35,8 @@ namespace EvoLife.Tests
                 vitals);
 
             Assert.AreEqual(BaselineMotive.SeekWater, policy.LastMotive);
-            Assert.AreEqual(2, executor.Last.Length);
-            Assert.Greater(executor.Last[CreatureActionSchema.IndexMoveX], 0.5f);
+            Assert.AreEqual(3, executor.Last.Length);
+            Assert.Greater(executor.Last[CreatureActionSchema.IndexTurn], 0.5f);
         }
 
         [Test]
@@ -70,6 +71,7 @@ namespace EvoLife.Tests
             var b = RunOnce(obs, seed: 17);
             Assert.AreEqual(a[0], b[0], 0.0001f);
             Assert.AreEqual(a[1], b[1], 0.0001f);
+            Assert.AreEqual(a[2], b[2], 0.0001f);
         }
 
         [Test]
@@ -97,12 +99,11 @@ namespace EvoLife.Tests
             var thirst = vitals.Thirst;
             var energy = vitals.Energy;
             var health = vitals.Health;
-            var interactor = new RecordingInteractor();
+            var executor = new RecordingExecutor();
             var policy = new ScriptedBaselinePolicy(
                 ScriptedBaselineSettings.HerbivoreDefaults(),
                 CreatureRole.Herbivore,
-                seed: 1,
-                interactor)
+                seed: 1)
             {
                 DeltaTimeOverride = 0.02f
             };
@@ -116,7 +117,7 @@ namespace EvoLife.Tests
                     foodDistance: 0.5f,
                     water: true,
                     waterDistance: 0.5f)),
-                new RecordingExecutor(),
+                executor,
                 null,
                 vitals);
 
@@ -124,19 +125,18 @@ namespace EvoLife.Tests
             Assert.AreEqual(thirst, vitals.Thirst);
             Assert.AreEqual(energy, vitals.Energy);
             Assert.AreEqual(health, vitals.Health);
-            Assert.IsFalse(interactor.Ate || interactor.Drank || interactor.Attacked);
+            Assert.AreEqual(CreatureActionSchema.InteractionNone, executor.LastInteraction);
         }
 
         [Test]
-        public void Step_RequestsEatThroughInteractor_NotVitalFields()
+        public void Step_RequestsEatThroughCanonicalActionPath()
         {
-            var interactor = new RecordingInteractor();
             var vitals = ComfortableVitals(hunger: 90f);
+            var executor = new RecordingExecutor();
             var policy = new ScriptedBaselinePolicy(
                 ScriptedBaselineSettings.HerbivoreDefaults(),
                 CreatureRole.Herbivore,
-                seed: 1,
-                interactor)
+                seed: 1)
             {
                 DeltaTimeOverride = 0.02f
             };
@@ -146,16 +146,74 @@ namespace EvoLife.Tests
                     hunger: 0.90f,
                     food: true,
                     foodDistance: 0.02f)),
-                new RecordingExecutor(),
+                executor,
                 null,
                 vitals);
 
-            Assert.IsTrue(interactor.Ate);
+            Assert.AreEqual(CreatureActionSchema.InteractionEat, executor.LastInteraction);
+            Assert.AreEqual(CreatureActionSchema.InteractionEat, policy.LastInteraction);
             Assert.AreEqual(90f, vitals.Hunger);
         }
 
         [Test]
-        public void Step_NullInteractor_DoesNotThrowWhenInRange()
+        public void Step_RequestsDrinkAttackAndRestThroughCanonicalActionPath()
+        {
+            var drinkExecutor = new RecordingExecutor();
+            new ScriptedBaselinePolicy(ScriptedBaselineSettings.HerbivoreDefaults(), CreatureRole.Herbivore, 1)
+            {
+                DeltaTimeOverride = 0.02f
+            }.Step(
+                new ArrayObservationSource(BaselineTestObservations.Herbivore(
+                    thirst: 0.90f,
+                    water: true,
+                    waterDistance: 0.02f)),
+                drinkExecutor,
+                null,
+                ComfortableVitals(thirst: 90f));
+            Assert.AreEqual(CreatureActionSchema.InteractionDrink, drinkExecutor.LastInteraction);
+
+            var attackExecutor = new RecordingExecutor();
+            new ScriptedBaselinePolicy(ScriptedBaselineSettings.PredatorDefaults(), CreatureRole.Predator, 1)
+            {
+                DeltaTimeOverride = 0.02f
+            }.Step(
+                new ArrayObservationSource(BaselineTestObservations.Predator(
+                    hunger: 0.90f,
+                    nearby: true,
+                    nearbyRole: 0f,
+                    nearbyDistance: 0.02f)),
+                attackExecutor,
+                null,
+                ComfortableVitals(hunger: 90f));
+            Assert.AreEqual(CreatureActionSchema.InteractionAttack, attackExecutor.LastInteraction);
+
+            var restExecutor = new RecordingExecutor();
+            new ScriptedBaselinePolicy(ScriptedBaselineSettings.HerbivoreDefaults(), CreatureRole.Herbivore, 1)
+            {
+                DeltaTimeOverride = 0.02f
+            }.Step(
+                new ArrayObservationSource(BaselineTestObservations.Herbivore(energy: 0.05f)),
+                restExecutor,
+                null,
+                ComfortableVitals(energy: 5f));
+            Assert.AreEqual(CreatureActionSchema.InteractionRest, restExecutor.LastInteraction);
+        }
+
+        [Test]
+        public void Policy_HasNoPrivilegedInteractorField()
+        {
+            var fields = typeof(ScriptedBaselinePolicy).GetFields(
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            for (var i = 0; i < fields.Length; i++)
+            {
+                Assert.IsFalse(
+                    typeof(ICreatureInteractor).IsAssignableFrom(fields[i].FieldType),
+                    "ScriptedBaselinePolicy must not keep a privileged ICreatureInteractor.");
+            }
+        }
+
+        [Test]
+        public void Step_NullExecutorTargets_DoNotThrowWhenInRange()
         {
             var policy = new ScriptedBaselinePolicy(
                 ScriptedBaselineSettings.PredatorDefaults(),
@@ -184,6 +242,7 @@ namespace EvoLife.Tests
             Assert.IsFalse(interactor.TryDrink());
             Assert.IsFalse(interactor.TryAttack());
             Assert.DoesNotThrow(interactor.SetResting);
+            Assert.DoesNotThrow(interactor.RequestReproduce);
         }
 
         static float[] RunOnce(float[] observations, int seed)
@@ -221,41 +280,24 @@ namespace EvoLife.Tests
             Assert.LessOrEqual(actions[0], 1f);
             Assert.GreaterOrEqual(actions[1], -1f);
             Assert.LessOrEqual(actions[1], 1f);
+            Assert.GreaterOrEqual(actions[2], 0f);
+            Assert.LessOrEqual(actions[2], 1f);
         }
 
         sealed class RecordingExecutor : IActionExecutor
         {
             public float[] Last { get; private set; } = new float[0];
+            public int LastInteraction { get; private set; }
             public int ActionSize => CreatureActionSchema.ContinuousCount;
-            public void ApplyActions(float[] actions) => Last = (float[])actions.Clone();
-        }
 
-        sealed class RecordingInteractor : ICreatureInteractor
-        {
-            public bool Ate { get; private set; }
-            public bool Drank { get; private set; }
-            public bool Attacked { get; private set; }
-            public bool Rested { get; private set; }
+            public void ApplyActions(float[] actions) =>
+                ApplyActions(actions, CreatureActionSchema.InteractionNone);
 
-            public bool TryEat()
+            public void ApplyActions(float[] continuousActions, int interaction)
             {
-                Ate = true;
-                return true;
+                Last = continuousActions != null ? (float[])continuousActions.Clone() : new float[0];
+                LastInteraction = interaction;
             }
-
-            public bool TryDrink()
-            {
-                Drank = true;
-                return true;
-            }
-
-            public bool TryAttack()
-            {
-                Attacked = true;
-                return true;
-            }
-
-            public void SetResting() => Rested = true;
         }
 
         sealed class ArrayObservationSource : IObservationSource
@@ -361,6 +403,48 @@ namespace EvoLife.Tests
                 nearbyDistance,
                 nearbyRole);
 
+        public static float[] BothRoles(
+            float hunger,
+            float energy,
+            bool herbivore,
+            float herbivoreDirX,
+            float herbivoreDirZ,
+            float herbivoreDistance,
+            bool predator,
+            float predatorDirX,
+            float predatorDirZ,
+            float predatorDistance)
+        {
+            var buffer = Create(
+                1f, hunger, 0.1f, energy, 0.1f, 0f,
+                false, 0f, 1f, 0.4f,
+                false, 0f, 1f, 0.4f,
+                false, 0f, 1f, 0.4f, 1f);
+            if (herbivore)
+            {
+                WriteResource(
+                    buffer,
+                    CreatureObservationSchema.IndexHerbivore,
+                    true,
+                    herbivoreDirX,
+                    herbivoreDirZ,
+                    herbivoreDistance);
+            }
+
+            if (predator)
+            {
+                WriteResource(
+                    buffer,
+                    CreatureObservationSchema.IndexPredator,
+                    true,
+                    predatorDirX,
+                    predatorDirZ,
+                    predatorDistance);
+            }
+
+            return buffer;
+        }
+
         static float[] Create(
             float health,
             float hunger,
@@ -405,11 +489,10 @@ namespace EvoLife.Tests
                 waterDistance);
             if (nearby)
             {
-                buffer[CreatureObservationSchema.IndexNearbyCreature + CreatureObservationSchema.OffsetDirX] = nearbyDirX;
-                buffer[CreatureObservationSchema.IndexNearbyCreature + CreatureObservationSchema.OffsetDirZ] = nearbyDirZ;
-                buffer[CreatureObservationSchema.IndexNearbyCreature + CreatureObservationSchema.OffsetDistance] = nearbyDistance;
-                buffer[CreatureObservationSchema.IndexNearbyCreature + CreatureObservationSchema.OffsetCreatureRole] = nearbyRole;
-                buffer[CreatureObservationSchema.IndexNearbyCreature + CreatureObservationSchema.OffsetCreaturePresent] = 1f;
+                var offset = nearbyRole >= 0.5f
+                    ? CreatureObservationSchema.IndexPredator
+                    : CreatureObservationSchema.IndexHerbivore;
+                WriteResource(buffer, offset, true, nearbyDirX, nearbyDirZ, nearbyDistance);
             }
 
             return buffer;

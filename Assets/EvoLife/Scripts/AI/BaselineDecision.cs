@@ -17,36 +17,35 @@ namespace EvoLife.AI
     }
 
     /// <summary>
-    /// Output of one baseline decision. Locomotion is always legal [-1, 1] after steering.
-    /// Interaction flags request owner APIs; they do not mutate vitals themselves.
+    /// Output of one baseline decision. Locomotion is CreatureActionSchema v2
+    /// (forward / turn / sprint). Interaction is the same discrete branch PPO uses.
     /// </summary>
     public readonly struct BaselineDecision
     {
         public BaselineDecision(
             BaselineMotive motive,
-            float moveX,
-            float moveZ,
-            bool tryEat,
-            bool tryDrink,
-            bool tryAttack,
-            bool rest)
+            float forward,
+            float turn,
+            float sprintOrEffort,
+            int interaction)
         {
             Motive = motive;
-            MoveX = moveX;
-            MoveZ = moveZ;
-            TryEat = tryEat;
-            TryDrink = tryDrink;
-            TryAttack = tryAttack;
-            Rest = rest;
+            Forward = Mathf.Clamp(forward, -1f, 1f);
+            Turn = Mathf.Clamp(turn, -1f, 1f);
+            SprintOrEffort = Mathf.Clamp01(sprintOrEffort);
+            Interaction = CreatureActionSchema.ClampInteraction(interaction);
         }
 
         public BaselineMotive Motive { get; }
-        public float MoveX { get; }
-        public float MoveZ { get; }
-        public bool TryEat { get; }
-        public bool TryDrink { get; }
-        public bool TryAttack { get; }
-        public bool Rest { get; }
+        public float Forward { get; }
+        public float Turn { get; }
+        public float SprintOrEffort { get; }
+        public int Interaction { get; }
+
+        public bool TryEat => Interaction == CreatureActionSchema.InteractionEat;
+        public bool TryDrink => Interaction == CreatureActionSchema.InteractionDrink;
+        public bool TryAttack => Interaction == CreatureActionSchema.InteractionAttack;
+        public bool Rest => Interaction == CreatureActionSchema.InteractionRest;
     }
 
     /// <summary>
