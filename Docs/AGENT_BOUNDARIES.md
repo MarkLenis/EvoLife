@@ -52,7 +52,7 @@ Agents can work simultaneously if they stay in lane:
 
 - Changing observation vector size (AI + Training + any sensor code)
 - Changing `SimulationStatsSnapshot` fields (Analytics + Backend + UI)
-- Changing gene layout indices (Genetics + Creatures phenotype consumers)
+- Changing `CanonicalGenomeSchema` traits (Genetics + Creatures phenotype consumers + ML observation size)
 - Adding components required on creature prefabs (Simulation spawn + AI + Creatures)
 
 ---

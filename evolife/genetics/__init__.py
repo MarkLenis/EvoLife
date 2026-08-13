@@ -1,4 +1,9 @@
-"""EvoLife genetics and evolutionary inheritance subsystem."""
+"""EvoLife genetics — offline/reference implementation of CanonicalGenomeSchema v1.
+
+The Unity runtime (Assets/EvoLife/Scripts/Genetics/) is the canonical simulation
+implementation. This package mirrors the same trait schema for research, analytics,
+and pytest coverage. Unity does not import or depend on this Python package.
+"""
 
 from evolife.genetics.analytics import CreatureAnalytics
 from evolife.genetics.config import (
@@ -22,9 +27,17 @@ from evolife.genetics.operations import (
     generate_random_genome,
     mutate,
 )
-from evolife.genetics.traits import TraitDefinition, TraitRegistry, default_trait_registry
+from evolife.genetics.traits import (
+    CANONICAL_SCHEMA_VERSION,
+    CANONICAL_TRAIT_NAMES,
+    TraitDefinition,
+    TraitRegistry,
+    default_trait_registry,
+)
 
 __all__ = [
+    "CANONICAL_SCHEMA_VERSION",
+    "CANONICAL_TRAIT_NAMES",
     "CreatureAnalytics",
     "CreatureConfig",
     "CreatureGenetics",

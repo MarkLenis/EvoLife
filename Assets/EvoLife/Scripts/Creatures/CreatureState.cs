@@ -11,7 +11,9 @@ namespace EvoLife.Creatures
             float health,
             float maxHealth,
             float hunger,
+            float maxHunger,
             float thirst,
+            float maxThirst,
             float energy,
             float maxEnergy,
             float age,
@@ -22,7 +24,9 @@ namespace EvoLife.Creatures
             Health = health;
             MaxHealth = maxHealth;
             Hunger = hunger;
+            MaxHunger = maxHunger;
             Thirst = thirst;
+            MaxThirst = maxThirst;
             Energy = energy;
             MaxEnergy = maxEnergy;
             Age = age;
@@ -34,7 +38,9 @@ namespace EvoLife.Creatures
         public float Health { get; }
         public float MaxHealth { get; }
         public float Hunger { get; }
+        public float MaxHunger { get; }
         public float Thirst { get; }
+        public float MaxThirst { get; }
         public float Energy { get; }
         public float MaxEnergy { get; }
         public float Age { get; }
@@ -43,6 +49,8 @@ namespace EvoLife.Creatures
         public DeathCause? DeathCause { get; }
 
         public float HealthRatio => MaxHealth <= 0f ? 0f : Health / MaxHealth;
+        public float HungerRatio => MaxHunger <= 0f ? 0f : Hunger / MaxHunger;
+        public float ThirstRatio => MaxThirst <= 0f ? 0f : Thirst / MaxThirst;
         public float EnergyRatio => MaxEnergy <= 0f ? 0f : Energy / MaxEnergy;
         public float AgeRatio => MaxAge <= 0f ? 0f : Age / MaxAge;
     }

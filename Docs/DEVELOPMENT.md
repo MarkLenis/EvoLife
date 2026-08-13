@@ -104,7 +104,7 @@ pytest -q
 
 1. Open Window → General → Test Runner.
 2. Select **EditMode**.
-3. Run `EvoLife.Tests.EditMode` tests (`GeneticOperatorsTests`, `PopulationTrackerTests`).
+3. Run `EvoLife.Tests.EditMode` tests (`GeneticOperatorsTests`, `CreatureBiologyTests`, `VitalObservationSourceTests`, `PopulationTrackerTests`).
 
 ### Unity PlayMode
 

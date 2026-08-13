@@ -218,5 +218,58 @@ namespace EvoLife.Tests
             Assert.AreEqual(1f, biology.Snapshot.Hunger, 0.001f);
             Assert.AreEqual(0.25f, debt, 0.001f);
         }
+
+        [Test]
+        public void DefaultCreatureBiologyInstancesDoNotShareModifierChanges()
+        {
+            var rates = CreateTestRates();
+            var a = new CreatureBiology(rates);
+            var b = new CreatureBiology(rates);
+
+            a.ApplyModifiers(a.Modifiers.With(hungerRateMultiplier: 3f, maxEnergyMultiplier: 2f));
+
+            Assert.AreEqual(3f, a.Modifiers.HungerRateMultiplier);
+            Assert.AreEqual(2f, a.Modifiers.MaxEnergyMultiplier);
+            Assert.AreEqual(1f, b.Modifiers.HungerRateMultiplier);
+            Assert.AreEqual(1f, b.Modifiers.MaxEnergyMultiplier);
+            Assert.AreNotSame(a.Modifiers, b.Modifiers);
+        }
+
+        [Test]
+        public void ApplyingModifiersToCreatureADoesNotAffectCreatureB()
+        {
+            var shared = new MetabolicModifiers(hungerRateMultiplier: 1.5f, maxAgeMultiplier: 1.2f);
+            var a = new CreatureBiology(CreateTestRates(), shared);
+            var b = new CreatureBiology(CreateTestRates(), shared);
+
+            a.ApplyModifiers(new MetabolicModifiers(hungerRateMultiplier: 4f, maxEnergyMultiplier: 3f));
+
+            Assert.AreEqual(4f, a.Modifiers.HungerRateMultiplier);
+            Assert.AreEqual(3f, a.Modifiers.MaxEnergyMultiplier);
+            Assert.AreEqual(1.5f, b.Modifiers.HungerRateMultiplier);
+            Assert.AreEqual(1.2f, b.Modifiers.MaxAgeMultiplier);
+            Assert.AreEqual(1f, b.Modifiers.MaxEnergyMultiplier);
+        }
+
+        [Test]
+        public void CreateIdentityReturnsIndependentInstances()
+        {
+            var first = MetabolicModifiers.CreateIdentity();
+            var second = MetabolicModifiers.CreateIdentity();
+
+            Assert.AreNotSame(first, second);
+            Assert.AreEqual(1f, first.HungerRateMultiplier);
+            Assert.AreEqual(1f, second.HungerRateMultiplier);
+        }
+
+        [Test]
+        public void SnapshotExposesHungerAndThirstCapacities()
+        {
+            var rates = CreateTestRates().With(hungerCapacity: 40f, thirstCapacity: 80f);
+            var biology = new CreatureBiology(rates);
+
+            Assert.AreEqual(40f, biology.Snapshot.MaxHunger);
+            Assert.AreEqual(80f, biology.Snapshot.MaxThirst);
+        }
     }
 }

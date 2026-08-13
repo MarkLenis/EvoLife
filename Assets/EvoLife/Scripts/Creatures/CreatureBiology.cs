@@ -22,7 +22,7 @@ namespace EvoLife.Creatures
         public CreatureBiology(MetabolicRates rates, MetabolicModifiers initialModifiers = null, float startingAge = 0f)
         {
             baseRates = rates ?? throw new ArgumentNullException(nameof(rates));
-            modifiers = initialModifiers ?? MetabolicModifiers.Identity;
+            modifiers = (initialModifiers ?? MetabolicModifiers.CreateIdentity()).Clone();
 
             health = EffectiveMaxHealth;
             energy = EffectiveMaxEnergy;
@@ -179,7 +179,7 @@ namespace EvoLife.Creatures
             }
 
             var previous = Snapshot;
-            modifiers = updatedModifiers;
+            modifiers = updatedModifiers.Clone();
 
             health = Clamp(health, 0f, EffectiveMaxHealth);
             energy = Clamp(energy, 0f, EffectiveMaxEnergy);
@@ -272,7 +272,9 @@ namespace EvoLife.Creatures
                 health,
                 EffectiveMaxHealth,
                 hunger,
+                baseRates.HungerCapacity,
                 thirst,
+                baseRates.ThirstCapacity,
                 energy,
                 EffectiveMaxEnergy,
                 age,
@@ -293,7 +295,9 @@ namespace EvoLife.Creatures
             Math.Abs(a.Health - b.Health) < float.Epsilon
             && Math.Abs(a.MaxHealth - b.MaxHealth) < float.Epsilon
             && Math.Abs(a.Hunger - b.Hunger) < float.Epsilon
+            && Math.Abs(a.MaxHunger - b.MaxHunger) < float.Epsilon
             && Math.Abs(a.Thirst - b.Thirst) < float.Epsilon
+            && Math.Abs(a.MaxThirst - b.MaxThirst) < float.Epsilon
             && Math.Abs(a.Energy - b.Energy) < float.Epsilon
             && Math.Abs(a.MaxEnergy - b.MaxEnergy) < float.Epsilon
             && Math.Abs(a.Age - b.Age) < float.Epsilon

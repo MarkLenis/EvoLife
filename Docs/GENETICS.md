@@ -1,30 +1,49 @@
 # Genetics & Evolutionary Inheritance
 
-The genetics subsystem provides genomes, inheritance operations, lineage tracking, and integration hooks for simulation and ML policy observations.
+The genetics subsystem provides genomes, inheritance operations, phenotype decoding, and normalized features for future ML-Agents observations.
 
-## Repository layout
+## Canonical runtime vs Python reference
 
 | Location | Role |
 |----------|------|
-| `evolife/genetics/` | Python reference implementation (pytest, offline ops, analytics) |
-| `Assets/EvoLife/Scripts/Genetics/` | Unity runtime seam (`Genome`, `IGeneticOperators`, `Phenotype`) |
+| `Assets/EvoLife/Scripts/Genetics/` | **Canonical runtime.** Unity/C# owns live simulation genomes, crossover, mutation, and phenotype decode. The simulation can run genetics with no Python dependency. |
+| `evolife/genetics/` | **Offline/reference/research** package. Same conceptual CanonicalGenomeSchema v1 for pytest, analytics, and experimentation. Not imported by Unity. |
 
-Per [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), **Genetics** owns genome data, crossover, mutation, and phenotype decode. The Python package below is the detailed, tested implementation of those operations. Unity integration should call into or mirror these rules via `IGeneticOperators` / `IGenomeDecoder` — not duplicate logic elsewhere.
+Do not treat the two copies as competing runtimes. If the schema changes, update Unity first, then keep the Python registry/bounds in sync.
 
-## Overview
+Per [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md):
 
-Each creature carries a **genome** — a set of numeric traits with hard bounds. Offspring inherit traits from parents via crossover and mutation. Evolutionary success comes from survival and reproduction, not a global fitness score.
+| Step | Owner |
+|------|--------|
+| Genome storage, founder generation, crossover, mutation | **Genetics** (`IGeneticOperators`, `Genome`, `CanonicalGenomeSchema`) |
+| Phenotype decode | **Genetics** (`IGenomeDecoder`, `Phenotype`, `CreatureGenome`) |
+| Apply phenotype to speed / metabolism / senses / energy / age caps | **Creatures** (`CreatureCapabilityMotor`, `CreatureVitals`) |
+| Call operators when spawning | **Simulation** (`CreatureSpawner`) — may *call* Genetics, must not define gene layout |
+| Consume normalized genetic values | **AI** (future observation source) — must not crossover/mutate |
+
+Creatures and AI must not implement inheritance. Genetics must not own vital drain formulas.
+
+## Canonical Unity genome (schema v1)
+
+`CanonicalGenomeSchema.Version = 1`  
+`CanonicalGenomeSchema.TraitCount = 9`
+
+A genome is an ordered set of **named** traits (`TraitId`), not an undocumented float array of length 4. Storage order matches `TraitId` ordinals. Other modules must use `TraitId` / canonical names, never magic indices.
 
 ```
-Founder genome ──► survive & reproduce ──► offspring genome
-                         │
-                         ▼
-                  CreatureAnalytics (lifetime metrics)
+TraitId                         canonical name
+BaseMovementSpeed               base_movement_speed
+SprintSpeed                     sprint_speed
+VisionRange                     vision_range
+MaximumEnergy                   maximum_energy
+MetabolismRate                  metabolism_rate
+BodySize                        body_size
+Aggression                      aggression
+ReproductionThreshold           reproduction_threshold
+MaximumAge                      maximum_age
 ```
 
-## Genome Format
-
-A genome is a mapping of trait name → float value, serialized as:
+Serialized conceptual form (Python `Genome.to_data()` / Unity `Genome.SchemaVersion`):
 
 ```json
 {
@@ -43,196 +62,135 @@ A genome is a mapping of trait name → float value, serialized as:
 }
 ```
 
-All trait definitions live in `evolife/genetics/traits.py` via `TraitRegistry`. Bounds are never hardcoded elsewhere.
+### Trait bounds (hard min/max, founder range, default, mutation magnitude)
 
-### Default Traits
+| Trait | Hard min | Hard max | Founder min | Founder max | Default | Mutation magnitude |
+|-------|----------|----------|-------------|-------------|---------|--------------------|
+| `base_movement_speed` | 0.5 | 5.0 | 1.0 | 3.0 | 2.0 | 0.2 |
+| `sprint_speed` | 1.0 | 10.0 | 2.0 | 6.0 | 4.0 | 0.3 |
+| `vision_range` | 1.0 | 50.0 | 5.0 | 25.0 | 12.0 | 1.5 |
+| `maximum_energy` | 10.0 | 500.0 | 50.0 | 200.0 | 100.0 | 10.0 |
+| `metabolism_rate` | 0.01 | 5.0 | 0.1 | 1.5 | 0.5 | 0.05 |
+| `body_size` | 0.1 | 10.0 | 0.5 | 3.0 | 1.0 | 0.1 |
+| `aggression` | 0.0 | 1.0 | 0.0 | 1.0 | 0.3 | 0.05 |
+| `reproduction_threshold` | 0.1 | 1.0 | 0.3 | 0.9 | 0.6 | 0.03 |
+| `maximum_age` | 10.0 | 10000.0 | 100.0 | 2000.0 | 500.0 | 50.0 |
 
-| Trait | Hard Min | Hard Max | Description |
-|-------|----------|----------|-------------|
-| `base_movement_speed` | 0.5 | 5.0 | Baseline locomotion speed |
-| `sprint_speed` | 1.0 | 10.0 | Burst locomotion speed |
-| `vision_range` | 1.0 | 50.0 | Sensory detection radius |
-| `maximum_energy` | 10.0 | 500.0 | Energy capacity |
-| `metabolism_rate` | 0.01 | 5.0 | Energy consumed per tick |
-| `body_size` | 0.1 | 10.0 | Physical scale |
-| `aggression` | 0.0 | 1.0 | Aggressive tendency |
-| `reproduction_threshold` | 0.1 | 1.0 | Energy fraction to reproduce |
-| `maximum_age` | 10.0 | 10000.0 | Lifespan in ticks (optional) |
+- **Hard bounds:** every set, crossover, and mutation is clamped. Impossible values cannot be stored.
+- **Founder/generation range:** used only by random founder generation (`CreateFounder` / `generate_random_genome`).
+- **Mutation magnitude:** max absolute delta per mutation event, scaled by `MutationConfig.MagnitudeScale`.
 
-Each trait also defines a **generation range** (subset of hard bounds used for random founding genomes) and a **mutation magnitude**.
+## Founder generation
 
-## Inheritance Pipeline
+Unity:
 
+```csharp
+var ops = new DefaultGeneticOperators();
+var genome = ops.CreateFounder(new System.Random(seed));
 ```
-Parent A genome ──┐
-                  ├──► Crossover ──► Mutation ──► Offspring genome
-Parent B genome ──┘
-```
 
-Use `create_offspring(parent_a, parent_b, config, seed)` for full lineage + genome, or `create_offspring_genome(...)` for genome only.
+Each trait is sampled uniformly in `[generationMin, generationMax]` using the supplied `System.Random`. The same seed produces the same genome. `CreatureSpawner` calls this API; it does not choose trait count or layout.
+
+Python (reference): `generate_random_genome(seed=12345)`.
+
+`Genome.CreateDefault()` fills every trait with its schema default (neutral individual, not a random founder).
 
 ## Crossover
 
-Configured via `CrossoverConfig` with three modes:
+Configured by `CrossoverConfig` (default: weighted, `parentAWeight = 0.5`):
 
 | Mode | Behavior |
 |------|----------|
-| `AVERAGE` | Per trait: `(parent_a + parent_b) / 2` |
-| `RANDOM_PARENT` | Per trait: inherit one parent's value at random |
-| `WEIGHTED` (default) | Per trait: `w * parent_a + (1-w) * parent_b` |
+| `Average` | Per trait: `(parentA + parentB) / 2` |
+| `RandomParent` | Per trait: inherit one parent's value at random |
+| `Weighted` (default) | Per trait: `w * parentA + (1-w) * parentB` |
 
-The default weight is `parent_a_weight = 0.5` (equal blend). All results are clamped to hard bounds.
-
-```python
-from evolife.genetics import CrossoverConfig, CrossoverMode, crossover
-
-config = CrossoverConfig(mode=CrossoverMode.WEIGHTED, parent_a_weight=0.6)
-child = crossover(parent_a.genome, parent_b.genome, config=config, seed=42)
-```
+Results are clamped to hard bounds. Null parents fall back to the other parent or a default genome.
 
 ## Mutation
 
-Configured via `MutationConfig`:
+Configured by `MutationConfig`:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `probability` | 0.15 | Per-trait mutation chance |
-| `magnitude_scale` | 1.0 | Multiplier on each trait's `mutation_magnitude` |
+| `Probability` | 0.15 | Per-trait mutation chance |
+| `MagnitudeScale` | 1.0 | Multiplier on each trait's `mutationMagnitude` |
 
-For each trait selected for mutation, a uniform delta in `[-mag, +mag]` is applied, then the value is **clamped to hard bounds**. Impossible values cannot be produced.
+For each selected trait, a uniform delta in `[-mag, +mag]` is applied, then **clamped to hard bounds**.
 
-Disable mutation entirely:
+Disable mutation: `GeneticsConfig.NoMutation()` (`probability = 0`).
 
-```python
-from evolife.genetics import GeneticsConfig
-config = GeneticsConfig.no_mutation()
+`CreateOffspring(parentA, parentB, random)` is crossover then mutation using the operator config.
+
+## Genome → Phenotype
+
+```
+Genome  --(IGenomeDecoder / CanonicalGenomeDecoder)-->  Phenotype (IReadOnlyPhenotype)
+                                                           │
+                                                           v
+                                                CreatureCapabilityMotor.ApplyPhenotype
+                                                           │
+                         ┌─────────────────────────────────┼──────────────────────────┐
+                         v                                 v                          v
+                   locomotion                         metabolism on              sensory range
+                   (walk/sprint)                      CreatureVitals             multiplier
+                                                      (rates, max energy,
+                                                       max age)
 ```
 
-## Parameter Bounds
+Decode rule (Unity):
 
-- **Hard bounds** (`hard_min`, `hard_max`): absolute limits; clamping always enforces these.
-- **Generation range** (`generation_min`, `generation_max`): used by `generate_random_genome`.
-- **Mutation magnitude**: max delta per mutation event (before clamping).
+- Multiplier traits: `value / traitDefault` so a default genome is `Phenotype.Neutral` (all multipliers 1).
+- `Aggression` is the raw [0, 1] trait, not a multiplier.
 
-## Lineage
+Creatures apply locomotion, metabolism, sensory range, max energy, and max age where existing adapters already exist. `reproduction_threshold`, `body_size`, and `aggression` remain on the read-only phenotype for later systems (reproduction / combat). Creatures never read `Genome` internals and never crossover or mutate.
 
-`CreatureGenetics` tracks:
+## How future ML-Agents should consume genetic values
 
-| Field | Description |
-|-------|-------------|
-| `creature_id` | Unique identifier (UUID string) |
-| `generation` | 0 for founders; `max(parent generations) + 1` for offspring |
-| `parent_ids` | Tuple of 1–2 parent creature IDs |
-| `genome` | The creature's genome |
-| `analytics` | Lifetime metrics container |
+Use **normalized [0, 1] features in schema order**, not raw genes and not phenotype multipliers:
 
-This is intentionally lightweight — not a full genealogy tree.
-
-## Analytics (Not Fitness)
-
-`CreatureAnalytics` records per-creature metrics:
-
-- `lifetime` — ticks survived
-- `offspring_count` — successful reproductions
-- `food_consumed` — energy from food
-- `successful_escapes` — evasions
-- `kills` — prey/rivals killed
-- `generation_number` — birth generation
-
-These are **not** aggregated into a fitness score. Selection emerges from simulation outcomes.
-
-## Integration with Simulation
-
-Apply genomes to creature parameters via `GenomeConfigAdapter`:
-
-```python
-from evolife.genetics import GenomeConfigAdapter
-
-config = GenomeConfigAdapter.from_creature(creature)
-# config.base_movement_speed, config.vision_range, etc.
+```csharp
+var vector = GeneticObservationProvider.GetObservationVector(genome);
+// length == CanonicalGenomeSchema.TraitCount (9)
+// value = (trait - hardMin) / (hardMax - hardMin), clamped to [0, 1]
 ```
 
-The simulation layer reads `CreatureConfig` fields. It does not need to understand genome internals.
+Python equivalent: `GeneticObservationProvider.get_observation_vector(creature)`.
 
-## ML Agent Observations
+The genetics module has no ML-Agents dependency. A future AI `IObservationSource` should call this provider (or `Genome.ToNormalizedArray()`) and must not implement operators.
 
-ML agents should consume **normalized genetic features** in `[0, 1]`:
+Vital observations are separate: `VitalObservationSource` normalizes hunger/thirst using `IReadOnlyVitalState.MaxHunger` / `MaxThirst`.
 
-```python
-from evolife.genetics import GeneticObservationProvider
+## Adding a new trait
 
-vector = GeneticObservationProvider.get_observation_vector(creature)
-schema = GeneticObservationProvider.observation_schema(creature)
+1. Add `TraitId`, bounds, and default in `CanonicalGenomeSchema` (Unity) and `default_trait_registry()` (Python). Keep names/order aligned.
+2. Map it in `CanonicalGenomeDecoder` / `Phenotype` / `IReadOnlyPhenotype` if it should affect capabilities.
+3. Wire it in `CreatureCapabilityMotor` / `CreatureVitals` only if a clean adapter already exists.
+4. Extend EditMode tests and `tests/genetics/`.
+5. Bump `CanonicalGenomeSchema.Version` / `CANONICAL_SCHEMA_VERSION` if the observation vector layout changes.
+
+## API quick reference (Unity)
+
+```csharp
+var ops = new DefaultGeneticOperators();
+var decoder = new CanonicalGenomeDecoder();
+
+var founder = ops.CreateFounder(new System.Random(42));
+var child = ops.CreateOffspring(parentA, parentB, new System.Random(99));
+var phenotype = decoder.Decode(child);
+var mlVector = GeneticObservationProvider.GetObservationVector(child);
 ```
 
-Normalization uses hard bounds: `(value - hard_min) / (hard_max - hard_min)`.
+## Running tests
 
-The genetics module has **no dependency** on ML-Agent frameworks. The observation provider is the stable contract.
+Unity EditMode (requires Unity Editor — see [MANUAL_UNITY_VERIFICATION.md](MANUAL_UNITY_VERIFICATION.md)):
 
-## Deterministic Generation
+- `GeneticOperatorsTests`
+- `PhenotypeCapabilityBridgeTests`
+- `CreatureBiologyTests` (modifier isolation)
+- `VitalObservationSourceTests`
 
-All random operations accept an optional `seed`:
-
-```python
-g1 = generate_random_genome(seed=12345)
-g2 = generate_random_genome(seed=12345)
-assert g1.to_dict() == g2.to_dict()
-```
-
-`create_offspring(..., seed=N)` derives sub-seeds for crossover and mutation, ensuring full pipeline reproducibility.
-
-## Adding a New Trait
-
-1. **Register in `default_trait_registry()`** (`evolife/genetics/traits.py`):
-
-```python
-registry.register(
-    TraitDefinition(
-        name="camouflage",
-        hard_min=0.0,
-        hard_max=1.0,
-        generation_min=0.0,
-        generation_max=0.5,
-        default=0.2,
-        mutation_magnitude=0.05,
-        description="Visual concealment strength",
-    )
-)
-```
-
-2. **Map in `CreatureConfig`** and `GenomeConfigAdapter.from_genome()` (`evolife/genetics/integration.py`).
-
-3. **Add tests** for bounds, mutation, crossover, serialization, and normalization.
-
-Crossover, mutation, serialization, and normalization pick up new traits automatically once registered.
-
-## API Quick Reference
-
-```python
-from evolife.genetics import (
-    generate_random_genome,
-    generate_population,
-    create_offspring,
-    GeneticsConfig,
-    CreatureGenetics,
-    GenomeConfigAdapter,
-    GeneticObservationProvider,
-)
-
-# Founding population
-population = generate_population(20, seed=42)
-
-# Reproduction
-child = create_offspring(parent_a, parent_b, seed=99)
-
-# Simulation config
-creature_config = GenomeConfigAdapter.from_creature(child)
-
-# Policy observations
-obs = GeneticObservationProvider.get_observation_vector(child)
-```
-
-## Running Tests
+Python reference:
 
 ```bash
 pip install -e ".[dev]"

@@ -13,9 +13,10 @@ from evolife.genetics.lineage import CreatureGenetics
 class CreatureConfig:
     """Simulation-facing parameters derived from a genome.
 
-    This is the contract between genetics and the simulation layer.
-    ML-Agent code should not import this directly for observations;
-    use Genome.to_normalized_features() instead.
+    This is the contract between genetics and the simulation layer for the
+    Python reference package. Unity maps the same traits through Phenotype /
+    IReadOnlyPhenotype instead. ML-Agent code should not import this directly
+    for observations; use Genome.to_normalized_features() instead.
     """
 
     base_movement_speed: float

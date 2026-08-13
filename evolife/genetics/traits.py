@@ -1,9 +1,29 @@
-"""Centralized trait definitions and bounds for the genetics subsystem."""
+"""Centralized trait definitions matching Unity CanonicalGenomeSchema v1.
+
+Unity C# under Assets/EvoLife/Scripts/Genetics/ is the canonical runtime
+simulation implementation. This Python package is the offline/reference
+implementation of the same conceptual trait schema (pytest, research, analytics).
+It is not a Unity runtime dependency.
+"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Iterator
+
+CANONICAL_SCHEMA_VERSION = 1
+
+CANONICAL_TRAIT_NAMES = (
+    "base_movement_speed",
+    "sprint_speed",
+    "vision_range",
+    "maximum_energy",
+    "metabolism_rate",
+    "body_size",
+    "aggression",
+    "reproduction_threshold",
+    "maximum_age",
+)
 
 
 @dataclass(frozen=True)
