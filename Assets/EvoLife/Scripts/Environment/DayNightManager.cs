@@ -40,6 +40,40 @@ namespace EvoLife.Environment
             NotifyLighting();
         }
 
+        public void BindLightingHook(MonoBehaviour hook)
+        {
+            if (hook == null)
+            {
+                return;
+            }
+
+            if (lightingHooks == null || lightingHooks.Length == 0)
+            {
+                lightingHooks = new[] { hook };
+                NotifyLighting();
+                return;
+            }
+
+            for (var i = 0; i < lightingHooks.Length; i++)
+            {
+                if (lightingHooks[i] == hook)
+                {
+                    NotifyLighting();
+                    return;
+                }
+            }
+
+            var next = new MonoBehaviour[lightingHooks.Length + 1];
+            for (var i = 0; i < lightingHooks.Length; i++)
+            {
+                next[i] = lightingHooks[i];
+            }
+
+            next[lightingHooks.Length] = hook;
+            lightingHooks = next;
+            NotifyLighting();
+        }
+
         public void Tick(float deltaTimeSeconds)
         {
             EnsureConfigured();

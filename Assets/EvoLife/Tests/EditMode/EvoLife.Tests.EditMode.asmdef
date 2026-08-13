@@ -9,6 +9,7 @@
     "EvoLife.Simulation",
     "EvoLife.AI",
     "EvoLife.Analytics",
+    "EvoLife.Presentation",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"
   ],

@@ -3,8 +3,8 @@
 AI-driven 3D wildlife ecosystem simulator (Unity) with multi-agent RL (ML-Agents / PPO),
 genetic inheritance, and a FastAPI analytics backend.
 
-> **Scope of this repository revision:** architectural skeleton and module boundaries.
-> No production terrain, art, tuned rewards, or trained models are included.
+> **Scope of this repository revision:** architectural skeleton plus a stylized presentation demo.
+> Training scenes stay lightweight. No tuned rewards or trained models are included.
 
 ## Repository layout
 
@@ -22,7 +22,7 @@ genetic inheritance, and a FastAPI analytics backend.
 1. Install **Unity 2022.3 LTS** (see `ProjectSettings/ProjectVersion.txt`).
 2. Open this repository root as a Unity project.
 3. Allow Package Manager to resolve `com.unity.ml-agents` and test frameworks.
-4. Open `Assets/EvoLife/Scenes/` (create/assign Bootstrap scene on first open if needed).
+4. Open `Assets/EvoLife/Scenes/EvoLifeDemo.unity` for the stylized demo, or `Assets/EvoLife/Scenes/Bootstrap.unity` for a lightweight/training placeholder.
 
 ### Backend
 
@@ -37,6 +37,8 @@ pytest -q
 ## Documentation
 
 - [Architecture](Docs/ARCHITECTURE.md)
+- [Presentation](Docs/PRESENTATION.md)
+- [Performance](Docs/PERFORMANCE.md)
 - [Experiments](Docs/EXPERIMENTS.md)
 - [Training curriculum](Docs/TRAINING_CURRICULUM.md)
 - [Reproduction / ecosystem lifecycle](Docs/REPRODUCTION.md)

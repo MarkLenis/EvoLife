@@ -160,7 +160,7 @@ Treat paired runs as **matched configurations**, not bit-identical replays.
 4. Play with `ExperimentOrchestrator` (not a live `mlagents-learn` session).
 5. Stop on time or extinction; inspect `population-series`, `survival`, and `policy-comparison`.
 
-Presentation/demo scenes can reuse the same prefabs with a HUD and a free camera. Do not mix demo time-scale scrubbing into evaluation logs.
+Presentation/demo scenes can reuse the same prefabs with Agent 10 HUD/camera after merge. Do not mix demo time-scale scrubbing into evaluation logs. See [PRESENTATION.md](PRESENTATION.md).
 
 ## Tests
 

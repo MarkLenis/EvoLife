@@ -30,7 +30,8 @@ Assets/EvoLife/Scripts/
   Simulation/    Time, population, spawning, config, tick runner
   AI/            Observations, actions, rewards, policies
   Analytics/     Stats capture + backend HTTP client
-  UI/            Presentation only
+  UI/            Presentation only (HUD / Agent 10 desktop UI)
+  Presentation/  Demo world visuals, materials, lighting/event sinks
 ```
 
 Supporting trees:
@@ -38,8 +39,10 @@ Supporting trees:
 | Path | Role |
 |------|------|
 | `Assets/EvoLife/Prefabs/` | Creature / environment / UI prefabs |
+| `Assets/EvoLife/Materials/` | Stylized demo materials (Built-in RP) |
+| `Assets/EvoLife/Shaders/` | Lightweight stylized color/water shaders |
 | `Assets/EvoLife/ScriptableObjects/` | Species, simulation, environment data assets |
-| `Assets/EvoLife/Scenes/` | Simulation scenes |
+| `Assets/EvoLife/Scenes/` | `Bootstrap` (lightweight) and `EvoLifeDemo` (presentation) |
 | `Assets/EvoLife/Tests/` | EditMode / PlayMode tests |
 | `Backend/` | FastAPI analytics API |
 | `Training/` | ML-Agents YAML + scripts |
@@ -60,6 +63,7 @@ Each Unity module has an **assembly definition** (`EvoLife.*.asmdef`) so compile
 | **AI** | Observations, action execution, reward calculation, scripted vs PPO policy selection | Mutating vitals directly, genome operators |
 | **Analytics** | Snapshots, export loop, backend transport | Simulation rules |
 | **UI** | HUD / controls presentation | Domain logic |
+| **Presentation** | Demo terrain/biome/plant/water/creature visuals, optional lighting and event cues | Camera/inspector/dashboard, AI, biology, experiment lifecycle |
 | **Backend** | Experiment records, stats persistence API | Unity runtime |
 | **Training** | PPO configs / train scripts | Runtime creature state |
 
@@ -73,17 +77,19 @@ Allowed references (arrows mean “depends on”):
 UI -----------> Analytics ------> Simulation
                      \               |
                       \              v
-                       \         Creatures <---- AI
-                        \            ^            |
-                         \           |            |
-                          \      Genetics <-------+
-                           \         ^
-                            \        |
-                             \   Environment
-                              \      ^
-                               \     |
-                                Common  <--- (everything may use Common)
+Presentation ----+    Creatures <---- AI
+                 \         ^            |
+                  \        |            |
+                   \   Genetics <-------+
+                    \      ^
+                     \     |
+                      Environment
+                           ^
+                           |
+                        Common  <--- (everything may use Common)
 ```
+
+`Presentation` may reference Common, Environment, Creatures, Genetics, Simulation, and AI (prefab wiring only). It must not become a second simulation or camera/UI owner. `UI` stays the HUD/desktop-controls module.
 
 Concrete asmdef rules:
 
@@ -93,6 +99,7 @@ Concrete asmdef rules:
 - `AI` → `Common`, `Creatures`, `Genetics`, `Environment` (reads state; does not reference Analytics/UI)
 - `Analytics` → `Common`, `Simulation`
 - `UI` → `Common`, `Simulation`, `Analytics`
+- `Presentation` → `Common`, `Environment`, `Creatures`, `Genetics`, `Simulation`, `AI`
 
 **Forbidden:** Creatures → AI; Genetics → Simulation; Environment → Creatures; circular asmdef references.
 
@@ -117,6 +124,7 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
 | `IReadOnlyResourceCensus` / `IReadOnlyEnvironmentState` / `IReadOnlyDayNightState` | Common | Analytics/AI read plants, events, time-of-day without mutation |
 | `IEnvironmentalVitalEffects` / `IEnvironmentalPopulationCommands` | Common | Event manager ports; Simulation implements via vitals + lifecycle |
 | `DayNightManager` / `ResourceManager` / `EnvironmentalEventManager` | Environment | Sim-time cycle, seeded resources, config-driven events |
+| `DayNightLightingPresenter` / `EnvironmentalEventVisualAdapter` | Presentation | Optional lighting and event cues; read-only vs Environment |
 | `EnvironmentalCreatureBridge` | Simulation | Applies event damage/spawn/remove through existing owners |
 | `IObservationSource` / `IActionExecutor` / `IRewardCalculator` | AI | RL plumbing |
 | `ICreaturePolicy` | AI | Scripted vs PPO step API (`ScriptedBaselinePolicy` heuristic, `EvoLifeCreatureAgent` / `PpoPolicyAdapter`) |
@@ -155,7 +163,7 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
    `PopulationStatisticCollector` builds `SimulationStatsSnapshot`. `CreatureLifetimeRecorder` observes spawn/death via `CreatureLifecycleHub` (Common contracts). `StatsExportLoop` batches POSTs to FastAPI via `BackendClient` (v1 `/stats` or extended run/snapshot/creature/generation endpoints). Failed POSTs retain pending records until a later successful flush (bounded FIFO overflow). See [ANALYTICS.md](ANALYTICS.md).
 
 7. **Present**  
-   `SimulationHud` renders collector/clock data only.
+   `SimulationHud` (UI module) renders collector/clock data only. The demo world is drawn by `Presentation` (`EvoLifeDemo` scene). See [PRESENTATION.md](PRESENTATION.md).
 
 ---
 
@@ -232,7 +240,7 @@ Default persistence is **SQLite**. See [ANALYTICS.md](ANALYTICS.md) and [Backend
 2. **Add types in that module**; expose cross-cutting needs via `Common` interfaces.
 3. **Prefer new small components** over expanding `SimulationRunner` / `CreatureBrain` into managers.
 4. **Add EditMode tests** for pure logic (genetics, collectors); PlayMode tests for spawn/tick integration.
-5. **Do not** introduce XR, ShaderGraph content, tuned reward tables, or art pipelines in architecture PRs.
+5. **Do not** introduce XR, tuned reward tables, or art pipelines in architecture PRs. Presentation/demo art belongs in `EvoLife.Presentation` ([PRESENTATION.md](PRESENTATION.md)).
 6. **Keep Training YAML** in sync when renaming Agent behaviors.
 
 ### Adding major features (pointers)
@@ -254,8 +262,9 @@ Default persistence is **SQLite**. See [ANALYTICS.md](ANALYTICS.md) and [Backend
 
 ## Explicit non-goals (current skeleton)
 
-- Final terrain, meshes, animations, VFX
+- Photoreal terrain, character animation, or heavy VFX
+- Shader Graph / URP conversion (Built-in RP + lightweight shaders; see [PRESENTATION.md](PRESENTATION.md))
 - Tuned RL rewards or trained ONNX models
-- ShaderGraph assets
 - XR / VR
 - Full evolutionary algorithm research suite (operators are seams only)
+- Desktop camera/inspector/dashboard (owned by the UI/desktop-debug lane, not Presentation)

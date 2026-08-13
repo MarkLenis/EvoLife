@@ -1,0 +1,21 @@
+{
+  "name": "EvoLife.Presentation",
+  "rootNamespace": "EvoLife.Presentation",
+  "references": [
+    "EvoLife.Common",
+    "EvoLife.Creatures",
+    "EvoLife.Genetics",
+    "EvoLife.Environment",
+    "EvoLife.Simulation",
+    "EvoLife.AI"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
