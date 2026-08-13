@@ -5,6 +5,8 @@ namespace EvoLife.Simulation
 {
     /// <summary>
     /// Owns simulation time and pause/speed. Not a god-object — only clock concerns.
+    /// Experiment pause/unpause authority lives on <c>ExperimentOrchestrator</c>:
+    /// initialization stays paused until <c>BeginRunning</c>.
     /// </summary>
     public sealed class SimulationClock : MonoBehaviour, ISimulationClock
     {

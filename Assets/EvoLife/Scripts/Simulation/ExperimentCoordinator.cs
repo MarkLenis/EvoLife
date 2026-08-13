@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using EvoLife.Common;
 
@@ -31,6 +32,57 @@ namespace EvoLife.Simulation
         public bool IsRunning => Phase == ExperimentRunPhase.Running;
 
         public bool HasFinished => Phase == ExperimentRunPhase.Finished;
+
+        public bool AllowsSimulationProgression =>
+            ExperimentSimulationProgression.AllowsTimeProgression(Phase);
+    }
+
+    /// <summary>
+    /// Pause/unpause authority for experiment phases. Only <see cref="ExperimentRunPhase.Running"/>
+    /// may advance simulation time.
+    /// </summary>
+    public static class ExperimentSimulationProgression
+    {
+        public static bool AllowsTimeProgression(ExperimentRunPhase phase)
+        {
+            switch (phase)
+            {
+                case ExperimentRunPhase.Running:
+                    return true;
+                case ExperimentRunPhase.Created:
+                case ExperimentRunPhase.Loaded:
+                case ExperimentRunPhase.EnvironmentInitialized:
+                case ExperimentRunPhase.PopulationInitialized:
+                case ExperimentRunPhase.AnalyticsStarted:
+                case ExperimentRunPhase.Stopping:
+                case ExperimentRunPhase.Finished:
+                    return false;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(phase), phase, "Unhandled ExperimentRunPhase.");
+            }
+        }
+
+        public static bool ShouldPauseClock(ExperimentRunPhase phase) =>
+            !AllowsTimeProgression(phase);
+
+        public static bool RejectsSecondBegin(ExperimentRunPhase phase)
+        {
+            switch (phase)
+            {
+                case ExperimentRunPhase.Created:
+                case ExperimentRunPhase.Loaded:
+                    return false;
+                case ExperimentRunPhase.EnvironmentInitialized:
+                case ExperimentRunPhase.PopulationInitialized:
+                case ExperimentRunPhase.AnalyticsStarted:
+                case ExperimentRunPhase.Running:
+                case ExperimentRunPhase.Stopping:
+                case ExperimentRunPhase.Finished:
+                    return true;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(phase), phase, "Unhandled ExperimentRunPhase.");
+            }
+        }
     }
 
     /// <summary>
@@ -45,6 +97,15 @@ namespace EvoLife.Simulation
         public ExperimentRunState State => state;
 
         public ExperimentConfiguration Configuration => configuration;
+
+        public bool AllowsSimulationProgression =>
+            state != null && ExperimentSimulationProgression.AllowsTimeProgression(state.Phase);
+
+        public bool ShouldPauseClock =>
+            state == null || ExperimentSimulationProgression.ShouldPauseClock(state.Phase);
+
+        public bool RejectsSecondBegin =>
+            state != null && ExperimentSimulationProgression.RejectsSecondBegin(state.Phase);
 
         public ExperimentCoordinator(ExperimentConfiguration experimentConfiguration = null)
         {

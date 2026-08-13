@@ -7,6 +7,8 @@ namespace EvoLife.Simulation
     /// <summary>
     /// Thin experiment coordinator for founders, extinction reporting, and wiring.
     /// Reproduction, respawn, and population counts stay in their dedicated types.
+    /// Environment experiment knobs are applied by <see cref="ExperimentOrchestrator"/>
+    /// during orchestrated runs, or by <see cref="ApplyStandaloneEnvironment"/> in demo scenes.
     /// </summary>
     public sealed class EcosystemManager : MonoBehaviour
     {
@@ -25,6 +27,7 @@ namespace EvoLife.Simulation
         [SerializeField] ResourceManager resourceManager;
         [SerializeField] DayNightManager dayNight;
         [SerializeField] bool spawnFoundersOnStart = true;
+        [SerializeField] bool applyEnvironmentOnStart = true;
 
         public SimulationConfig Config => config;
         public ExtinctionState CurrentExtinction => ExtinctionEvaluator.Evaluate(populationTracker);
@@ -50,6 +53,12 @@ namespace EvoLife.Simulation
             set => spawnFoundersOnStart = value;
         }
 
+        public bool ApplyEnvironmentOnStart
+        {
+            get => applyEnvironmentOnStart;
+            set => applyEnvironmentOnStart = value;
+        }
+
         public void Configure(
             SimulationConfig simulationConfig,
             SimulationClock simulationClock,
@@ -59,7 +68,10 @@ namespace EvoLife.Simulation
             ReproductionSystem reproductionSystem,
             TrainingRespawnController respawn,
             GameObject herbivore,
-            GameObject predator)
+            GameObject predator,
+            ResourceManager resources = null,
+            DayNightManager dayNightManager = null,
+            EnvironmentalEventManager events = null)
         {
             config = simulationConfig;
             clock = simulationClock;
@@ -70,17 +82,48 @@ namespace EvoLife.Simulation
             trainingRespawn = respawn;
             herbivorePrefab = herbivore;
             predatorPrefab = predator;
+            if (resources != null)
+            {
+                resourceManager = resources;
+            }
+
+            if (dayNightManager != null)
+            {
+                dayNight = dayNightManager;
+            }
+
+            if (events != null)
+            {
+                environmentalEvents = events;
+            }
+        }
+
+        void Awake()
+        {
+            if (applyEnvironmentOnStart && resourceManager != null)
+            {
+                resourceManager.PlaceOnStart = false;
+            }
         }
 
         void Start()
         {
             ApplyExperimentSettings();
+            if (applyEnvironmentOnStart)
+            {
+                ApplyStandaloneEnvironment();
+            }
+
             if (spawnFoundersOnStart)
             {
                 SpawnFounders();
             }
         }
 
+        /// <summary>
+        /// Wires population, reproduction, spawner, and event-bridge bindings.
+        /// Does not apply ResourceManager / day-night / event experiment configuration.
+        /// </summary>
         public void ApplyExperimentSettings()
         {
             if (config == null)
@@ -126,18 +169,33 @@ namespace EvoLife.Simulation
                 predatorPrefab,
                 transform,
                 seeds.EnvironmentalCreatures);
-            ExperimentEnvironmentApplicator.Apply(
-                experiment,
-                resourceManager,
-                dayNight,
-                environmentalEvents,
-                eventConfig: null);
             environmentalEvents?.Bind(
                 resourceManager,
                 environmentalCreatures,
                 environmentalCreatures,
                 eventConfig: null,
                 clock);
+        }
+
+        /// <summary>
+        /// Standalone/demo path when <see cref="ExperimentOrchestrator"/> is absent.
+        /// Orchestrated experiments disable <see cref="ApplyEnvironmentOnStart"/> and call
+        /// <see cref="ExperimentEnvironmentApplicator"/> themselves.
+        /// </summary>
+        public void ApplyStandaloneEnvironment()
+        {
+            if (config == null)
+            {
+                return;
+            }
+
+            ExperimentEnvironmentApplicator.Apply(
+                config.ToExperimentConfiguration(),
+                resourceManager,
+                dayNight,
+                environmentalEvents,
+                eventConfig: null);
+            resourceManager?.EnsurePlaced();
         }
 
         public void SpawnFounders()

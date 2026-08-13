@@ -125,8 +125,8 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
 | `IStatisticCollector` | Analytics | Snapshot production |
 | `AnalyticsSnapshotBuilder` / `CreatureLifetimeFactory` / `GenerationAggregator` | Analytics | Pure experiment metrics |
 | `CreatureLifecycleHub` | Simulation | Spawn/death fan-out for observers |
-| `ReproductionSystem` / `EcosystemManager` | Simulation | Local mating, offspring spawn, founder population, extinction report |
-| `ExperimentConfiguration` / `ExperimentOrchestrator` | Simulation | Serializable experiment document, start/stop lifecycle (not a god manager) |
+| `ReproductionSystem` / `EcosystemManager` | Simulation | Local mating, offspring spawn, founder population, extinction report. Costs/cooldowns commit only after spawn succeeds. `EcosystemManager` wires population systems; orchestrated environment application is owned by `ExperimentOrchestrator`. |
+| `ExperimentConfiguration` / `ExperimentOrchestrator` | Simulation | Serializable experiment document, start/stop lifecycle, initialization pause/unpause (not a god manager) |
 | `IReproductionRequestHandler` | Common | AI request seam; Simulation implements success/failure |
 | `IAnalyticsCreatureView` / `ICreatureLineage` / `IReadOnlyGenomeTraits` / `IEpisodeMetrics` | Common | Read-only analytics observation |
 | `GeneticObservationProvider` | Genetics | Normalized [0,1] genome vector for ML observations (`CreatureObservationSchema` indices 6–14) |
@@ -137,7 +137,7 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
 ## Expected Unity data flow
 
 1. **Bootstrap / config**  
-   `SimulationConfig` / `ExperimentConfiguration` supplies seed, initial counts, policy kinds, resources, events, and stop rules. `ExperimentOrchestrator` loads that document, asks existing owners to initialize, and ends the run. See [EXPERIMENTS.md](EXPERIMENTS.md).
+   `SimulationConfig` / `ExperimentConfiguration` supplies seed, initial counts, policy kinds, resources, events, and stop rules. `ExperimentOrchestrator` pauses `SimulationClock`, loads that document, asks existing owners to initialize, starts analytics, then unpauses only at `BeginRunning`. See [EXPERIMENTS.md](EXPERIMENTS.md).
 
 2. **Spawn**  
    `CreatureSpawner` instantiates a prefab, assigns `CreatureId`, initializes `CreatureVitals`, creates/assigns `Genome` via Genetics operators, decodes phenotype, applies it through `CreatureCapabilityMotor`, and sets `IPolicyKindOwner` from the requested `AgentPolicyKind`.
@@ -207,7 +207,7 @@ Genome  --(IGenomeDecoder)-->  Phenotype (IReadOnlyPhenotype)
 - Canonical genome: **schema v1**, nine named traits (`TraitId` / `CanonicalGenomeSchema`). See [GENETICS.md](GENETICS.md). Unity C# is the runtime; `evolife/genetics/` is the offline reference of the same schema.
 - Decode: `CanonicalGenomeDecoder` maps trait / default → phenotype multipliers (aggression stays raw \[0,1\]).
 - `CreatureSpawner` calls `IGeneticOperators.CreateFounder` — it does not choose gene count or layout.
-- Reproduction / inheritance: Simulation `ReproductionSystem` calls `IGeneticOperators.Crossover` + `Mutate`, then `CreatureSpawner` with the child genome, generation, and parent ids. See [REPRODUCTION.md](REPRODUCTION.md).
+- Reproduction / inheritance: Simulation `ReproductionSystem` calls `IGeneticOperators.Crossover` + `Mutate`, then `CreatureSpawner` with the child genome, generation, and parent ids. Biological costs and cooldowns commit only after that spawn succeeds. See [REPRODUCTION.md](REPRODUCTION.md).
 - Creatures never implement crossover/mutation.
 
 ---

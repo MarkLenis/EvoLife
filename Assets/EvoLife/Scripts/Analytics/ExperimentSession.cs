@@ -8,7 +8,8 @@ namespace EvoLife.Analytics
 {
     /// <summary>
     /// Creates a backend run with enough metadata to reproduce/identify the experiment.
-    /// Failures are logged; the simulation continues.
+    /// A missing backend client is local-dev success. A failed backend create is a
+    /// startup failure; <see cref="ExperimentOrchestrator"/> will not enter Running.
     /// </summary>
     public sealed class ExperimentSession : MonoBehaviour, IExperimentAnalyticsSession
     {
@@ -54,7 +55,7 @@ namespace EvoLife.Analytics
                     RunId = collector != null ? collector.ExperimentIdValue : "local-dev";
                     collector?.SetExperimentId(new ExperimentId(RunId));
                     RunReady = false;
-                    return false;
+                    return true;
                 }
 
                 var created = await backendClient.CreateRunAsync(Metadata);
@@ -69,7 +70,7 @@ namespace EvoLife.Analytics
                 RunId = collector != null ? collector.ExperimentIdValue : "local-dev";
                 collector?.SetExperimentId(new ExperimentId(RunId));
                 RunReady = false;
-                Debug.LogWarning("ExperimentSession: backend run create failed; simulation will continue locally.");
+                Debug.LogWarning("ExperimentSession: backend run create failed.");
                 return false;
             }
             finally

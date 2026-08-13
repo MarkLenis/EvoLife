@@ -7,7 +7,9 @@ namespace EvoLife.Simulation
 {
     /// <summary>
     /// Applies experiment environment knobs onto existing Environment types.
-    /// Does not own plants, biomes, or event effect logic.
+    /// Does not own plants, biomes, or event effect logic, and does not place resources.
+    /// ExperimentOrchestrator is the experiment-time caller; EcosystemManager may call
+    /// this only for standalone/demo scenes where the orchestrator is absent.
     /// </summary>
     public static class ExperimentEnvironmentApplicator
     {
@@ -53,10 +55,8 @@ namespace EvoLife.Simulation
             }
 
             settings.DefaultRegenPerSecond = BaselineRegenPerSecond * regen;
-            if (resources.HasPlaced)
-            {
-                resources.PlaceResources();
-            }
+            // Placement is owned by ResourceManager.EnsurePlaced / PlaceResources.
+            // Applying knobs must not silently re-place an already-initialized world.
         }
 
         public static void ApplyDayNight(ExperimentConfiguration configuration, DayNightManager dayNight)

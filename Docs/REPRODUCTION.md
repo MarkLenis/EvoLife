@@ -15,11 +15,12 @@ Policy (scripted or PPO)
             ├─ ReproductionEligibility (alive, mature, health, energy, cooldown)
             ├─ local mate search (same species, same role, in mateRange)
             ├─ species population cap
-            ├─ CreatureVitals.ConsumeEnergy / optional ApplyDamage
             ├─ OffspringComposer → IGeneticOperators.Crossover + Mutate
+            ├─ required prefab + CreatureSpawner present
             └─ CreatureSpawner.Spawn (new CreatureId, lineage, genome)
                     ├─ PopulationTracker.Register
-                    └─ CreatureLifecycleHub.RegisterSpawned
+                    ├─ CreatureLifecycleHub.RegisterSpawned
+                    └─ only then: cooldown timestamps + CreatureVitals.ConsumeEnergy / optional ApplyDamage
 ```
 
 - A request with no eligible local mate is a **safe no-op**.
@@ -77,6 +78,19 @@ Configured on `ReproductionSettings` / `ReproductionConfig`:
 
 Simulation never writes private `CreatureBiology` fields.
 
+A reproduction attempt is **transactional** around spawn:
+
+1. **Prepare** — requester/mate eligibility, population cap, genetics operators, child blueprint, required prefab, and spawner. No cooldown or vital cost is applied yet.
+2. **Commit** — spawn offspring; only after `CreatureSpawner.Spawn` returns a live instance, set both parents' cooldown timestamps, charge energy, and apply optional health cost.
+
+If prefab resolution or spawn fails (`SpawnFailed`):
+
+- parents keep their energy and health
+- reproduction cooldown does not start
+- birth count does not increase
+
+If applying the reproduction cost kills a parent, the already-spawned offspring **remains**. That is a successful birth with a biological cost, not a rollback.
+
 ## Population management
 
 Keep these separate:
@@ -91,7 +105,7 @@ Keep these separate:
 | Training-only refill | `TrainingRespawnController` |
 | Thin wiring + extinction report | `EcosystemManager` |
 
-`EcosystemManager` is not a god object. It applies experiment settings, optionally spawns founders, and exposes `CurrentExtinction` from `ExtinctionEvaluator`.
+`EcosystemManager` is not a god object. It applies population/reproduction/spawner wiring, optionally spawns founders, and exposes `CurrentExtinction` from `ExtinctionEvaluator`. During orchestrated experiments it does **not** re-apply ResourceManager/day-night/event configuration; `ExperimentOrchestrator` owns that step. See [EXPERIMENTS.md](EXPERIMENTS.md).
 
 Extinction states: none, herbivores extinct, predators extinct, ecosystem extinct. Derived from alive counts only.
 
@@ -128,4 +142,4 @@ Creature prefabs should include `CreatureReproductionBridge` (or allow spawn to 
 
 ## Tests
 
-EditMode: `ReproductionTests`, `EcosystemLifecycleTests` (eligible pair, underage / low-energy / dead / incompatible species, cooldown, generation, parent ids, crossover, zero-mutation stability, mutation bounds, seeded determinism, population tracker, no-mate no-op, single birth per request, training vs persistent respawn).
+EditMode: `ReproductionTests`, `EcosystemLifecycleTests` (eligible pair, underage / low-energy / dead / incompatible species, cooldown, generation, parent ids, crossover, zero-mutation stability, mutation bounds, seeded determinism, population tracker, no-mate no-op, single birth per request, training vs persistent respawn, missing spawner/prefab/simulated spawn failure does not charge parents or start cooldown, successful spawn charges and cools down both parents once, lethal cost does not roll back offspring).

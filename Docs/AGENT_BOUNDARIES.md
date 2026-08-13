@@ -24,7 +24,7 @@ This guide prevents duplicate systems when multiple human or coding agents work 
 | Reproduction eligibility, local mating, offspring spawn | **Simulation** | `ReproductionSystem`, `ReproductionEligibility`, `OffspringComposer`, `CreatureReproductionBridge` | Creatures (no mating in `CreatureVitals`), AI (request only), Genetics (operators only) |
 | Founder population / extinction report | **Simulation** | `InitialPopulationSpawner`, `EcosystemManager`, `ExtinctionEvaluator` | Analytics |
 | Training-support respawn | **Simulation** | `TrainingRespawnController` | Creatures, AI |
-| Experiment/sim config assets | **Simulation** | `SimulationConfig`, `ExperimentConfiguration`, `EcosystemSettings`, `ReproductionConfig`, `ExperimentOrchestrator` | Backend (Backend stores experiment *records*) |
+| Experiment/sim config assets | **Simulation** | `SimulationConfig`, `ExperimentConfiguration`, `EcosystemSettings`, `ReproductionConfig`, `ExperimentOrchestrator` (pause/unpause + one environment apply per run) | Backend (Backend stores experiment *records*) |
 | Tick fan-out | **Simulation** | `SimulationRunner` | — keep this thin; `ExperimentOrchestrator` owns run start/stop only |
 | Observations | **AI** | `IObservationSource`, `VitalObservationSource`, `CompositeObservationSource`, `CreatureObservationSchema`, optional `EnvironmentObservationSource` (not in PPO v2) | Creatures, Environment |
 | Actions / locomotion intent | **AI** | `IActionExecutor`, `PlanarMoveActionExecutor`, `CreatureActionSchema`, `LocalCreatureInteractor` | Simulation (Simulation owns whether `reproduce_request` succeeds) |
@@ -119,7 +119,7 @@ After Unity-side changes, a human (or Unity-equipped runner) should confirm:
 - [ ] Observation vector size is 31 (`CreatureObservationSchema` v2). Time-of-day is **not** in that vector.
 - [ ] Action space is 3 continuous + 1 discrete branch of size 6 (`CreatureActionSchema` v2)
 - [ ] Scripted baseline EditMode tests pass (`BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`)
-- [ ] Reproduction EditMode tests pass (`ReproductionTests`, `EcosystemLifecycleTests`)
+- [ ] Reproduction EditMode tests pass (`ReproductionTests`, `EcosystemLifecycleTests`), including spawn-failure commit tests (no energy/health/cooldown on `SpawnFailed`)
 - [ ] Environment EditMode tests pass (`PlantResourceTests`, `DayNightCycleTests`, `EnvironmentalEventTests`)
-- [ ] Experiment EditMode tests pass (`ExperimentConfigurationTests`)
+- [ ] Experiment EditMode tests pass (`ExperimentConfigurationTests`, `ExperimentLifecycleTests`) — initialization stays paused until `BeginRunning`; environment applicator/placement happens once per orchestrated start
 - [ ] Analytics export retention tests pass (`AnalyticsExportControllerTests`)  

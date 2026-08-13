@@ -14,6 +14,11 @@ namespace EvoLife.Common
 
         void SetAutoStart(bool enabled);
 
+        /// <summary>
+        /// Starts the analytics run. Return true if startup succeeded, including
+        /// local-dev without a backend. Return false if the experiment must stay
+        /// paused and must not enter Running.
+        /// </summary>
         Task<bool> BeginAsync();
 
         Task<bool> FinishAsync(string status, string stopReason);
