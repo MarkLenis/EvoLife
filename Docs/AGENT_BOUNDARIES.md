@@ -24,7 +24,7 @@ This guide prevents duplicate systems when multiple human or coding agents work 
 | Observations | **AI** | `IObservationSource`, `VitalObservationSource`, `CompositeObservationSource`, `CreatureObservationSchema` | Creatures, Environment |
 | Actions / locomotion intent | **AI** | `IActionExecutor`, `PlanarMoveActionExecutor`, `CreatureActionSchema` | Simulation |
 | Rewards | **AI** | `IRewardCalculator`, `TrainingRewardCalculator`, `SurvivalRewardCalculator` | Creatures |
-| Scripted baseline vs PPO policy | **AI** | `CreatureBrain`, `ScriptedBaselinePolicy`, `EvoLifeCreatureAgent`, `PpoPolicyAdapter` (idle fallback) | Simulation |
+| Scripted baseline vs PPO policy | **AI** | `CreatureBrain`, `ScriptedBaselinePolicy`, `BaselineMotiveEvaluator`, `ScriptedBaselineSettings` / `ScriptedBaselineProfile`, `EvoLifeCreatureAgent`, `PpoPolicyAdapter` (idle fallback) | Simulation |
 | Stats snapshots + HTTP upload | **Analytics** | `SimulationStatsSnapshot`, `BackendClient`, collectors, lifetime/generation records | Simulation, UI, Creatures, AI |
 | HUD / presentation | **UI** | `SimulationHud` | Domain modules |
 | Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, IDs, enums | Gameplay behavior |
@@ -69,7 +69,7 @@ Agents can work simultaneously if they stay in lane:
 | Change RL reward for eating | `IRewardCalculator` implementation |
 | Speed up the sim | `SimulationClock` / `SimulationConfig` |
 | Count births for graphs | Analytics collector + Backend schema (see [ANALYTICS.md](ANALYTICS.md)) |
-| Compare PPO vs scripted | `AgentPolicyKind` on `CreatureBrain` / `SimulationConfig`; Analytics records `policy_kind` (see [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [ANALYTICS.md](ANALYTICS.md)) |
+| Compare PPO vs scripted | `AgentPolicyKind` on `CreatureBrain` / `SimulationConfig`; Analytics records `policy_kind` (see [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md), [ANALYTICS.md](ANALYTICS.md)) |
 
 ---
 
@@ -107,4 +107,5 @@ After Unity-side changes, a human (or Unity-equipped runner) should confirm:
 - [ ] Creature prefab has exactly one owner component per concern (vitals, genome, brain)  
 - [ ] ML-Agents package imports and `EVOLIFE_MLAGENTS` define appears when expected
 - [ ] `EvoLifeCreatureAgent` Behavior Parameters names are `EvoLifeHerbivore` / `EvoLifePredator`
-- [ ] Observation vector size is 28 (`CreatureObservationSchema`)  
+- [ ] Observation vector size is 28 (`CreatureObservationSchema`)
+- [ ] Scripted baseline EditMode tests pass (`BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`)  

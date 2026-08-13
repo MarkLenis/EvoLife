@@ -1,6 +1,6 @@
 # EvoLife ML-Agents Integration
 
-This document describes the AI module’s Unity ML-Agents PPO wiring. Rewards, observations, and actions live in **AI**. Creature vitals and genomes stay in **Creatures** / **Genetics**.
+This document describes the AI module’s Unity ML-Agents PPO wiring. Rewards, observations, and actions live in **AI**. Creature vitals and genomes stay in **Creatures** / **Genetics**. The non-learning control group is documented in [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md).
 
 Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), [Training/README.md](../Training/README.md).
 
@@ -78,7 +78,9 @@ Contract: `CreatureActionSchema` (version **1**, 2 continuous actions). Incoming
 
 Executed by `PlanarMoveActionExecutor`. Speed comes from `CreatureCapabilityMotor.MaxSpeed` when present.
 
-Eat / drink / attack / rest are **not** in the action space. Those simulation mechanics are not yet exposed as dedicated AI executors. Do not invent fake interaction buttons.
+Eat / drink / attack / rest are **not** in the PPO action space. Those simulation mechanics are not yet exposed as dedicated AI executors. Do not invent fake interaction buttons on the learned agent.
+
+The scripted baseline may call Creatures / Environment owner APIs when a locally sensed target is in range. That is an intentional benchmark difference until interaction actions exist; sensing still uses this same schema. See [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md).
 
 ## Reward components
 
@@ -124,6 +126,8 @@ Switch at runtime: `CreatureBrain.SetPolicyKind`. Simulation can pass `AgentPoli
 
 `SimulationConfig.HerbivorePolicy` / `PredatorPolicy` remain the experiment-level defaults.
 
+How the heuristic decides, which sensors it uses, and how to run scripted-vs-PPO experiments: [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md).
+
 ## PPO config
 
 | File | Behaviors |
@@ -165,7 +169,7 @@ Do not treat these as production values:
 
 ## Known limitations
 
-- Locomotion-only actions: agents cannot eat/drink/attack until interaction executors exist.
+- Locomotion-only PPO actions: learned agents cannot eat/drink/attack until interaction executors exist. The scripted baseline may use local owner APIs (documented difference).
 - Nearby-creature sensing needs colliders; otherwise those five slots stay zero.
 - No trained ONNX is shipped. Do not commit model binaries unless required.
 - Unity Editor is required to compile/run ML-Agents PlayMode tests.
