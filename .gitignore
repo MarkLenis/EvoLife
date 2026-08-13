@@ -60,3 +60,12 @@ ml-agents.log
 
 # Cursor / local agent
 .cursor/
+
+# Python (Training/genetics, Backend)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+dist/
+build/
