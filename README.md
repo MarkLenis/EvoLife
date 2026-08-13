@@ -38,6 +38,7 @@ pytest -q
 
 - [Architecture](Docs/ARCHITECTURE.md)
 - [ML-Agents / PPO](Docs/AI_ML_AGENTS.md)
+- [Scripted baseline](Docs/SCRIPTED_BASELINE.md)
 - [Genetics](Docs/GENETICS.md)
 - [Development](Docs/DEVELOPMENT.md)
 - [Agent boundaries](Docs/AGENT_BOUNDARIES.md) — for parallel human/AI contributors

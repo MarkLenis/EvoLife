@@ -39,7 +39,9 @@ Results are written to `Training/results/` (gitignored). Do not commit `.onnx` /
 ## Switch PPO vs scripted baseline
 
 - `CreatureBrain.policyKind` or `SimulationConfig` herbivore/predator policy.
-- `AgentPolicyKind.ScriptedBaseline` — heuristic locomotion; Agent component disabled.
+- `AgentPolicyKind.ScriptedBaseline` — heuristic survival controller (`ScriptedBaselinePolicy`); Agent component disabled. See [Docs/SCRIPTED_BASELINE.md](../Docs/SCRIPTED_BASELINE.md).
 - `AgentPolicyKind.LearnedPpo` — `EvoLifeCreatureAgent` exclusive control.
+
+Analytics can tell them apart (`scripted_baseline` vs `learned_ppo`). For a full comparison protocol (configs, backend queries, fairness notes), use [Docs/SCRIPTED_BASELINE.md](../Docs/SCRIPTED_BASELINE.md) and [Docs/ANALYTICS.md](../Docs/ANALYTICS.md).
 
 Starter PPO hyperparameters in `Training/configs/` are **experimental**, not tuned optima.

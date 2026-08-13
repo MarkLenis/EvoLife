@@ -109,7 +109,7 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
 | `IGenomeDecoder` / `IGeneticOperators` | Genetics | Inheritance pipeline (`CanonicalGenomeSchema` v1) |
 | `IResourceNode` | Environment | Consumable world resources |
 | `IObservationSource` / `IActionExecutor` / `IRewardCalculator` | AI | RL plumbing |
-| `ICreaturePolicy` | AI | Scripted vs PPO step API |
+| `ICreaturePolicy` | AI | Scripted vs PPO step API (`ScriptedBaselinePolicy` heuristic, `EvoLifeCreatureAgent` / `PpoPolicyAdapter`) |
 | `EvoLifeCreatureAgent` | AI | ML-Agents Agent bridge (`EvoLifeHerbivore` / `EvoLifePredator`) |
 | `CreatureObservationSchema` | AI | Documented observation size/order (v1, size 28) |
 | `IStatisticCollector` | Analytics | Snapshot production |
@@ -133,10 +133,10 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
    `SimulationClock` advances sim time. `SimulationRunner` calls `ISimulationTickable.Tick` on registered systems (vitals, plants, etc.).
 
 4. **Decide**  
-   `CreatureBrain` selects exclusive control: `ScriptedBaselinePolicy` or `EvoLifeCreatureAgent` (learned PPO). Policy reads observations (vitals + genetics + optional local sensors), computes/receives actions, applies them via `IActionExecutor`. Scripted and PPO never run on the same creature at once.
+   `CreatureBrain` selects exclusive control: `ScriptedBaselinePolicy` or `EvoLifeCreatureAgent` (learned PPO). Policy reads observations (vitals + genetics + optional local sensors), computes/receives actions, applies them via `IActionExecutor`. Scripted and PPO never run on the same creature at once. The scripted baseline is a utility/priority heuristic over the same observation schema; see [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md).
 
 5. **Act / interact**  
-   Movement and future eat/drink/attack use Environment `IResourceNode` and Creatures APIs (`ConsumeFood`, `Drink`, `ApplyDamage`). AI does not bypass these.
+   Movement uses `IActionExecutor`. Eat/drink/attack use Environment `IResourceNode` and Creatures APIs (`ConsumeFood`, `Drink`, `ApplyDamage`). AI does not bypass these or write vital fields. PPO currently has locomotion-only actions; the scripted baseline may call those owner APIs when a locally sensed target is in range ([SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md)).
 
 6. **Measure**  
    `PopulationStatisticCollector` builds `SimulationStatsSnapshot`. `CreatureLifetimeRecorder` observes spawn/death via `CreatureLifecycleHub` (Common contracts). `StatsExportLoop` batches POSTs to FastAPI via `BackendClient` (v1 `/stats` or extended run/snapshot/creature/generation endpoints). See [ANALYTICS.md](ANALYTICS.md).
@@ -231,6 +231,7 @@ Default persistence is **SQLite**. See [ANALYTICS.md](ANALYTICS.md) and [Backend
 | New gene | `CanonicalGenomeSchema` + decoder | Phenotype consumers in Creatures; bump schema version if observation size changes |
 | New statistic | Analytics (+ Backend schema) | UI display optional |
 | PPO training | AI Agent wiring + Training configs | Reward calculator only for shaping |
+| Scripted baseline heuristic | AI `ScriptedBaselinePolicy` / settings profile | Observation schema, Creatures/Environment APIs |
 
 ---
 

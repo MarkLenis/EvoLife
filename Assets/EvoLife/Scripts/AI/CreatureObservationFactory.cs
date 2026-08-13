@@ -19,11 +19,7 @@ namespace EvoLife.AI
             ResourceRegistry resources,
             float baseSenseRange = CreatureObservationSchema.DefaultSenseRange)
         {
-            float SenseRange()
-            {
-                var multiplier = motor != null ? motor.SensoryRangeMultiplier : 1f;
-                return Mathf.Max(0.01f, baseSenseRange * multiplier);
-            }
+            float SenseRange() => ResolveSenseRange(motor, baseSenseRange);
 
             IResourceProximitySensor resourceSensor = transform != null
                 ? new ResourceRegistryProximitySensor(resources, transform, SenseRange)
@@ -39,6 +35,18 @@ namespace EvoLife.AI
                 genome != null ? genome.Genome : null,
                 resourceSensor,
                 creatureSensor);
+        }
+
+        /// <summary>
+        /// Sense radius shared by PPO observations and the scripted baseline interactor.
+        /// Phenotype sensory-range multipliers apply here.
+        /// </summary>
+        public static float ResolveSenseRange(
+            CreatureCapabilityMotor motor,
+            float baseSenseRange = CreatureObservationSchema.DefaultSenseRange)
+        {
+            var multiplier = motor != null ? motor.SensoryRangeMultiplier : 1f;
+            return Mathf.Max(0.01f, baseSenseRange * multiplier);
         }
     }
 }

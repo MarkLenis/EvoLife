@@ -13,10 +13,11 @@ Unity Editor is not available in typical cloud agent environments. After pulling
    - `CreatureObservationSchemaTests` / `CompositeObservationSourceTests` (size 28, order, sensor zeros)
    - `CreatureActionSchemaTests` (clamp / idle PPO fallback)
    - `TrainingRewardCalculatorTests` (death terminate, relief, critical-need)
+   - `BaselineMotiveEvaluatorTests` / `ScriptedBaselinePolicyTests` (scripted heuristic priorities, legal actions, no vital mutation)
    - `PopulationTrackerTests`
    - `AnalyticsCollectorTests` (snapshot math, lifetime records, generation aggregates, policy classification, empty-population safety)
 5. Open `Assets/EvoLife/Scenes/Bootstrap.unity`, add missing component references (`SimulationClock`, `SimulationRunner`, `PopulationTracker`, `CreatureSpawner`, analytics) via the Inspector — the checked-in scene is a minimal placeholder.
-6. Confirm ScriptableObject create menus appear: `EvoLife/Creatures/Species Vitals`, `EvoLife/Simulation/Config`.
+6. Confirm ScriptableObject create menus appear: `EvoLife/Creatures/Species Vitals`, `EvoLife/Simulation/Config`, `EvoLife/AI/Scripted Baseline Profile`.
 7. Commit any Unity-generated `.meta` files so GUIDs are shared.
 8. Optional: with ML-Agents Python installed, run `./Training/scripts/train_herbivore.sh`, set a creature to `LearnedPpo`, press Play, and confirm the trainer connects (`EvoLifeHerbivore`).
 9. Optional: start Backend and toggle `StatsExportLoop.uploadToBackend` once a collector is wired in the scene.

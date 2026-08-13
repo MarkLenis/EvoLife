@@ -21,6 +21,11 @@ namespace EvoLife.AI
         [SerializeField] EvoLifeCreatureAgent mlAgent;
         [SerializeField] ResourceRegistry resourceRegistry;
         [SerializeField] TrainingRewardSettings rewardSettings = new TrainingRewardSettings();
+        [Tooltip("Optional species/role profile. When unset, role default thresholds are used.")]
+        [SerializeField] ScriptedBaselineProfile baselineProfile;
+        [Tooltip("If enabled, ignore role defaults and use the inline settings below (when no profile is assigned).")]
+        [SerializeField] bool useInlineBaselineSettings;
+        [SerializeField] ScriptedBaselineSettings baselineSettings = new ScriptedBaselineSettings();
 
         IObservationSource observations;
         IEpisodeRewardCalculator rewards;
@@ -121,7 +126,7 @@ namespace EvoLife.AI
             }
             else
             {
-                policy = new ScriptedBaselinePolicy();
+                policy = CreateScriptedBaseline();
                 controlMode = CreatureControlMode.ScriptedBaseline;
             }
 
@@ -130,6 +135,35 @@ namespace EvoLife.AI
                 mlAgent.Bind(observations, rewards, actionExecutor, vitals);
                 mlAgent.SetControlEnabled(controlMode == CreatureControlMode.LearnedPpo);
             }
+        }
+
+        ICreaturePolicy CreateScriptedBaseline()
+        {
+            var role = identity != null ? identity.Role : CreatureRole.Herbivore;
+            ScriptedBaselineSettings settings;
+            if (baselineProfile != null)
+            {
+                settings = baselineProfile.Settings;
+            }
+            else if (useInlineBaselineSettings && baselineSettings != null)
+            {
+                settings = baselineSettings;
+            }
+            else
+            {
+                settings = ScriptedBaselineSettings.ForRole(role);
+            }
+            var seed = identity != null ? identity.Id.Value : 1;
+            ICreatureInteractor interactor = vitals != null
+                ? new LocalCreatureInteractor(
+                    vitals,
+                    transform,
+                    resourceRegistry,
+                    identity,
+                    () => CreatureObservationFactory.ResolveSenseRange(motor),
+                    settings)
+                : null;
+            return new ScriptedBaselinePolicy(settings, role, seed, interactor);
         }
 
         ICreaturePolicy CreatePpoFallbackOrNull()

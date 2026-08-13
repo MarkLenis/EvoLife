@@ -155,6 +155,8 @@ curl -s http://127.0.0.1:8000/api/v1/runs/$RUN/policy-comparison
 
 Compare `mean_lifetime`, death-cause histograms, and (for PPO) `mean_episode_return` when present. Population series `scripted_alive` / `ppo_alive` in `extra_metrics` show mixed-run composition over time.
 
+Scripted baseline behavior, sensors, and fairness notes: [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md).
+
 ## Example: query / results workflow
 
 ```bash
