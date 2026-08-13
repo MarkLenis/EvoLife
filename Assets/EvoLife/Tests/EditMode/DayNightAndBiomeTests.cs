@@ -129,6 +129,33 @@ namespace EvoLife.Tests
             }
         }
 
+        [Test]
+        public void CensusProperties_ShareFrameCache_CaptureCensusIsFresh()
+        {
+            var objects = new System.Collections.Generic.List<GameObject>();
+            try
+            {
+                var manager = CreateManager(objects, seed: 5, density: 0.03f, radius: 8f);
+                manager.PlaceResources();
+                Assert.Greater(manager.Plants.Count, 0);
+
+                var first = manager.TotalPlantFoodRemaining;
+                var second = manager.TotalPlantFoodRemaining;
+                Assert.AreEqual(first, second, 0.0001f);
+
+                var taken = manager.Plants[0].TryConsume(5f);
+                Assert.Greater(taken, 0f);
+                var cached = manager.TotalPlantFoodRemaining;
+                var live = manager.CaptureCensus().TotalPlantFoodRemaining;
+                Assert.AreEqual(first, cached, 0.0001f);
+                Assert.AreEqual(first - taken, live, 0.0001f);
+            }
+            finally
+            {
+                Cleanup(objects);
+            }
+        }
+
         static ResourceManager CreateManager(
             System.Collections.Generic.List<GameObject> objects,
             int seed,

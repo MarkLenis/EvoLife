@@ -43,7 +43,7 @@ Rules:
 - Optional `ResourceManager` places plants once from a seed + density, then ticks existing nodes.
 - Placement is deterministic for the same seed, radius, density, and biome list.
 
-Read-only statistics: `IReadOnlyResourceCensus` (`ResourceCensus` / `ResourceManager.CaptureCensus`) exposes plant count, density, remaining food, capacity, and abundance (remaining / capacity).
+Read-only statistics: `IReadOnlyResourceCensus` (`ResourceCensus` / `ResourceManager.CaptureCensus`) exposes plant count, density, remaining food, capacity, and abundance (remaining / capacity). `ResourceManager` property getters share a per-Unity-frame cache; `CaptureCensus()` always rebuilds. See [PERFORMANCE.md](PERFORMANCE.md).
 
 ## Water
 
@@ -66,7 +66,7 @@ Logical circular zones, not authored terrain or NavMesh:
 
 `BiomeMap.ResolveKind(position)` uses the first containing zone, else the default grassland. Zones may change plant spawn density, regen multipliers, temperature pressure, and which plants an event affects.
 
-There is no procedural mesh, ShaderGraph, or final art in this module.
+There is no procedural mesh or NavMesh in this module. Demo ground discs live in Presentation and must not change `BiomeMap` rules. See [PRESENTATION.md](PRESENTATION.md).
 
 ## Day / night
 
@@ -78,7 +78,7 @@ Exposed on `IReadOnlyDayNightState`:
 - `DayDurationSeconds` (configurable)
 - `IsDay` / `IsNight` / `Phase`
 
-Optional `IDayNightLightingHook` sinks can react to updates. No lighting implementation is required.
+Optional `IDayNightLightingHook` sinks can react to updates. The demo scene binds `DayNightLightingPresenter` through `DayNightManager.BindLightingHook`. No lighting implementation is required for training.
 
 ## Observation seam (PPO schema unchanged)
 

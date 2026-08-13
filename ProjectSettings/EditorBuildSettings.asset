@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/EvoLife/Scenes/Bootstrap.unity
     guid: a1111111111111111111111111111111
+  - enabled: 1
+    path: Assets/EvoLife/Scenes/EvoLifeDemo.unity
+    guid: a2222222222222222222222222222222
   m_configObjects: {}
