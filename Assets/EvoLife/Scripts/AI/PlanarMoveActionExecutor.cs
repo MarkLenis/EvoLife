@@ -1,30 +1,52 @@
 using UnityEngine;
+using EvoLife.Creatures;
 
 namespace EvoLife.AI
 {
     /// <summary>
-    /// Applies continuous actions as a planar move intent. Physics/animation come later.
-    /// Action layout (v0): [0]=moveX, [1]=moveZ
+    /// Applies continuous actions as a planar move intent.
+    /// Action layout: see <see cref="CreatureActionSchema"/>.
+    /// Uses <see cref="CreatureCapabilityMotor"/> speed when present; never mutates vitals fields.
     /// </summary>
     public sealed class PlanarMoveActionExecutor : MonoBehaviour, IActionExecutor
     {
         [SerializeField] float moveSpeed = 3.5f;
+        [SerializeField] CreatureCapabilityMotor motor;
+        [SerializeField] CreatureVitals vitals;
 
+        readonly float[] clamped = new float[CreatureActionSchema.ContinuousCount];
         Vector3 pendingVelocity;
 
-        public int ActionSize => 2;
+        public int ActionSize => CreatureActionSchema.ContinuousCount;
+
+        void Awake()
+        {
+            if (motor == null)
+            {
+                motor = GetComponent<CreatureCapabilityMotor>();
+            }
+
+            if (vitals == null)
+            {
+                vitals = GetComponent<CreatureVitals>();
+            }
+        }
 
         public void ApplyActions(float[] actions)
         {
-            if (actions == null || actions.Length < ActionSize)
-            {
-                pendingVelocity = Vector3.zero;
-                return;
-            }
+            CreatureActionSchema.ClampTo(actions, clamped);
+            var speed = motor != null ? motor.MaxSpeed : moveSpeed;
+            pendingVelocity = new Vector3(
+                clamped[CreatureActionSchema.IndexMoveX],
+                0f,
+                clamped[CreatureActionSchema.IndexMoveZ]) * speed;
 
-            var x = Mathf.Clamp(actions[0], -1f, 1f);
-            var z = Mathf.Clamp(actions[1], -1f, 1f);
-            pendingVelocity = new Vector3(x, 0f, z) * moveSpeed;
+            if (vitals != null)
+            {
+                vitals.CurrentActivity = pendingVelocity.sqrMagnitude > 0.0001f
+                    ? ActivityLevel.Walking
+                    : ActivityLevel.Idle;
+            }
         }
 
         void Update()

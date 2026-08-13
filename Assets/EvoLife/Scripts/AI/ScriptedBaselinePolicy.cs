@@ -5,6 +5,7 @@ namespace EvoLife.AI
 {
     /// <summary>
     /// Deterministic heuristic baseline for evaluation against PPO.
+    /// Hungry → bias forward; thirsty → bias sideways. Placeholder heuristic only.
     /// </summary>
     public sealed class ScriptedBaselinePolicy : ICreaturePolicy
     {
@@ -22,19 +23,19 @@ namespace EvoLife.AI
             var obs = new float[observationSource.ObservationSize];
             observationSource.WriteObservations(obs);
 
-            // Hungry → bias forward; thirsty → bias sideways. Placeholder heuristic only.
-            var hunger = obs.Length > 1 ? obs[1] : 0f;
-            var thirst = obs.Length > 2 ? obs[2] : 0f;
+            var hunger = obs.Length > CreatureObservationSchema.IndexHunger
+                ? obs[CreatureObservationSchema.IndexHunger]
+                : 0f;
+            var thirst = obs.Length > CreatureObservationSchema.IndexThirst
+                ? obs[CreatureObservationSchema.IndexThirst]
+                : 0f;
 
-            var actions = new float[actionExecutor.ActionSize];
-            if (actions.Length >= 2)
-            {
-                actions[0] = Mathf.Clamp(thirst - 0.3f, -1f, 1f);
-                actions[1] = Mathf.Clamp(hunger - 0.3f, -1f, 1f);
-            }
+            var actions = new float[CreatureActionSchema.ContinuousCount];
+            actions[CreatureActionSchema.IndexMoveX] = Mathf.Clamp(thirst - 0.3f, -1f, 1f);
+            actions[CreatureActionSchema.IndexMoveZ] = Mathf.Clamp(hunger - 0.3f, -1f, 1f);
 
             actionExecutor.ApplyActions(actions);
-            _ = rewardCalculator?.CalculateReward(vitals, false);
+            _ = rewardCalculator?.CalculateReward(vitals, vitals != null && !vitals.IsAlive);
         }
     }
 }

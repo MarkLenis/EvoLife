@@ -157,9 +157,9 @@ var vector = GeneticObservationProvider.GetObservationVector(genome);
 
 Python equivalent: `GeneticObservationProvider.get_observation_vector(creature)`.
 
-The genetics module has no ML-Agents dependency. A future AI `IObservationSource` should call this provider (or `Genome.ToNormalizedArray()`) and must not implement operators.
+The genetics module has no ML-Agents dependency. AI `CompositeObservationSource` calls this provider (or `Genome.ToNormalizedArray()`) for indices 6–14 of `CreatureObservationSchema` and must not implement operators.
 
-Vital observations are separate: `VitalObservationSource` normalizes hunger/thirst using `IReadOnlyVitalState.MaxHunger` / `MaxThirst`.
+Vital observations are separate: `VitalObservationSource` / the vitals block of `CompositeObservationSource` normalize hunger/thirst using `IReadOnlyVitalState.MaxHunger` / `MaxThirst`.
 
 ## Adding a new trait
 

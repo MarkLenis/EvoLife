@@ -110,8 +110,11 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
 | `IResourceNode` | Environment | Consumable world resources |
 | `IObservationSource` / `IActionExecutor` / `IRewardCalculator` | AI | RL plumbing |
 | `ICreaturePolicy` | AI | Scripted vs PPO step API |
+| `EvoLifeCreatureAgent` | AI | ML-Agents Agent bridge (`EvoLifeHerbivore` / `EvoLifePredator`) |
+| `CreatureObservationSchema` | AI | Documented observation size/order (v1, size 28) |
 | `IStatisticCollector` | Analytics | Snapshot production |
-| `GeneticObservationProvider` | Genetics | Normalized [0,1] genome vector for future ML observations |
+| `GeneticObservationProvider` | Genetics | Normalized [0,1] genome vector for ML observations (`CreatureObservationSchema` indices 6–14) |
+| `IPolicyKindOwner` | Common | Simulation can set scripted vs PPO without referencing AI |
 
 ---
 
@@ -121,13 +124,13 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
    `SimulationConfig` (ScriptableObject) supplies seed, initial counts, policy kinds, time scale.
 
 2. **Spawn**  
-   `CreatureSpawner` instantiates a prefab, assigns `CreatureId`, initializes `CreatureVitals`, creates/assigns `Genome` via Genetics operators, decodes phenotype, applies it through `CreatureCapabilityMotor`.
+   `CreatureSpawner` instantiates a prefab, assigns `CreatureId`, initializes `CreatureVitals`, creates/assigns `Genome` via Genetics operators, decodes phenotype, applies it through `CreatureCapabilityMotor`, and sets `IPolicyKindOwner` from the requested `AgentPolicyKind`.
 
 3. **Tick**  
    `SimulationClock` advances sim time. `SimulationRunner` calls `ISimulationTickable.Tick` on registered systems (vitals, plants, etc.).
 
 4. **Decide**  
-   `CreatureBrain` selects `ScriptedBaselinePolicy` or `PpoPolicyAdapter`. Policy reads observations (vitals (+ later sensors)), computes/receives actions, applies them via `IActionExecutor`.
+   `CreatureBrain` selects exclusive control: `ScriptedBaselinePolicy` or `EvoLifeCreatureAgent` (learned PPO). Policy reads observations (vitals + genetics + optional local sensors), computes/receives actions, applies them via `IActionExecutor`. Scripted and PPO never run on the same creature at once.
 
 5. **Act / interact**  
    Movement and future eat/drink/attack use Environment `IResourceNode` and Creatures APIs (`ConsumeFood`, `Drink`, `ApplyDamage`). AI does not bypass these.
@@ -159,13 +162,14 @@ IActionExecutor  --->  movement / interaction components
 
 Rules:
 
-- PPO / ML-Agents code lives under **AI**, behind `ICreaturePolicy` / future `Agent` subclass.
-- Rewards are computed in `IRewardCalculator`, not inside vitals.
+- PPO / ML-Agents code lives under **AI** in `EvoLifeCreatureAgent` behind `ICreaturePolicy` / `CreatureBrain` control mode.
+- Rewards are computed in `IRewardCalculator` / `TrainingRewardCalculator`, not inside vitals.
 - Observations may include `GeneticObservationProvider` normalized genes and phenotype-derived sensory range, but **do not** mutate genomes.
 - Hunger/thirst observations must use `IReadOnlyVitalState.MaxHunger` / `MaxThirst`, not a hard-coded 100.
-- `PpoPolicyAdapter` is a compile-safe seam; when ML-Agents is imported, `EVOLIFE_MLAGENTS` is defined via asmdef `versionDefines`. Wire `Agent.CollectObservations` / `OnActionReceived` at that seam without moving vitals ownership.
+- `PpoPolicyAdapter` is an idle fallback when the Agent or ML-Agents package is missing. It is not a second PPO implementation.
+- Behavior names: `EvoLifeHerbivore` and `EvoLifePredator` (`MlAgentsBehaviorNames`). Observation layout: `CreatureObservationSchema` (size 28). See [AI_ML_AGENTS.md](AI_ML_AGENTS.md).
 
-Training configs live in `Training/configs/*.yaml` and must use behavior names that match the Unity Agent behavior name once added.
+Training configs live in `Training/configs/*.yaml` and must use those same behavior names.
 
 ---
 

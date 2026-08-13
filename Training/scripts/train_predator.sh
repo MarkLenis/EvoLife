@@ -1,14 +1,10 @@
 #!/usr/bin/env bash
-# Train EvoLifeHerbivore PPO.
-# Usage:
-#   1. pip install mlagents  # compatible with com.unity.ml-agents 2.0.x
-#   2. Start this script; it waits for a Unity trainer connection.
-#   3. Open the Unity project, set CreatureBrain policy to LearnedPpo, press Play.
-# Optional: RUN_ID=my_run FORCE=1 ./Training/scripts/train_herbivore.sh
+# Train EvoLifePredator PPO.
+# Usage: RUN_ID=predator_dev ./Training/scripts/train_predator.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CONFIG="${ROOT}/Training/configs/herbivore_ppo.yaml"
-RUN_ID="${RUN_ID:-herbivore_ppo_dev}"
+CONFIG="${ROOT}/Training/configs/predator_ppo.yaml"
+RUN_ID="${RUN_ID:-predator_ppo_dev}"
 RESULTS_DIR="${ROOT}/Training/results"
 FORCE_ARGS=()
 if [[ "${FORCE:-0}" == "1" ]]; then
@@ -16,7 +12,7 @@ if [[ "${FORCE:-0}" == "1" ]]; then
 fi
 
 echo "Starting ML-Agents training with ${CONFIG}"
-echo "Behavior name: EvoLifeHerbivore"
+echo "Behavior name: EvoLifePredator"
 echo "Ensure Unity is ready to connect (Play mode or a training build)."
 mkdir -p "${RESULTS_DIR}"
 mlagents-learn "${CONFIG}" --run-id="${RUN_ID}" --time-scale=20 --results-dir="${RESULTS_DIR}" "${FORCE_ARGS[@]}"

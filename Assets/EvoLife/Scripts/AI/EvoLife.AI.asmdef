@@ -5,7 +5,8 @@
     "EvoLife.Common",
     "EvoLife.Creatures",
     "EvoLife.Genetics",
-    "EvoLife.Environment"
+    "EvoLife.Environment",
+    "Unity.MLAgents"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

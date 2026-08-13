@@ -13,7 +13,7 @@ namespace EvoLife.AI
 
         public VitalObservationSource(IReadOnlyVitalState vitals) => this.vitals = vitals;
 
-        public int ObservationSize => 5;
+        public int ObservationSize => CreatureObservationSchema.VitalCount;
 
         public void WriteObservations(float[] buffer)
         {

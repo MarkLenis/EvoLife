@@ -1,6 +1,9 @@
-# Placeholder predator PPO config. Mirror herbivore until observation spaces diverge.
+# EvoLife predator PPO — development starter config.
+# Same observation/action layout as herbivores (CreatureObservationSchema v1, size 28).
+# Behavior name MUST match Unity Behavior Parameters / EvoLifeCreatureAgent.
+# These hyperparameters are reasonable starters, not claimed optima.
 behaviors:
-  Predator:
+  EvoLifePredator:
     trainer_type: ppo
     hyperparameters:
       batch_size: 1024
@@ -19,6 +22,9 @@ behaviors:
       extrinsic:
         gamma: 0.99
         strength: 1.0
-    max_steps: 500000
+    keep_checkpoints: 5
+    checkpoint_interval: 50000
+    max_steps: 1000000
     time_horizon: 64
     summary_freq: 10000
+    threaded: false

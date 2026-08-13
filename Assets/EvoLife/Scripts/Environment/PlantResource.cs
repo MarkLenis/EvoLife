@@ -11,11 +11,27 @@ namespace EvoLife.Environment
         [SerializeField] float maxAmount = 20f;
         [SerializeField] float currentAmount = 20f;
         [SerializeField] float regenPerSecond = 0.5f;
+        [SerializeField] ResourceRegistry registry;
 
         public ResourceKind Kind => ResourceKind.Plant;
         public Vector3 Position => transform.position;
         public float AvailableAmount => currentAmount;
         public bool IsDepleted => currentAmount <= 0f;
+
+        void OnEnable()
+        {
+            if (registry == null)
+            {
+                registry = FindObjectOfType<ResourceRegistry>();
+            }
+
+            registry?.Register(this);
+        }
+
+        void OnDisable()
+        {
+            registry?.Unregister(this);
+        }
 
         public float TryConsume(float requestedAmount)
         {
