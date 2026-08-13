@@ -1,0 +1,2082 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "EvoLife Analytics Backend",
+    "description": "Experiment records and simulation statistics for EvoLife.",
+    "version": "0.2.0"
+  },
+  "paths": {
+    "/api/v1/experiments": {
+      "get": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "List Experiments",
+        "operationId": "list_experiments_api_v1_experiments_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExperimentRecord"
+                  },
+                  "type": "array",
+                  "title": "Response List Experiments Api V1 Experiments Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "Create Experiment",
+        "operationId": "create_experiment_api_v1_experiments_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentRecord"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stats": {
+      "post": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "Post Stats",
+        "operationId": "post_stats_api_v1_stats_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatsSnapshotIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsSnapshotIn"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "v1"
+        ],
+        "summary": "Get Stats",
+        "operationId": "get_stats_api_v1_stats_get",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StatsSnapshotIn"
+                  },
+                  "title": "Response Get Stats Api V1 Stats Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs": {
+      "post": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Create Simulation Run",
+        "operationId": "create_simulation_run_api_v1_runs_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationRunCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationRunResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "List Simulation Runs",
+        "operationId": "list_simulation_runs_api_v1_runs_get",
+        "parameters": [
+          {
+            "name": "experiment_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Experiment Name"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationRunListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/finish": {
+      "post": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Finish Simulation Run",
+        "operationId": "finish_simulation_run_api_v1_runs__run_id__finish_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationRunFinish"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationRunResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Get Simulation Run",
+        "operationId": "get_simulation_run_api_v1_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationRunDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/snapshots": {
+      "post": {
+        "tags": [
+          "snapshots"
+        ],
+        "summary": "Submit Snapshot",
+        "operationId": "submit_snapshot_api_v1_runs__run_id__snapshots_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationSnapshotCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationSnapshotResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/snapshots/batch": {
+      "post": {
+        "tags": [
+          "snapshots"
+        ],
+        "summary": "Submit Snapshots Batch",
+        "operationId": "submit_snapshots_batch_api_v1_runs__run_id__snapshots_batch_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationSnapshotBatchCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationSnapshotBatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/creatures": {
+      "post": {
+        "tags": [
+          "creatures"
+        ],
+        "summary": "Submit Creature Records",
+        "operationId": "submit_creature_records_api_v1_runs__run_id__creatures_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatureLifeRecordBatchCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatureLifeRecordBatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/generations": {
+      "post": {
+        "tags": [
+          "generations"
+        ],
+        "summary": "Submit Generation Summaries",
+        "operationId": "submit_generation_summaries_api_v1_runs__run_id__generations_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerationSummaryBatchCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationSummaryBatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/population-series": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get Population Time Series",
+        "operationId": "get_population_time_series_api_v1_runs__run_id__population_series_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PopulationTimeSeriesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/evolution-series": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get Evolution Time Series",
+        "operationId": "get_evolution_time_series_api_v1_runs__run_id__evolution_series_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "species",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Species"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvolutionTimeSeriesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreatureLifeRecordBatchCreate": {
+        "properties": {
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/CreatureLifeRecordCreate"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Records"
+          }
+        },
+        "type": "object",
+        "required": [
+          "records"
+        ],
+        "title": "CreatureLifeRecordBatchCreate"
+      },
+      "CreatureLifeRecordBatchResponse": {
+        "properties": {
+          "inserted": {
+            "type": "integer",
+            "title": "Inserted"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/CreatureLifeRecordResponse"
+            },
+            "type": "array",
+            "title": "Records"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inserted",
+          "records"
+        ],
+        "title": "CreatureLifeRecordBatchResponse"
+      },
+      "CreatureLifeRecordCreate": {
+        "properties": {
+          "creature_id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Creature Id"
+          },
+          "species": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Species"
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Generation"
+          },
+          "birth_time": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Birth Time"
+          },
+          "death_time": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Death Time"
+          },
+          "cause_of_death": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cause Of Death"
+          },
+          "parent_id_1": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id 1"
+          },
+          "parent_id_2": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id 2"
+          },
+          "offspring_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Offspring Count",
+            "default": 0
+          },
+          "genome_traits": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Genome Traits"
+          },
+          "extra_fields": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Fields"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "creature_id",
+          "species",
+          "generation",
+          "birth_time"
+        ],
+        "title": "CreatureLifeRecordCreate"
+      },
+      "CreatureLifeRecordResponse": {
+        "properties": {
+          "creature_id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Creature Id"
+          },
+          "species": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Species"
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Generation"
+          },
+          "birth_time": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Birth Time"
+          },
+          "death_time": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Death Time"
+          },
+          "cause_of_death": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cause Of Death"
+          },
+          "parent_id_1": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id 1"
+          },
+          "parent_id_2": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id 2"
+          },
+          "offspring_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Offspring Count",
+            "default": 0
+          },
+          "genome_traits": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Genome Traits"
+          },
+          "extra_fields": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Fields"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "creature_id",
+          "species",
+          "generation",
+          "birth_time",
+          "id",
+          "run_id"
+        ],
+        "title": "CreatureLifeRecordResponse"
+      },
+      "EvolutionTimeSeriesPoint": {
+        "properties": {
+          "species": {
+            "type": "string",
+            "title": "Species"
+          },
+          "generation": {
+            "type": "integer",
+            "title": "Generation"
+          },
+          "population_count": {
+            "type": "integer",
+            "title": "Population Count"
+          },
+          "average_genome_traits": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Average Genome Traits"
+          },
+          "average_lifespan": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Lifespan"
+          },
+          "reproduction_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reproduction Rate"
+          },
+          "offspring_per_parent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offspring Per Parent"
+          },
+          "extra_statistics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Statistics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "species",
+          "generation",
+          "population_count"
+        ],
+        "title": "EvolutionTimeSeriesPoint"
+      },
+      "EvolutionTimeSeriesResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/EvolutionTimeSeriesPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "points"
+        ],
+        "title": "EvolutionTimeSeriesResponse"
+      },
+      "ExperimentCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "policy_herbivore": {
+            "type": "string",
+            "title": "Policy Herbivore",
+            "default": "scripted_baseline"
+          },
+          "policy_predator": {
+            "type": "string",
+            "title": "Policy Predator",
+            "default": "scripted_baseline"
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed",
+            "default": 42
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ExperimentCreate"
+      },
+      "ExperimentRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "policy_herbivore": {
+            "type": "string",
+            "title": "Policy Herbivore"
+          },
+          "policy_predator": {
+            "type": "string",
+            "title": "Policy Predator"
+          },
+          "seed": {
+            "type": "integer",
+            "title": "Seed"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "policy_herbivore",
+          "policy_predator",
+          "seed"
+        ],
+        "title": "ExperimentRecord"
+      },
+      "GenerationSummaryBatchCreate": {
+        "properties": {
+          "summaries": {
+            "items": {
+              "$ref": "#/components/schemas/GenerationSummaryCreate"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Summaries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "summaries"
+        ],
+        "title": "GenerationSummaryBatchCreate"
+      },
+      "GenerationSummaryBatchResponse": {
+        "properties": {
+          "inserted": {
+            "type": "integer",
+            "title": "Inserted"
+          },
+          "summaries": {
+            "items": {
+              "$ref": "#/components/schemas/GenerationSummaryResponse"
+            },
+            "type": "array",
+            "title": "Summaries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inserted",
+          "summaries"
+        ],
+        "title": "GenerationSummaryBatchResponse"
+      },
+      "GenerationSummaryCreate": {
+        "properties": {
+          "species": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Species"
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Generation"
+          },
+          "population_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Population Count"
+          },
+          "average_genome_traits": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Average Genome Traits"
+          },
+          "average_lifespan": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Lifespan"
+          },
+          "reproduction_rate": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reproduction Rate"
+          },
+          "offspring_per_parent": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offspring Per Parent"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "extra_statistics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Statistics"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "species",
+          "generation",
+          "population_count"
+        ],
+        "title": "GenerationSummaryCreate"
+      },
+      "GenerationSummaryResponse": {
+        "properties": {
+          "species": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Species"
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Generation"
+          },
+          "population_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Population Count"
+          },
+          "average_genome_traits": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Average Genome Traits"
+          },
+          "average_lifespan": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Lifespan"
+          },
+          "reproduction_rate": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reproduction Rate"
+          },
+          "offspring_per_parent": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offspring Per Parent"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "extra_statistics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Statistics"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "species",
+          "generation",
+          "population_count",
+          "id",
+          "run_id"
+        ],
+        "title": "GenerationSummaryResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "PopulationTimeSeriesPoint": {
+        "properties": {
+          "simulation_time": {
+            "type": "number",
+            "title": "Simulation Time"
+          },
+          "herbivore_population": {
+            "type": "integer",
+            "title": "Herbivore Population"
+          },
+          "predator_population": {
+            "type": "integer",
+            "title": "Predator Population"
+          },
+          "plant_count": {
+            "type": "integer",
+            "title": "Plant Count"
+          },
+          "births": {
+            "type": "integer",
+            "title": "Births"
+          },
+          "deaths": {
+            "type": "integer",
+            "title": "Deaths"
+          },
+          "average_herbivore_speed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Herbivore Speed"
+          },
+          "average_predator_speed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Predator Speed"
+          },
+          "average_vision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Vision"
+          },
+          "average_lifespan": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Lifespan"
+          },
+          "average_energy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Energy"
+          },
+          "extra_metrics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Metrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "simulation_time",
+          "herbivore_population",
+          "predator_population",
+          "plant_count",
+          "births",
+          "deaths"
+        ],
+        "title": "PopulationTimeSeriesPoint"
+      },
+      "PopulationTimeSeriesResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/PopulationTimeSeriesPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "points"
+        ],
+        "title": "PopulationTimeSeriesResponse"
+      },
+      "RunStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "running",
+          "completed",
+          "failed",
+          "cancelled"
+        ],
+        "title": "RunStatus"
+      },
+      "SimulationRunCreate": {
+        "properties": {
+          "experiment_name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Experiment Name"
+          },
+          "random_seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Random Seed"
+          },
+          "configuration": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Configuration"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus",
+            "default": "running"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "experiment_name"
+        ],
+        "title": "SimulationRunCreate"
+      },
+      "SimulationRunDetailResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "experiment_name": {
+            "type": "string",
+            "title": "Experiment Name"
+          },
+          "random_seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Random Seed"
+          },
+          "configuration": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Configuration"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "snapshot_count": {
+            "type": "integer",
+            "title": "Snapshot Count",
+            "default": 0
+          },
+          "creature_record_count": {
+            "type": "integer",
+            "title": "Creature Record Count",
+            "default": 0
+          },
+          "generation_summary_count": {
+            "type": "integer",
+            "title": "Generation Summary Count",
+            "default": 0
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "run_id",
+          "started_at",
+          "experiment_name",
+          "status"
+        ],
+        "title": "SimulationRunDetailResponse"
+      },
+      "SimulationRunFinish": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/RunStatus",
+            "default": "completed"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "SimulationRunFinish"
+      },
+      "SimulationRunListResponse": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/SimulationRunResponse"
+            },
+            "type": "array",
+            "title": "Runs"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "runs",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "SimulationRunListResponse"
+      },
+      "SimulationRunResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "experiment_name": {
+            "type": "string",
+            "title": "Experiment Name"
+          },
+          "random_seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Random Seed"
+          },
+          "configuration": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Configuration"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "run_id",
+          "started_at",
+          "experiment_name",
+          "status"
+        ],
+        "title": "SimulationRunResponse"
+      },
+      "SimulationSnapshotBatchCreate": {
+        "properties": {
+          "snapshots": {
+            "items": {
+              "$ref": "#/components/schemas/SimulationSnapshotCreate"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Snapshots"
+          }
+        },
+        "type": "object",
+        "required": [
+          "snapshots"
+        ],
+        "title": "SimulationSnapshotBatchCreate"
+      },
+      "SimulationSnapshotBatchResponse": {
+        "properties": {
+          "inserted": {
+            "type": "integer",
+            "title": "Inserted"
+          },
+          "snapshots": {
+            "items": {
+              "$ref": "#/components/schemas/SimulationSnapshotResponse"
+            },
+            "type": "array",
+            "title": "Snapshots"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inserted",
+          "snapshots"
+        ],
+        "title": "SimulationSnapshotBatchResponse"
+      },
+      "SimulationSnapshotCreate": {
+        "properties": {
+          "simulation_time": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Simulation Time"
+          },
+          "herbivore_population": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Herbivore Population"
+          },
+          "predator_population": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Predator Population"
+          },
+          "plant_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Plant Count",
+            "default": 0
+          },
+          "births": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Births",
+            "default": 0
+          },
+          "deaths": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Deaths",
+            "default": 0
+          },
+          "average_herbivore_speed": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Herbivore Speed"
+          },
+          "average_predator_speed": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Predator Speed"
+          },
+          "average_vision": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Vision"
+          },
+          "average_lifespan": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Lifespan"
+          },
+          "average_energy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Energy"
+          },
+          "extra_metrics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Metrics"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "simulation_time",
+          "herbivore_population",
+          "predator_population"
+        ],
+        "title": "SimulationSnapshotCreate"
+      },
+      "SimulationSnapshotResponse": {
+        "properties": {
+          "simulation_time": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Simulation Time"
+          },
+          "herbivore_population": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Herbivore Population"
+          },
+          "predator_population": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Predator Population"
+          },
+          "plant_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Plant Count",
+            "default": 0
+          },
+          "births": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Births",
+            "default": 0
+          },
+          "deaths": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Deaths",
+            "default": 0
+          },
+          "average_herbivore_speed": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Herbivore Speed"
+          },
+          "average_predator_speed": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Predator Speed"
+          },
+          "average_vision": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Vision"
+          },
+          "average_lifespan": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Lifespan"
+          },
+          "average_energy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Energy"
+          },
+          "extra_metrics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Metrics"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "simulation_time",
+          "herbivore_population",
+          "predator_population",
+          "id",
+          "run_id"
+        ],
+        "title": "SimulationSnapshotResponse"
+      },
+      "StatsSnapshotIn": {
+        "properties": {
+          "experimentId": {
+            "type": "string",
+            "title": "Experimentid"
+          },
+          "simulationTimeSeconds": {
+            "type": "number",
+            "title": "Simulationtimeseconds"
+          },
+          "herbivoreCount": {
+            "type": "integer",
+            "title": "Herbivorecount"
+          },
+          "predatorCount": {
+            "type": "integer",
+            "title": "Predatorcount"
+          },
+          "totalAlive": {
+            "type": "integer",
+            "title": "Totalalive"
+          },
+          "timestampUtcUnix": {
+            "type": "number",
+            "title": "Timestamputcunix"
+          }
+        },
+        "type": "object",
+        "required": [
+          "experimentId",
+          "simulationTimeSeconds",
+          "herbivoreCount",
+          "predatorCount",
+          "totalAlive",
+          "timestampUtcUnix"
+        ],
+        "title": "StatsSnapshotIn",
+        "description": "Unity-compatible stats payload (camelCase field names)."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
