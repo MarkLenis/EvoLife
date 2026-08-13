@@ -11,4 +11,14 @@ namespace EvoLife.Common
         ScriptedBaseline = 0,
         LearnedPpo = 1
     }
+
+    public enum DeathCause : byte
+    {
+        Unknown = 0,
+        Predation,
+        Starvation,
+        Dehydration,
+        OldAge,
+        Environmental,
+    }
 }

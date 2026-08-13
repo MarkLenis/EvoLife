@@ -1,37 +1,58 @@
+using System;
 using UnityEngine;
 using EvoLife.Common;
 
 namespace EvoLife.Creatures
 {
     /// <summary>
-    /// Owns mutable biological vitals for one creature. Other modules read via IReadOnlyVitalState.
+    /// Unity-facing owner of biological vitals. Delegates simulation to <see cref="CreatureBiology"/>.
     /// </summary>
     public sealed class CreatureVitals : MonoBehaviour, IReadOnlyVitalState, ISimulationTickable
     {
         [SerializeField] SpeciesVitalsDefinition definition;
 
-        float health;
-        float hunger;
-        float thirst;
-        float energy;
-        float age;
-        float metabolismMultiplier = 1f;
+        CreatureBiology biology;
+        ActivityLevel currentActivity = ActivityLevel.Idle;
 
-        public float Health => health;
-        public float Hunger => hunger;
-        public float Thirst => thirst;
-        public float Energy => energy;
-        public float Age => age;
-        public bool IsAlive => health > 0f;
+        public event Action<CreatureDiedEventArgs> Died;
+        public event Action<HealthChangedEventArgs> HealthChanged;
+        public event Action<CreatureStateChangedEventArgs> StateChanged;
+
+        public ActivityLevel CurrentActivity
+        {
+            get => currentActivity;
+            set => currentActivity = value;
+        }
+
+        public CreatureBiology Biology => biology;
+
+        public float Health => biology?.Snapshot.Health ?? 0f;
+        public float MaxHealth => biology?.Snapshot.MaxHealth ?? 0f;
+        public float Hunger => biology?.Snapshot.Hunger ?? 0f;
+        public float Thirst => biology?.Snapshot.Thirst ?? 0f;
+        public float Energy => biology?.Snapshot.Energy ?? 0f;
+        public float MaxEnergy => biology?.Snapshot.MaxEnergy ?? 0f;
+        public float Age => biology?.Snapshot.Age ?? 0f;
+        public float MaxAge => biology?.Snapshot.MaxAge ?? 0f;
+        public bool IsAlive => biology?.IsAlive ?? false;
+        public DeathCause? CauseOfDeath => biology?.CauseOfDeath;
 
         public void Initialize(SpeciesVitalsDefinition vitalsDefinition)
         {
             definition = vitalsDefinition;
-            health = definition.MaxHealth;
-            hunger = 0f;
-            thirst = 0f;
-            energy = definition.MaxEnergy;
-            age = 0f;
+            if (definition == null)
+            {
+                biology = null;
+                return;
+            }
+
+            biology = new CreatureBiology(definition.ToMetabolicRates());
+            WireEvents(biology);
+        }
+
+        void OnDestroy()
+        {
+            UnwireEvents(biology);
         }
 
         /// <summary>
@@ -39,61 +60,94 @@ namespace EvoLife.Creatures
         /// </summary>
         public void ApplyMetabolismMultiplier(float multiplier)
         {
-            metabolismMultiplier = Mathf.Max(0.01f, multiplier);
+            if (biology == null)
+            {
+                return;
+            }
+
+            var clamped = Mathf.Max(0.01f, multiplier);
+            var updated = biology.Modifiers;
+            updated.HungerRateMultiplier = clamped;
+            updated.ThirstRateMultiplier = clamped;
+            updated.EnergyConsumptionMultiplier = clamped;
+            biology.ApplyModifiers(updated);
         }
 
         public void Tick(float deltaTimeSeconds)
         {
-            if (!IsAlive || definition == null || deltaTimeSeconds <= 0f)
-            {
-                return;
-            }
-
-            var metabolism = metabolismMultiplier;
-            hunger = Mathf.Min(definition.MaxHunger, hunger + definition.HungerIncreasePerSecond * metabolism * deltaTimeSeconds);
-            thirst = Mathf.Min(definition.MaxThirst, thirst + definition.ThirstIncreasePerSecond * metabolism * deltaTimeSeconds);
-            energy = Mathf.Max(0f, energy - definition.EnergyDrainPerSecond * metabolism * deltaTimeSeconds);
-            age += definition.AgingPerSecond * deltaTimeSeconds;
-
-            // Placeholder damage model — refined later by design, not here.
-            if (hunger >= definition.MaxHunger || thirst >= definition.MaxThirst || energy <= 0f)
-            {
-                ApplyDamage(5f * deltaTimeSeconds);
-            }
+            biology?.Tick(deltaTimeSeconds, currentActivity);
         }
 
-        public void ApplyDamage(float amount)
+        public void ApplyDamage(float amount, DeathCause cause = DeathCause.Environmental)
         {
-            if (amount <= 0f || !IsAlive)
-            {
-                return;
-            }
-
-            health = Mathf.Max(0f, health - amount);
+            biology?.TakeDamage(amount, cause);
         }
 
         public void RestoreHealth(float amount)
         {
-            if (definition == null || amount <= 0f || !IsAlive)
-            {
-                return;
-            }
-
-            health = Mathf.Min(definition.MaxHealth, health + amount);
+            biology?.Heal(amount);
         }
 
         public void ConsumeFood(float hungerRelief, float energyGain)
         {
-            hunger = Mathf.Max(0f, hunger - Mathf.Max(0f, hungerRelief));
-            if (definition != null)
+            if (biology == null)
             {
-                energy = Mathf.Min(definition.MaxEnergy, energy + Mathf.Max(0f, energyGain));
+                return;
+            }
+
+            biology.Eat(Mathf.Max(0f, hungerRelief));
+            if (energyGain > 0f)
+            {
+                biology.GainEnergy(energyGain);
             }
         }
 
         public void Drink(float thirstRelief)
         {
-            thirst = Mathf.Max(0f, thirst - Mathf.Max(0f, thirstRelief));
+            biology?.Drink(Mathf.Max(0f, thirstRelief));
         }
+
+        public void ConsumeEnergy(float amount)
+        {
+            biology?.ConsumeEnergy(Mathf.Max(0f, amount));
+        }
+
+        public void Rest(float deltaTimeSeconds)
+        {
+            biology?.Rest(Mathf.Max(0f, deltaTimeSeconds));
+        }
+
+        public void Die(DeathCause cause = DeathCause.Unknown)
+        {
+            biology?.Die(cause);
+        }
+
+        void WireEvents(CreatureBiology target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            target.Died += ForwardDied;
+            target.HealthChanged += ForwardHealthChanged;
+            target.StateChanged += ForwardStateChanged;
+        }
+
+        void UnwireEvents(CreatureBiology target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            target.Died -= ForwardDied;
+            target.HealthChanged -= ForwardHealthChanged;
+            target.StateChanged -= ForwardStateChanged;
+        }
+
+        void ForwardDied(CreatureDiedEventArgs args) => Died?.Invoke(args);
+        void ForwardHealthChanged(HealthChangedEventArgs args) => HealthChanged?.Invoke(args);
+        void ForwardStateChanged(CreatureStateChangedEventArgs args) => StateChanged?.Invoke(args);
     }
 }
