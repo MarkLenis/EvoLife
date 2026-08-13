@@ -42,4 +42,36 @@ namespace EvoLife.Common
         PredatorsExtinct = 2,
         EcosystemExtinct = 3
     }
+
+    /// <summary>
+    /// Lightweight logical biome. Zones are spatial labels, not authored terrain.
+    /// </summary>
+    public enum BiomeKind : byte
+    {
+        Grassland = 0,
+        Forest = 1,
+        Wetland = 2,
+        Rocky = 3
+    }
+
+    /// <summary>
+    /// Configurable ecological event kinds. Effects are applied through Environment
+    /// resource APIs, CreatureVitals, and Simulation lifecycle — never hidden state.
+    /// </summary>
+    public enum EnvironmentalEventKind : byte
+    {
+        Drought = 0,
+        Wildfire = 1,
+        HeatWave = 2,
+        FoodBoom = 3,
+        DiseasePressure = 4,
+        PredatorIntroduction = 5,
+        PredatorRemoval = 6
+    }
+
+    public enum DayNightPhase : byte
+    {
+        Day = 0,
+        Night = 1
+    }
 }

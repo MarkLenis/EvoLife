@@ -38,6 +38,8 @@ pytest -q
 
 - [Architecture](Docs/ARCHITECTURE.md)
 - [Reproduction / ecosystem lifecycle](Docs/REPRODUCTION.md)
+- [Environment](Docs/ENVIRONMENT.md)
+- [Environmental events](Docs/ENVIRONMENT_EVENTS.md)
 - [ML-Agents / PPO](Docs/AI_ML_AGENTS.md)
 - [Scripted baseline](Docs/SCRIPTED_BASELINE.md)
 - [Genetics](Docs/GENETICS.md)

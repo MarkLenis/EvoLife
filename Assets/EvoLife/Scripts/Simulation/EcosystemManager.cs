@@ -1,5 +1,6 @@
 using UnityEngine;
 using EvoLife.Common;
+using EvoLife.Environment;
 
 namespace EvoLife.Simulation
 {
@@ -19,10 +20,29 @@ namespace EvoLife.Simulation
         [SerializeField] GameObject herbivorePrefab;
         [SerializeField] GameObject predatorPrefab;
         [SerializeField] ReproductionConfig reproductionConfig;
+        [SerializeField] EnvironmentalCreatureBridge environmentalCreatures;
+        [SerializeField] EnvironmentalEventManager environmentalEvents;
+        [SerializeField] ResourceManager resourceManager;
+        [SerializeField] DayNightManager dayNight;
         [SerializeField] bool spawnFoundersOnStart = true;
 
         public SimulationConfig Config => config;
         public ExtinctionState CurrentExtinction => ExtinctionEvaluator.Evaluate(populationTracker);
+        public IReadOnlyDayNightState DayNight => dayNight;
+
+        public IReadOnlyEnvironmentState CaptureEnvironmentState()
+        {
+            if (environmentalEvents != null)
+            {
+                return environmentalEvents.CaptureState(dayNight, resourceManager);
+            }
+
+            return new EnvironmentStateSnapshot(
+                dayNight,
+                resourceManager != null ? resourceManager.CaptureCensus() : default,
+                System.Array.Empty<IReadOnlyEnvironmentalEvent>(),
+                resourceManager != null ? resourceManager.TemperatureNormalized : 0f);
+        }
 
         public void Configure(
             SimulationConfig simulationConfig,
@@ -83,6 +103,21 @@ namespace EvoLife.Simulation
                 herbivorePrefab,
                 predatorPrefab,
                 config.RandomSeed + 31);
+            environmentalCreatures?.Configure(
+                spawner,
+                lifecycleHub,
+                populationTracker,
+                config,
+                herbivorePrefab,
+                predatorPrefab,
+                transform,
+                config.RandomSeed + 53);
+            environmentalEvents?.Bind(
+                resourceManager,
+                environmentalCreatures,
+                environmentalCreatures,
+                eventConfig: null,
+                clock);
         }
 
         public void SpawnFounders()

@@ -255,6 +255,7 @@ namespace EvoLife.Tests
             public ResourceKind Kind { get; set; }
             public Vector3 Position { get; set; }
             public float AvailableAmount { get; set; } = 1f;
+            public float Capacity { get; set; } = 1f;
             public bool IsDepleted { get; set; }
             public float TryConsume(float requestedAmount) => 0f;
         }

@@ -2,7 +2,7 @@
 
 Analytics **observes** the simulation. It does not control biology, genetics, spawning, or policy behavior.
 
-Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [GENETICS.md](GENETICS.md), [REPRODUCTION.md](REPRODUCTION.md), [Backend/README.md](../Backend/README.md).
+Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md), [AI_ML_AGENTS.md](AI_ML_AGENTS.md), [GENETICS.md](GENETICS.md), [REPRODUCTION.md](REPRODUCTION.md), [ENVIRONMENT.md](ENVIRONMENT.md), [Backend/README.md](../Backend/README.md).
 
 ## Metric families
 
@@ -60,9 +60,10 @@ Always measurable:
 - `scriptedAlive` / `ppoAlive` (from live `IPolicyKindOwner` views)
 - `maxGeneration` among living observed creatures
 
-Not recorded (not currently measurable without inventing data):
+Not recorded on the HTTP snapshot yet (contracts exist; upload not wired):
 
-- plant counts (Environment census is not exposed to Analytics)
+- plant counts / density / abundance (`IReadOnlyResourceCensus`)
+- active ecological events and start/end times (`IReadOnlyEnvironmentalEvent`)
 - food/water consumed totals (biology does not accumulate them)
 - kills (no combat accounting yet)
 
@@ -204,7 +205,7 @@ Analytics assembly references **Common + Simulation** only (plus JSON). It does 
 - Experiment metadata includes `ecosystem_mode` (`persistent_ecosystem` vs `training_support`) and `training_respawn_enabled` so analytics can distinguish persistent ecosystems from training-support respawn.
 - Food, water, and kills are not recorded until those quantities are exposed on a read-only contract.
 - Episode return exists only when ML-Agents is present and a PPO episode has completed.
-- Plant counts are not observed.
+- Plant census and active events are readable via `IReadOnlyEnvironmentState` but are not uploaded on v1 `/stats` yet.
 - Unique snapshot time per run: do not post two snapshots at the exact same `simulation_time`.
 - Existing local SQLite files gain `policy_kind` via a lightweight `ALTER TABLE` on startup.
 - Bounded pending queues can drop the oldest unsent records if the backend stays down long enough to overflow.

@@ -16,6 +16,12 @@ namespace EvoLife.Environment
         ResourceKind Kind { get; }
         Vector3 Position { get; }
         float AvailableAmount { get; }
+
+        /// <summary>
+        /// Maximum stored amount. Infinite sources may return <see cref="float.PositiveInfinity"/>.
+        /// </summary>
+        float Capacity { get; }
+
         bool IsDepleted { get; }
 
         /// <summary>Attempts to consume up to requested amount. Returns amount actually taken.</summary>
