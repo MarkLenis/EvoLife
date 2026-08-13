@@ -13,9 +13,9 @@ namespace EvoLife.AI
 {
     /// <summary>
     /// ML-Agents Agent bridge for one EvoLife creature.
-    /// Reads observations, applies locomotion through <see cref="IActionExecutor"/>,
-    /// and scores rewards through <see cref="IEpisodeRewardCalculator"/>.
-    /// Does not own vitals or genetics.
+    /// Reads observations, applies CreatureActionSchema v2 through <see cref="IActionExecutor"/>
+    /// (local locomotion plus discrete interaction), and scores rewards through
+    /// <see cref="IEpisodeRewardCalculator"/>. Does not own vitals or genetics.
     /// </summary>
 #if EVOLIFE_MLAGENTS
     [RequireComponent(typeof(BehaviorParameters))]
@@ -57,6 +57,10 @@ namespace EvoLife.AI
         public int ObservationSize => CreatureObservationSchema.Size;
 
         public int ActionSize => CreatureActionSchema.ContinuousCount;
+
+        public int DiscreteBranchSize => CreatureActionSchema.InteractionBranchSize;
+
+        public int DiscreteBranchCount => CreatureActionSchema.DiscreteBranchCount;
 
         public bool ControlEnabled => controlEnabled;
 
@@ -167,17 +171,28 @@ namespace EvoLife.AI
             }
 
             EnsureBindings();
-            actionBuffer[CreatureActionSchema.IndexMoveX] = 0f;
-            actionBuffer[CreatureActionSchema.IndexMoveZ] = 0f;
+            actionBuffer[CreatureActionSchema.IndexForward] = 0f;
+            actionBuffer[CreatureActionSchema.IndexTurn] = 0f;
+            actionBuffer[CreatureActionSchema.IndexSprintOrEffort] = 0f;
             var continuous = actions.ContinuousActions;
             if (continuous.Length >= CreatureActionSchema.ContinuousCount)
             {
-                actionBuffer[CreatureActionSchema.IndexMoveX] = continuous[CreatureActionSchema.IndexMoveX];
-                actionBuffer[CreatureActionSchema.IndexMoveZ] = continuous[CreatureActionSchema.IndexMoveZ];
+                actionBuffer[CreatureActionSchema.IndexForward] = continuous[CreatureActionSchema.IndexForward];
+                actionBuffer[CreatureActionSchema.IndexTurn] = continuous[CreatureActionSchema.IndexTurn];
+                actionBuffer[CreatureActionSchema.IndexSprintOrEffort] =
+                    continuous[CreatureActionSchema.IndexSprintOrEffort];
+            }
+
+            var interaction = CreatureActionSchema.InteractionNone;
+            var discrete = actions.DiscreteActions;
+            if (discrete.Length > 0)
+            {
+                interaction = discrete[0];
             }
 
             CreatureActionSchema.ClampTo(actionBuffer, actionBuffer);
-            executor?.ApplyActions(actionBuffer);
+            interaction = CreatureActionSchema.ClampInteraction(interaction);
+            executor?.ApplyActions(actionBuffer, interaction);
 
             var signal = rewards != null
                 ? rewards.Evaluate(vitals)
@@ -193,13 +208,18 @@ namespace EvoLife.AI
         public override void Heuristic(in ActionBuffers actionsOut)
         {
             var continuous = actionsOut.ContinuousActions;
-            if (continuous.Length < CreatureActionSchema.ContinuousCount)
+            if (continuous.Length >= CreatureActionSchema.ContinuousCount)
             {
-                return;
+                continuous[CreatureActionSchema.IndexForward] = Input.GetAxisRaw("Vertical");
+                continuous[CreatureActionSchema.IndexTurn] = Input.GetAxisRaw("Horizontal");
+                continuous[CreatureActionSchema.IndexSprintOrEffort] = Input.GetKey(KeyCode.LeftShift) ? 1f : 0f;
             }
 
-            continuous[CreatureActionSchema.IndexMoveX] = Input.GetAxisRaw("Horizontal");
-            continuous[CreatureActionSchema.IndexMoveZ] = Input.GetAxisRaw("Vertical");
+            var discrete = actionsOut.DiscreteActions;
+            if (discrete.Length > 0)
+            {
+                discrete[0] = CreatureActionSchema.InteractionNone;
+            }
         }
 
         void OnDestroy()
@@ -252,7 +272,9 @@ namespace EvoLife.AI
                 identity != null ? identity.Role : CreatureRoleOrDefault());
             parameters.BrainParameters.VectorObservationSize = CreatureObservationSchema.Size;
             parameters.BrainParameters.NumStackedVectorObservations = 1;
-            parameters.BrainParameters.ActionSpec = ActionSpec.MakeContinuous(CreatureActionSchema.ContinuousCount);
+            parameters.BrainParameters.ActionSpec = new ActionSpec(
+                CreatureActionSchema.ContinuousCount,
+                new[] { CreatureActionSchema.InteractionBranchSize });
         }
 #else
         void Awake()

@@ -111,7 +111,7 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
 | `IObservationSource` / `IActionExecutor` / `IRewardCalculator` | AI | RL plumbing |
 | `ICreaturePolicy` | AI | Scripted vs PPO step API (`ScriptedBaselinePolicy` heuristic, `EvoLifeCreatureAgent` / `PpoPolicyAdapter`) |
 | `EvoLifeCreatureAgent` | AI | ML-Agents Agent bridge (`EvoLifeHerbivore` / `EvoLifePredator`) |
-| `CreatureObservationSchema` | AI | Documented observation size/order (v1, size 28) |
+| `CreatureObservationSchema` | AI | Documented observation size/order (v2, size 31) |
 | `IStatisticCollector` | Analytics | Snapshot production |
 | `AnalyticsSnapshotBuilder` / `CreatureLifetimeFactory` / `GenerationAggregator` | Analytics | Pure experiment metrics |
 | `CreatureLifecycleHub` | Simulation | Spawn/death fan-out for observers |
@@ -136,10 +136,10 @@ Avoid “god managers.” `SimulationRunner` only fans out ticks; it must not ac
    `CreatureBrain` selects exclusive control: `ScriptedBaselinePolicy` or `EvoLifeCreatureAgent` (learned PPO). Policy reads observations (vitals + genetics + optional local sensors), computes/receives actions, applies them via `IActionExecutor`. Scripted and PPO never run on the same creature at once. The scripted baseline is a utility/priority heuristic over the same observation schema; see [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md).
 
 5. **Act / interact**  
-   Movement uses `IActionExecutor`. Eat/drink/attack use Environment `IResourceNode` and Creatures APIs (`ConsumeFood`, `Drink`, `ApplyDamage`). AI does not bypass these or write vital fields. PPO currently has locomotion-only actions; the scripted baseline may call those owner APIs when a locally sensed target is in range ([SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md)).
+   Movement and eat/drink/attack/rest/reproduce_request use the same canonical `IActionExecutor` path (`PlanarMoveActionExecutor` + `LocalCreatureInteractor`). Eat/drink/attack call Environment `IResourceNode` and Creatures APIs (`ConsumeFood`, `Drink`, `ApplyDamage`). AI does not bypass these or write vital fields. PPO and the scripted baseline share CreatureObservationSchema v2 and CreatureActionSchema v2 ([AI_ML_AGENTS.md](AI_ML_AGENTS.md), [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md)). `reproduce_request` is reserved for a future reproduction system and is a no-op until that executor is attached.
 
 6. **Measure**  
-   `PopulationStatisticCollector` builds `SimulationStatsSnapshot`. `CreatureLifetimeRecorder` observes spawn/death via `CreatureLifecycleHub` (Common contracts). `StatsExportLoop` batches POSTs to FastAPI via `BackendClient` (v1 `/stats` or extended run/snapshot/creature/generation endpoints). See [ANALYTICS.md](ANALYTICS.md).
+   `PopulationStatisticCollector` builds `SimulationStatsSnapshot`. `CreatureLifetimeRecorder` observes spawn/death via `CreatureLifecycleHub` (Common contracts). `StatsExportLoop` batches POSTs to FastAPI via `BackendClient` (v1 `/stats` or extended run/snapshot/creature/generation endpoints). Failed POSTs retain pending records until a later successful flush (bounded FIFO overflow). See [ANALYTICS.md](ANALYTICS.md).
 
 7. **Present**  
    `SimulationHud` renders collector/clock data only.
@@ -170,7 +170,7 @@ Rules:
 - Observations may include `GeneticObservationProvider` normalized genes and phenotype-derived sensory range, but **do not** mutate genomes.
 - Hunger/thirst observations must use `IReadOnlyVitalState.MaxHunger` / `MaxThirst`, not a hard-coded 100.
 - `PpoPolicyAdapter` is an idle fallback when the Agent or ML-Agents package is missing. It is not a second PPO implementation.
-- Behavior names: `EvoLifeHerbivore` and `EvoLifePredator` (`MlAgentsBehaviorNames`). Observation layout: `CreatureObservationSchema` (size 28). See [AI_ML_AGENTS.md](AI_ML_AGENTS.md).
+- Behavior names: `EvoLifeHerbivore` and `EvoLifePredator` (`MlAgentsBehaviorNames`). Observation layout: `CreatureObservationSchema` v2 (size 31). Action layout: `CreatureActionSchema` v2 (3 continuous + discrete interaction branch of size 6). See [AI_ML_AGENTS.md](AI_ML_AGENTS.md).
 
 Training configs live in `Training/configs/*.yaml` and must use those same behavior names.
 

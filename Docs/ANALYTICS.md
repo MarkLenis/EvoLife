@@ -39,9 +39,13 @@ ExperimentSession  --POST /api/v1/runs-->  FastAPI SimulationRun
                 └─ POST /api/v1/runs/{id}/generations   (upsert by species+generation)
 ```
 
-If run creation or upload fails, Unity logs a warning and the simulation continues. Local collectors still capture in-memory.
+If run creation or upload fails, Unity logs a warning (throttled to the export interval) and the simulation continues. Local collectors still capture in-memory.
 
-Fallback: when the extended run was not created, `StatsExportLoop` posts the v1 `POST /api/v1/stats` payload only (population snapshot). Creature/generation uploads require a successful run id.
+Pending snapshot, lifetime, and generation records are **retained until a POST is confirmed successful**. `AnalyticsExportController` keeps bounded queues (default 64 snapshots, 256 lifetime records). One flush may be in flight at a time; records added during a flush are not dequeued with that batch.
+
+**Overflow policy:** when a pending queue is full, the oldest record is dropped (FIFO) so memory cannot grow forever. Overflow is logged at most once per export interval.
+
+Fallback: when the extended run was not created, `StatsExportLoop` posts the v1 `POST /api/v1/stats` payload only (population snapshot), with the same retain-until-success behavior. Creature/generation uploads require a successful run id.
 
 ## What gets recorded
 
@@ -187,7 +191,8 @@ curl "http://127.0.0.1:8000/api/v1/runs/$RUN/population-series"
 | `CreatureLifetimeRecorder` | Subscribes to `CreatureLifecycleHub` |
 | `GenerationAnalyticsCollector` | Upload-shaped generation rows |
 | `ExperimentSession` | Creates the backend run |
-| `StatsExportLoop` | Batching |
+| `StatsExportLoop` | Interval capture + bounded retry queues |
+| `AnalyticsExportController` | Pure pending-queue / in-flight / overflow logic |
 | `BackendClient` | Existing HTTP client (v1 + extended) |
 
 Analytics assembly references **Common + Simulation** only (plus JSON). It does not reference Creatures, Genetics, or AI.
@@ -200,3 +205,4 @@ Analytics assembly references **Common + Simulation** only (plus JSON). It does 
 - Plant counts are not observed.
 - Unique snapshot time per run: do not post two snapshots at the exact same `simulation_time`.
 - Existing local SQLite files gain `policy_kind` via a lightweight `ALTER TABLE` on startup.
+- Bounded pending queues can drop the oldest unsent records if the backend stays down long enough to overflow.

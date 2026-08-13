@@ -20,7 +20,7 @@ namespace EvoLife.Tests
                 food: true));
 
             Assert.AreEqual(BaselineMotive.SeekWater, decision.Motive);
-            Assert.Greater(decision.MoveZ, 0.5f);
+            Assert.Greater(decision.Forward, 0.5f);
             Assert.IsFalse(decision.TryEat);
         }
 
@@ -37,7 +37,7 @@ namespace EvoLife.Tests
                 water: true));
 
             Assert.AreEqual(BaselineMotive.SeekFood, decision.Motive);
-            Assert.Less(decision.MoveX, -0.5f);
+            Assert.Less(decision.Turn, -0.5f);
             Assert.IsFalse(decision.TryDrink);
         }
 
@@ -56,7 +56,7 @@ namespace EvoLife.Tests
                 nearbyDistance: 0.25f));
 
             Assert.AreEqual(BaselineMotive.Flee, decision.Motive);
-            Assert.Less(decision.MoveX, 0f);
+            Assert.Less(decision.Turn, 0f);
         }
 
         [Test]
@@ -68,8 +68,8 @@ namespace EvoLife.Tests
                 energy: 0.10f));
 
             Assert.AreEqual(BaselineMotive.Rest, decision.Motive);
-            Assert.AreEqual(0f, decision.MoveX, 0.0001f);
-            Assert.AreEqual(0f, decision.MoveZ, 0.0001f);
+            Assert.AreEqual(0f, decision.Forward, 0.0001f);
+            Assert.AreEqual(0f, decision.Turn, 0.0001f);
             Assert.IsTrue(decision.Rest);
         }
 
@@ -153,7 +153,7 @@ namespace EvoLife.Tests
                 nearbyDistance: 0.30f));
 
             Assert.AreEqual(BaselineMotive.SeekWater, decision.Motive);
-            Assert.Greater(decision.MoveZ, 0.5f);
+            Assert.Greater(decision.Forward, 0.5f);
         }
 
         [Test]
@@ -170,7 +170,7 @@ namespace EvoLife.Tests
                 nearbyDistance: 0.40f));
 
             Assert.AreEqual(BaselineMotive.Hunt, decision.Motive);
-            Assert.Greater(decision.MoveZ, 0.5f);
+            Assert.Greater(decision.Forward, 0.5f);
         }
 
         [Test]
@@ -262,8 +262,8 @@ namespace EvoLife.Tests
                 world, new BaselineMemory(), settings, CreatureRole.Herbivore, 0.02f);
 
             Assert.AreEqual(a.Motive, b.Motive);
-            Assert.AreEqual(a.MoveX, b.MoveX, 0.0001f);
-            Assert.AreEqual(a.MoveZ, b.MoveZ, 0.0001f);
+            Assert.AreEqual(a.Forward, b.Forward, 0.0001f);
+            Assert.AreEqual(a.Turn, b.Turn, 0.0001f);
         }
 
         [Test]
@@ -277,8 +277,8 @@ namespace EvoLife.Tests
                 waterDistance: 0f));
 
             Assert.AreEqual(BaselineMotive.SeekWater, decision.Motive);
-            Assert.AreEqual(0f, decision.MoveX, 0.0001f);
-            Assert.AreEqual(0f, decision.MoveZ, 0.0001f);
+            Assert.AreEqual(0f, decision.Forward, 0.0001f);
+            Assert.AreEqual(0f, decision.Turn, 0.0001f);
             Assert.IsTrue(decision.TryDrink);
         }
 
@@ -293,6 +293,57 @@ namespace EvoLife.Tests
                     ScriptedBaselineSettings.HerbivoreDefaults(),
                     CreatureRole.Herbivore,
                     0.02f));
+        }
+
+        [Test]
+        public void Herbivore_FleeTurnsAwayFromPredator()
+        {
+            var decision = EvaluateHerbivore(BaselineTestObservations.Herbivore(
+                energy: 0.80f,
+                nearby: true,
+                nearbyRole: 1f,
+                nearbyDirX: 1f,
+                nearbyDirZ: 0f,
+                nearbyDistance: 0.20f));
+
+            Assert.AreEqual(BaselineMotive.Flee, decision.Motive);
+            Assert.Less(decision.Turn, -0.5f);
+            Assert.Greater(decision.SprintOrEffort, 0.5f);
+        }
+
+        [Test]
+        public void Predator_SteersTowardPreyForward()
+        {
+            var decision = EvaluatePredator(BaselineTestObservations.Predator(
+                hunger: 0.80f,
+                nearby: true,
+                nearbyRole: 0f,
+                nearbyDirX: 0f,
+                nearbyDirZ: 1f,
+                nearbyDistance: 0.40f));
+
+            Assert.AreEqual(BaselineMotive.Hunt, decision.Motive);
+            Assert.Greater(decision.Forward, 0.5f);
+            Assert.Greater(decision.SprintOrEffort, 0.5f);
+        }
+
+        [Test]
+        public void Herbivore_NearbyHerbivoreDoesNotHidePredatorThreat()
+        {
+            var decision = EvaluateHerbivore(BaselineTestObservations.BothRoles(
+                hunger: 0.90f,
+                energy: 0.80f,
+                herbivore: true,
+                herbivoreDirX: 1f,
+                herbivoreDirZ: 0f,
+                herbivoreDistance: 0.05f,
+                predator: true,
+                predatorDirX: -1f,
+                predatorDirZ: 0f,
+                predatorDistance: 0.25f));
+
+            Assert.AreEqual(BaselineMotive.Flee, decision.Motive);
+            Assert.Greater(decision.Turn, 0.5f);
         }
 
         static BaselineDecision EvaluateHerbivore(float[] observations)
@@ -316,6 +367,6 @@ namespace EvoLife.Tests
         }
 
         static float MoveMagnitude(BaselineDecision decision) =>
-            Mathf.Sqrt(decision.MoveX * decision.MoveX + decision.MoveZ * decision.MoveZ);
+            Mathf.Sqrt(decision.Forward * decision.Forward + decision.Turn * decision.Turn);
     }
 }

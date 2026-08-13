@@ -24,7 +24,7 @@ namespace EvoLife.AI
             }
 
             CreatureActionSchema.ClampTo(null, lastActions);
-            actionExecutor.ApplyActions(lastActions);
+            actionExecutor.ApplyActions(lastActions, CreatureActionSchema.InteractionNone);
             _ = rewardCalculator?.CalculateReward(vitals, vitals != null && !vitals.IsAlive);
         }
     }

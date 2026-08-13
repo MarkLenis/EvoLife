@@ -22,10 +22,10 @@ This guide prevents duplicate systems when multiple human or coding agents work 
 | Experiment/sim config assets | **Simulation** | `SimulationConfig` | Backend (Backend stores experiment *records*) |
 | Tick fan-out | **Simulation** | `SimulationRunner` | — keep this thin |
 | Observations | **AI** | `IObservationSource`, `VitalObservationSource`, `CompositeObservationSource`, `CreatureObservationSchema` | Creatures, Environment |
-| Actions / locomotion intent | **AI** | `IActionExecutor`, `PlanarMoveActionExecutor`, `CreatureActionSchema` | Simulation |
+| Actions / locomotion intent | **AI** | `IActionExecutor`, `PlanarMoveActionExecutor`, `CreatureActionSchema`, `LocalCreatureInteractor` | Simulation |
 | Rewards | **AI** | `IRewardCalculator`, `TrainingRewardCalculator`, `SurvivalRewardCalculator` | Creatures |
 | Scripted baseline vs PPO policy | **AI** | `CreatureBrain`, `ScriptedBaselinePolicy`, `BaselineMotiveEvaluator`, `ScriptedBaselineSettings` / `ScriptedBaselineProfile`, `EvoLifeCreatureAgent`, `PpoPolicyAdapter` (idle fallback) | Simulation |
-| Stats snapshots + HTTP upload | **Analytics** | `SimulationStatsSnapshot`, `BackendClient`, collectors, lifetime/generation records | Simulation, UI, Creatures, AI |
+| Stats snapshots + HTTP upload | **Analytics** | `SimulationStatsSnapshot`, `BackendClient`, `StatsExportLoop`, `AnalyticsExportController`, collectors, lifetime/generation records | Simulation, UI, Creatures, AI |
 | HUD / presentation | **UI** | `SimulationHud` | Domain modules |
 | Shared contracts only | **Common** | `IReadOnly*`, `IPolicyKindOwner`, IDs, enums | Gameplay behavior |
 | REST experiment/stats API | **Backend** | FastAPI `app/` | Unity (except DTO field alignment) |
@@ -107,5 +107,7 @@ After Unity-side changes, a human (or Unity-equipped runner) should confirm:
 - [ ] Creature prefab has exactly one owner component per concern (vitals, genome, brain)  
 - [ ] ML-Agents package imports and `EVOLIFE_MLAGENTS` define appears when expected
 - [ ] `EvoLifeCreatureAgent` Behavior Parameters names are `EvoLifeHerbivore` / `EvoLifePredator`
-- [ ] Observation vector size is 28 (`CreatureObservationSchema`)
-- [ ] Scripted baseline EditMode tests pass (`BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`)  
+- [ ] Observation vector size is 31 (`CreatureObservationSchema` v2)
+- [ ] Action space is 3 continuous + 1 discrete branch of size 6 (`CreatureActionSchema` v2)
+- [ ] Scripted baseline EditMode tests pass (`BaselineMotiveEvaluatorTests`, `ScriptedBaselinePolicyTests`)
+- [ ] Analytics export retention tests pass (`AnalyticsExportControllerTests`)  

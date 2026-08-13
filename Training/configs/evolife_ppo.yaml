@@ -2,7 +2,8 @@
 # Behavior names MUST match Unity Behavior Parameters:
 #   EvoLifeHerbivore
 #   EvoLifePredator
-# Observation size: 28  |  Actions: 2 continuous (move_x, move_z)
+# Observation size: 31  |  Actions: 3 continuous (forward, turn, sprint_or_effort)
+#                       + 1 discrete branch of size 6 (none/eat/drink/attack/rest/reproduce_request)
 # Starter values only — not claimed optima.
 behaviors:
   EvoLifeHerbivore:

@@ -159,8 +159,42 @@ namespace EvoLife.Tests
 
             for (var i = 0; i < CreatureObservationSchema.NearbyCreatureCount; i++)
             {
-                Assert.AreEqual(0f, buffer[CreatureObservationSchema.IndexNearbyCreature + i], 0.0001f);
+                Assert.AreEqual(0f, buffer[CreatureObservationSchema.IndexHerbivore + i], 0.0001f);
             }
+        }
+
+        [Test]
+        public void NearbyHerbivoreDoesNotHidePredator()
+        {
+            var sensor = new StaticCreatureProximitySensor(
+                () => Vector3.zero,
+                () => 10f,
+                herbivoreTarget: () => new Vector3(1f, 0f, 0f),
+                predatorTarget: () => new Vector3(0f, 0f, 8f));
+            var buffer = new float[CreatureObservationSchema.Size];
+            new CompositeObservationSource(new StubVitalState(), creatureSensor: sensor).WriteObservations(buffer);
+
+            Assert.AreEqual(1f, buffer[CreatureObservationSchema.IndexHerbivore + CreatureObservationSchema.OffsetPresent], 0.0001f);
+            Assert.AreEqual(1f, buffer[CreatureObservationSchema.IndexPredator + CreatureObservationSchema.OffsetPresent], 0.0001f);
+            Assert.AreEqual(0.1f, buffer[CreatureObservationSchema.IndexHerbivore + CreatureObservationSchema.OffsetDistance], 0.0001f);
+            Assert.AreEqual(0.8f, buffer[CreatureObservationSchema.IndexPredator + CreatureObservationSchema.OffsetDistance], 0.0001f);
+        }
+
+        [Test]
+        public void NearbyPredatorDoesNotHideHerbivore()
+        {
+            var sensor = new StaticCreatureProximitySensor(
+                () => Vector3.zero,
+                () => 10f,
+                herbivoreTarget: () => new Vector3(0f, 0f, 9f),
+                predatorTarget: () => new Vector3(-1f, 0f, 0f));
+            var buffer = new float[CreatureObservationSchema.Size];
+            new CompositeObservationSource(new StubVitalState(), creatureSensor: sensor).WriteObservations(buffer);
+
+            Assert.AreEqual(1f, buffer[CreatureObservationSchema.IndexHerbivore + CreatureObservationSchema.OffsetPresent], 0.0001f);
+            Assert.AreEqual(1f, buffer[CreatureObservationSchema.IndexPredator + CreatureObservationSchema.OffsetPresent], 0.0001f);
+            Assert.Greater(buffer[CreatureObservationSchema.IndexHerbivore + CreatureObservationSchema.OffsetDistance],
+                buffer[CreatureObservationSchema.IndexPredator + CreatureObservationSchema.OffsetDistance]);
         }
 
         [Test]
@@ -178,8 +212,8 @@ namespace EvoLife.Tests
             var creature = new StaticCreatureProximitySensor(
                 () => Vector3.zero,
                 () => 10f,
-                () => new Vector3(-2f, 0f, 2f),
-                () => CreatureRole.Herbivore);
+                herbivoreTarget: () => new Vector3(-2f, 0f, 2f),
+                predatorTarget: () => new Vector3(2f, 0f, -2f));
 
             var buffer = new float[CreatureObservationSchema.Size];
             new CompositeObservationSource(
@@ -193,8 +227,12 @@ namespace EvoLife.Tests
             AssertSignedDirection(buffer[CreatureObservationSchema.IndexFood]);
             AssertSignedDirection(buffer[CreatureObservationSchema.IndexFood + 1]);
             AssertUnitRange(buffer, CreatureObservationSchema.IndexFood + 2, CreatureObservationSchema.IndexFood + 3);
-            AssertSignedDirection(buffer[CreatureObservationSchema.IndexNearbyCreature]);
-            AssertSignedDirection(buffer[CreatureObservationSchema.IndexNearbyCreature + 1]);
+            AssertSignedDirection(buffer[CreatureObservationSchema.IndexHerbivore]);
+            AssertSignedDirection(buffer[CreatureObservationSchema.IndexHerbivore + 1]);
+            AssertUnitRange(
+                buffer,
+                CreatureObservationSchema.IndexHerbivore + CreatureObservationSchema.OffsetDistance,
+                CreatureObservationSchema.IndexPredator + CreatureObservationSchema.OffsetPresent);
         }
 
         static void AssertUnitRange(float[] buffer, int start, int end)

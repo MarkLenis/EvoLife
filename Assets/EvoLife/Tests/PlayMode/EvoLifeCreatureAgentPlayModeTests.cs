@@ -33,7 +33,11 @@ namespace EvoLife.Tests
                 yield return null;
                 Assert.NotNull(agent);
                 Assert.AreEqual(CreatureObservationSchema.Size, agent.ObservationSize);
+                Assert.AreEqual(31, agent.ObservationSize);
                 Assert.AreEqual(CreatureActionSchema.ContinuousCount, agent.ActionSize);
+                Assert.AreEqual(3, agent.ActionSize);
+                Assert.AreEqual(6, agent.DiscreteBranchSize);
+                Assert.AreEqual(1, agent.DiscreteBranchCount);
             }
             finally
             {

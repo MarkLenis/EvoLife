@@ -6,8 +6,9 @@ using EvoLife.Creatures;
 namespace EvoLife.AI
 {
     /// <summary>
-    /// Optional nearby-creature sensor using physics overlap. Returns zeros when Physics
-    /// finds nothing (no colliders, no other identities). Does not use Simulation registries.
+    /// Optional nearby-creature sensor using one physics overlap. Derives nearest herbivore
+    /// and nearest predator from the same local query. Returns zeros when Physics finds
+    /// nothing (no colliders, no other identities). Does not use Simulation registries.
     /// </summary>
     public sealed class PhysicsCreatureProximitySensor : ICreatureProximitySensor
     {
@@ -25,19 +26,20 @@ namespace EvoLife.AI
             this.self = self;
         }
 
-        public void WriteNearest(float[] buffer, int offset)
+        public void WriteNearestRoles(float[] buffer, int herbivoreOffset, int predatorOffset)
         {
             var range = senseRange != null ? senseRange() : 0f;
             if (origin == null || range <= 0f)
             {
-                WriteEmpty(buffer, offset);
+                WriteEmpty(buffer, herbivoreOffset, predatorOffset);
                 return;
             }
 
             var count = Physics.OverlapSphereNonAlloc(origin.position, range, colliderBuffer);
-            Transform best = null;
-            ICreatureIdentity bestIdentity = null;
-            var bestSqr = range * range;
+            Transform bestHerbivore = null;
+            Transform bestPredator = null;
+            var bestHerbivoreSqr = range * range;
+            var bestPredatorSqr = range * range;
 
             for (var i = 0; i < count; i++)
             {
@@ -53,92 +55,109 @@ namespace EvoLife.AI
                     continue;
                 }
 
-                var sqr = (col.transform.position - origin.position).sqrMagnitude;
-                if (sqr <= bestSqr)
+                var targetVitals = col.GetComponentInParent<CreatureVitals>();
+                if (targetVitals != null && !targetVitals.IsAlive)
                 {
-                    bestSqr = sqr;
-                    best = col.transform;
-                    bestIdentity = identity;
+                    continue;
+                }
+
+                var sqr = (col.transform.position - origin.position).sqrMagnitude;
+                if (identity.Role == CreatureRole.Predator)
+                {
+                    if (sqr <= bestPredatorSqr)
+                    {
+                        bestPredatorSqr = sqr;
+                        bestPredator = col.transform;
+                    }
+                }
+                else if (sqr <= bestHerbivoreSqr)
+                {
+                    bestHerbivoreSqr = sqr;
+                    bestHerbivore = col.transform;
                 }
             }
 
-            if (best == null || bestIdentity == null)
-            {
-                WriteEmpty(buffer, offset);
-                return;
-            }
+            WriteTarget(buffer, herbivoreOffset, origin, range, bestHerbivore);
+            WriteTarget(buffer, predatorOffset, origin, range, bestPredator);
+        }
 
+        static void WriteTarget(
+            float[] buffer,
+            int offset,
+            Transform origin,
+            float range,
+            Transform target)
+        {
+            var present = target != null;
             ObservationMath.WriteLocalProximity(
                 buffer,
                 offset,
                 origin.position,
                 origin.rotation,
-                best.position,
+                present ? target.position : origin.position,
                 range,
-                present: true);
-
-            if (buffer != null && buffer.Length > offset + CreatureObservationSchema.OffsetCreatureRole)
-            {
-                buffer[offset + CreatureObservationSchema.OffsetCreatureRole] =
-                    ObservationMath.RoleToObservation(bestIdentity.Role);
-                buffer[offset + CreatureObservationSchema.OffsetCreaturePresent] = 1f;
-            }
+                present);
         }
 
-        static void WriteEmpty(float[] buffer, int offset) =>
-            ObservationMath.WriteZeros(buffer, offset, CreatureObservationSchema.NearbyCreatureCount);
+        static void WriteEmpty(float[] buffer, int herbivoreOffset, int predatorOffset)
+        {
+            ObservationMath.WriteZeros(buffer, herbivoreOffset, CreatureObservationSchema.ResourceChannelCount);
+            ObservationMath.WriteZeros(buffer, predatorOffset, CreatureObservationSchema.ResourceChannelCount);
+        }
     }
 
     /// <summary>
-    /// Test/stub sensor that writes a provided nearby creature, or zeros when absent.
+    /// Test/stub sensor that writes independent herbivore and predator targets, or zeros when absent.
     /// </summary>
     public sealed class StaticCreatureProximitySensor : ICreatureProximitySensor
     {
         readonly Func<Vector3> origin;
         readonly Func<Quaternion> rotation;
         readonly Func<float> senseRange;
-        readonly Func<Vector3?> target;
-        readonly Func<CreatureRole?> targetRole;
+        readonly Func<Vector3?> herbivoreTarget;
+        readonly Func<Vector3?> predatorTarget;
 
         public StaticCreatureProximitySensor(
             Func<Vector3> origin,
             Func<float> senseRange,
-            Func<Vector3?> target,
-            Func<CreatureRole?> targetRole,
+            Func<Vector3?> herbivoreTarget,
+            Func<Vector3?> predatorTarget,
             Func<Quaternion> rotation = null)
         {
             this.origin = origin;
             this.senseRange = senseRange;
-            this.target = target;
-            this.targetRole = targetRole;
+            this.herbivoreTarget = herbivoreTarget;
+            this.predatorTarget = predatorTarget;
             this.rotation = rotation ?? (() => Quaternion.identity);
         }
 
-        public void WriteNearest(float[] buffer, int offset)
+        public void WriteNearestRoles(float[] buffer, int herbivoreOffset, int predatorOffset)
         {
             var range = senseRange != null ? senseRange() : 0f;
             var position = origin != null ? origin() : Vector3.zero;
-            var targetPos = target?.Invoke();
-            var role = targetRole?.Invoke();
-            var present = targetPos.HasValue && role.HasValue && range > 0f;
+            var rot = rotation != null ? rotation() : Quaternion.identity;
+            WriteOne(buffer, herbivoreOffset, position, rot, range, herbivoreTarget);
+            WriteOne(buffer, predatorOffset, position, rot, range, predatorTarget);
+        }
 
+        static void WriteOne(
+            float[] buffer,
+            int offset,
+            Vector3 position,
+            Quaternion rotation,
+            float range,
+            Func<Vector3?> target)
+        {
+            var targetPos = target?.Invoke();
+            var present = targetPos.HasValue && range > 0f;
             ObservationMath.WriteLocalProximity(
                 buffer,
                 offset,
                 position,
-                rotation(),
+                rotation,
                 present ? targetPos.Value : position,
                 range,
                 present);
-
-            if (buffer == null || buffer.Length < offset + CreatureObservationSchema.NearbyCreatureCount)
-            {
-                return;
-            }
-
-            buffer[offset + CreatureObservationSchema.OffsetCreatureRole] =
-                present ? ObservationMath.RoleToObservation(role.Value) : 0f;
-            buffer[offset + CreatureObservationSchema.OffsetCreaturePresent] = present ? 1f : 0f;
         }
     }
 }

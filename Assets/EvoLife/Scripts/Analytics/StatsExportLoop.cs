@@ -5,7 +5,9 @@ namespace EvoLife.Analytics
 {
     /// <summary>
     /// Periodically captures and batches statistics. Never posts every frame.
-    /// Backend failures are ignored so the simulation can continue.
+    /// Pending records are retained until a POST is confirmed successful. Temporary backend
+    /// failures do not discard data; overflow drops the oldest queued records when the
+    /// bounded backlog is full. Simulation continues if FastAPI is unavailable.
     /// </summary>
     public sealed class StatsExportLoop : MonoBehaviour
     {
@@ -19,10 +21,24 @@ namespace EvoLife.Analytics
         [SerializeField] bool uploadToBackend;
         [SerializeField] bool useExtendedRunApi = true;
         [SerializeField] bool uploadGenerationSummaries = true;
+        [SerializeField] int maxPendingSnapshots = 64;
+        [SerializeField] int maxPendingLifetimeRecords = 256;
 
         float elapsed;
-        readonly List<SnapshotCreateDto> snapshotBuffer = new List<SnapshotCreateDto>();
         bool generationDirty = true;
+        float lastWarningUnscaledTime = -999f;
+        AnalyticsExportController exportController;
+
+        public AnalyticsExportController ExportController =>
+            exportController ?? (exportController = CreateController());
+
+        void Awake()
+        {
+            exportController = CreateController();
+        }
+
+        AnalyticsExportController CreateController() =>
+            new AnalyticsExportController(maxPendingSnapshots, maxPendingLifetimeRecords, maxPendingSnapshots);
 
         void Update()
         {
@@ -45,7 +61,8 @@ namespace EvoLife.Analytics
         {
             if (uploadToBackend)
             {
-                Flush(force: true);
+                EnqueuePendingUploads();
+                _ = FlushAsync(force: true);
             }
         }
 
@@ -60,6 +77,7 @@ namespace EvoLife.Analytics
             }
 
             var snapshot = collector.Capture();
+
             if (!uploadToBackend || backendClient == null)
             {
                 return;
@@ -70,37 +88,33 @@ namespace EvoLife.Analytics
                 return;
             }
 
-            if (CanUseExtendedApi)
-            {
-                snapshotBuffer.Add(AnalyticsDtoMapper.ToSnapshotDto(snapshot));
-                Flush(force: snapshotBuffer.Count >= Mathf.Max(1, snapshotBatchSize));
-            }
-            else
-            {
-                _ = backendClient.PostSnapshotAsync(snapshot);
-            }
+            EnqueuePendingUploads(snapshot);
+            _ = FlushAsync(force: false);
         }
 
-        void Flush(bool force)
+        void EnqueuePendingUploads(SimulationStatsSnapshot snapshot = null)
         {
-            if (!CanUseExtendedApi || backendClient == null)
+            if (!uploadToBackend || backendClient == null)
             {
-                snapshotBuffer.Clear();
                 return;
             }
 
-            var runId = experimentSession.RunId;
-            if (snapshotBuffer.Count > 0 && (force || snapshotBuffer.Count >= Mathf.Max(1, snapshotBatchSize)))
+            if (snapshot != null)
             {
-                var batch = new List<SnapshotCreateDto>(snapshotBuffer);
-                snapshotBuffer.Clear();
-                _ = backendClient.PostSnapshotBatchAsync(runId, batch);
+                if (CanUseExtendedApi)
+                {
+                    ExportController.EnqueueSnapshot(AnalyticsDtoMapper.ToSnapshotDto(snapshot));
+                }
+                else
+                {
+                    ExportController.EnqueueV1Snapshot(snapshot);
+                }
             }
 
             if (lifetimeRecorder != null)
             {
                 var records = lifetimeRecorder.DrainCompleted();
-                if (records.Count > 0)
+                if (records != null && records.Count > 0)
                 {
                     var dtos = new List<CreatureLifeRecordDto>(records.Count);
                     for (var i = 0; i < records.Count; i++)
@@ -108,21 +122,122 @@ namespace EvoLife.Analytics
                         dtos.Add(AnalyticsDtoMapper.ToCreatureDto(records[i]));
                     }
 
-                    _ = backendClient.PostCreatureRecordsAsync(runId, dtos);
+                    ExportController.EnqueueLifetimes(dtos);
                     generationDirty = true;
                 }
             }
 
-            if (uploadGenerationSummaries && generationCollector != null && (force || generationDirty))
+            if (uploadGenerationSummaries && generationCollector != null && generationDirty)
             {
                 var summaries = generationCollector.CaptureUploadSummaries();
-                if (summaries.Count > 0)
+                if (summaries != null && summaries.Count > 0)
                 {
-                    _ = backendClient.PostGenerationSummariesAsync(runId, summaries);
+                    ExportController.ReplaceGenerations(summaries);
                 }
 
                 generationDirty = false;
             }
+        }
+
+        async System.Threading.Tasks.Task FlushAsync(bool force)
+        {
+            if (!uploadToBackend || backendClient == null)
+            {
+                return;
+            }
+
+            if (ExportController.FlushInFlight)
+            {
+                return;
+            }
+
+            if (!force
+                && CanUseExtendedApi
+                && ExportController.PendingSnapshotCount < Mathf.Max(1, snapshotBatchSize)
+                && ExportController.PendingLifetimeCount == 0
+                && ExportController.PendingGenerationCount == 0)
+            {
+                return;
+            }
+
+            var batch = ExportController.TryBeginFlush();
+            if (batch == null)
+            {
+                return;
+            }
+
+            var snapshotsOk = true;
+            var lifetimesOk = true;
+            var generationsOk = true;
+            var v1SuccessCount = 0;
+
+            try
+            {
+                if (CanUseExtendedApi)
+                {
+                    var runId = experimentSession.RunId;
+                    if (batch.Snapshots != null && batch.Snapshots.Count > 0)
+                    {
+                        snapshotsOk = await backendClient.PostSnapshotBatchAsync(runId, batch.Snapshots);
+                    }
+
+                    if (batch.Lifetimes != null && batch.Lifetimes.Count > 0)
+                    {
+                        lifetimesOk = await backendClient.PostCreatureRecordsAsync(runId, batch.Lifetimes);
+                    }
+
+                    if (batch.Generations != null && batch.Generations.Count > 0)
+                    {
+                        generationsOk = await backendClient.PostGenerationSummariesAsync(runId, batch.Generations);
+                    }
+                }
+                else if (batch.V1Snapshots != null)
+                {
+                    for (var i = 0; i < batch.V1Snapshots.Count; i++)
+                    {
+                        var posted = await backendClient.PostSnapshotAsync(batch.V1Snapshots[i]);
+                        if (!posted)
+                        {
+                            break;
+                        }
+
+                        v1SuccessCount++;
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                snapshotsOk = false;
+                lifetimesOk = false;
+                generationsOk = false;
+                Warn($"StatsExportLoop flush exception: {ex.Message}");
+            }
+
+            ExportController.CompleteFlush(snapshotsOk, lifetimesOk, generationsOk, v1SuccessCount);
+
+            if (!snapshotsOk || !lifetimesOk || !generationsOk
+                || (batch.V1Snapshots != null && v1SuccessCount < batch.V1Snapshots.Count))
+            {
+                Warn("StatsExportLoop: backend upload failed; pending records were retained for the next interval.");
+            }
+
+            if (ExportController.OverflowDropped > 0)
+            {
+                Warn(
+                    $"StatsExportLoop: pending analytics overflow dropped {ExportController.OverflowDropped} oldest record(s) (bounded FIFO).");
+            }
+        }
+
+        void Warn(string message)
+        {
+            var now = Time.unscaledTime;
+            if (now - lastWarningUnscaledTime < Mathf.Max(intervalSeconds, 1f))
+            {
+                return;
+            }
+
+            lastWarningUnscaledTime = now;
+            Debug.LogWarning(message);
         }
     }
 }

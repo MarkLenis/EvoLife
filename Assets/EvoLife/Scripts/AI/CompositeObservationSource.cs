@@ -5,7 +5,7 @@ namespace EvoLife.AI
 {
     /// <summary>
     /// Concatenates vitals, role, genetics, and optional local sensors into
-    /// <see cref="CreatureObservationSchema"/> order. Does not mutate any source.
+    /// <see cref="CreatureObservationSchema"/> v2 order. Does not mutate any source.
     /// </summary>
     public sealed class CompositeObservationSource : IObservationSource
     {
@@ -64,13 +64,16 @@ namespace EvoLife.AI
 
             if (creatureSensor != null)
             {
-                creatureSensor.WriteNearest(buffer, CreatureObservationSchema.IndexNearbyCreature);
+                creatureSensor.WriteNearestRoles(
+                    buffer,
+                    CreatureObservationSchema.IndexHerbivore,
+                    CreatureObservationSchema.IndexPredator);
             }
             else
             {
                 ObservationMath.WriteZeros(
                     buffer,
-                    CreatureObservationSchema.IndexNearbyCreature,
+                    CreatureObservationSchema.IndexHerbivore,
                     CreatureObservationSchema.NearbyCreatureCount);
             }
         }

@@ -7,8 +7,9 @@ using EvoLife.Environment;
 namespace EvoLife.AI
 {
     /// <summary>
-    /// Local eat / drink / attack / rest using the same sense radius as PPO sensors.
-    /// Does not consult <c>PopulationTracker</c> or other global registries.
+    /// Local eat / drink / attack / rest / reproduce-request using the same sense radius
+    /// as PPO sensors. Shared by learned and scripted policies through the canonical
+    /// action executor. Does not consult <c>PopulationTracker</c> or other global registries.
     /// </summary>
     public sealed class LocalCreatureInteractor : ICreatureInteractor
     {
@@ -20,6 +21,7 @@ namespace EvoLife.AI
         readonly ICreatureIdentity self;
         readonly Func<float> senseRange;
         readonly ScriptedBaselineSettings settings;
+        readonly IReproductionRequestHandler reproduction;
         readonly Collider[] colliderBuffer = new Collider[ColliderBufferSize];
 
         public LocalCreatureInteractor(
@@ -28,7 +30,8 @@ namespace EvoLife.AI
             ResourceRegistry resources,
             ICreatureIdentity self,
             Func<float> senseRange,
-            ScriptedBaselineSettings settings)
+            ScriptedBaselineSettings settings,
+            IReproductionRequestHandler reproduction = null)
         {
             this.vitals = vitals;
             this.origin = origin;
@@ -36,6 +39,7 @@ namespace EvoLife.AI
             this.self = self;
             this.senseRange = senseRange;
             this.settings = settings ?? ScriptedBaselineSettings.HerbivoreDefaults();
+            this.reproduction = reproduction;
         }
 
         public bool TryEat() => ConsumeKind(ResourceKind.Plant, settings.FoodConsumeRequest, eaten =>
@@ -53,7 +57,12 @@ namespace EvoLife.AI
 
         public bool TryAttack()
         {
-            if (vitals == null || origin == null)
+            if (vitals == null || origin == null || !vitals.IsAlive)
+            {
+                return false;
+            }
+
+            if (self != null && self.Role != CreatureRole.Predator)
             {
                 return false;
             }
@@ -89,7 +98,7 @@ namespace EvoLife.AI
                 }
 
                 var targetVitals = col.GetComponentInParent<CreatureVitals>();
-                if (targetVitals == null || !targetVitals.IsAlive)
+                if (targetVitals == null || !targetVitals.IsAlive || ReferenceEquals(targetVitals, vitals))
                 {
                     continue;
                 }
@@ -120,9 +129,14 @@ namespace EvoLife.AI
             }
         }
 
+        public void RequestReproduce()
+        {
+            reproduction?.HandleReproduceRequest();
+        }
+
         bool ConsumeKind(ResourceKind kind, float requested, Action<float> applyTaken)
         {
-            if (vitals == null || origin == null || resources == null || applyTaken == null)
+            if (vitals == null || origin == null || resources == null || applyTaken == null || !vitals.IsAlive)
             {
                 return false;
             }

@@ -12,14 +12,14 @@ It bridges:
 
 ```
 ML-Agents Academy
-    → CollectObservations (CreatureObservationSchema)
-    → OnActionReceived (CreatureActionSchema)
-    → IActionExecutor (PlanarMoveActionExecutor)
+    → CollectObservations (CreatureObservationSchema v2)
+    → OnActionReceived (CreatureActionSchema v2)
+    → IActionExecutor (PlanarMoveActionExecutor + LocalCreatureInteractor)
     → IEpisodeRewardCalculator (TrainingRewardCalculator)
     → existing CreatureVitals / Environment query APIs
 ```
 
-It does **not** mutate `CreatureVitals` fields. Locomotion uses `IActionExecutor`. Activity is set through the existing `CreatureVitals.CurrentActivity` API so biology can account for walking.
+It does **not** mutate `CreatureVitals` fields. Locomotion is local-forward + yaw turn + sprint/effort through `IActionExecutor`. Discrete interactions (eat/drink/attack/rest/reproduce_request) use the same executor path as the scripted baseline. Invalid interactions are safe no-ops. Activity is set through the existing `CreatureVitals.CurrentActivity` API so biology can account for walking, sprinting, resting, and attacking.
 
 `PpoPolicyAdapter` is **not** a second PPO trainer. It is an idle fallback when the Agent component or ML-Agents package is missing, so a `LearnedPpo` creature never also runs the scripted baseline.
 
@@ -32,9 +32,9 @@ It does **not** mutate `CreatureVitals` fields. Locomotion uses `IActionExecutor
 
 `EvoLifeCreatureAgent.Initialize` writes these onto `BehaviorParameters` from `CreatureIdentity.Role`. Set the prefab identity role to match the intended behavior **before** Play, because ML-Agents registers the name at agent initialization.
 
-## Observation vector (exact order)
+## Observation vector (CreatureObservationSchema v2)
 
-Contract: `CreatureObservationSchema` (version **1**, size **28**). Tests fail if `Names.Length`, genetics trait count, or indices drift.
+Contract: `CreatureObservationSchema` (version **2**, size **31**). Tests fail if `Names.Length`, genetics trait count, or indices drift. This is the only runtime observation layout; v1 is not retained.
 
 | Index | Name | Range | Source |
 |------:|------|-------|--------|
@@ -43,23 +43,28 @@ Contract: `CreatureObservationSchema` (version **1**, size **28**). Tests fail i
 | 2 | `thirst` | [0,1] | vitals / `MaxThirst` |
 | 3 | `energy` | [0,1] | vitals / `MaxEnergy` |
 | 4 | `age` | [0,1] | vitals / `MaxAge` |
-| 5 | `role` | 0 or 1 | `ICreatureIdentity` (0 herbivore, 1 predator) |
+| 5 | `own_role` | 0 or 1 | `ICreatureIdentity` (0 herbivore, 1 predator) |
 | 6–14 | `gene_*` | [0,1] | `GeneticObservationProvider` / CanonicalGenomeSchema v1 order |
-| 15 | `food_dir_x` | [-1,1] | nearest plant, agent-local X |
-| 16 | `food_dir_z` | [-1,1] | nearest plant, agent-local Z |
-| 17 | `food_distance` | [0,1] | distance / sense range |
-| 18 | `food_present` | 0 or 1 | 1 if a non-depleted plant was found |
-| 19 | `water_dir_x` | [-1,1] | nearest water |
-| 20 | `water_dir_z` | [-1,1] | |
-| 21 | `water_distance` | [0,1] | |
-| 22 | `water_present` | 0 or 1 | |
-| 23 | `nearby_dir_x` | [-1,1] | nearest other `CreatureIdentity` |
-| 24 | `nearby_dir_z` | [-1,1] | |
-| 25 | `nearby_distance` | [0,1] | |
-| 26 | `nearby_role` | 0 or 1 | other creature role |
-| 27 | `nearby_present` | 0 or 1 | |
+| 15 | `nearest_food_dir_x` | [-1,1] | nearest plant, agent-local X |
+| 16 | `nearest_food_dir_z` | [-1,1] | nearest plant, agent-local Z |
+| 17 | `nearest_food_distance` | [0,1] | distance / sense range |
+| 18 | `nearest_food_present` | 0 or 1 | 1 if a non-depleted plant was found |
+| 19 | `nearest_water_dir_x` | [-1,1] | nearest water |
+| 20 | `nearest_water_dir_z` | [-1,1] | |
+| 21 | `nearest_water_distance` | [0,1] | |
+| 22 | `nearest_water_present` | 0 or 1 | |
+| 23 | `nearest_herbivore_dir_x` | [-1,1] | nearest other herbivore, agent-local |
+| 24 | `nearest_herbivore_dir_z` | [-1,1] | |
+| 25 | `nearest_herbivore_distance` | [0,1] | |
+| 26 | `nearest_herbivore_present` | 0 or 1 | |
+| 27 | `nearest_predator_dir_x` | [-1,1] | nearest other predator, agent-local |
+| 28 | `nearest_predator_dir_z` | [-1,1] | |
+| 29 | `nearest_predator_distance` | [0,1] | |
+| 30 | `nearest_predator_present` | 0 or 1 | |
 
 Missing optional sensors (no `ResourceRegistry`, no physics colliders, null genome) write **zeros** for their block. Presence=0 with distance=0 means “nothing sensed”, not “standing on the target”.
+
+Herbivore and predator channels are **independent**. A nearer same-role creature cannot hide the other role. `PhysicsCreatureProximitySensor` uses one `OverlapSphereNonAlloc` and derives both nearest-role results from that local query. Policies do not receive global population registries.
 
 Sense range defaults to 12 (canonical `vision_range` default) times `CreatureCapabilityMotor.SensoryRangeMultiplier`.
 
@@ -67,20 +72,34 @@ Sense range defaults to 12 (canonical `vision_range` default) times `CreatureCap
 
 Genetics are **read-only** via `GeneticObservationProvider`. AI never calls crossover or mutation.
 
-## Action vector (exact order)
+## Action vector (CreatureActionSchema v2)
 
-Contract: `CreatureActionSchema` (version **1**, 2 continuous actions). Incoming values are clamped to [-1, 1].
+Contract: `CreatureActionSchema` (version **2**). Shared by PPO and the scripted baseline.
 
-| Index | Name | Meaning |
+Continuous (3), clamped:
+
+| Index | Name | Range | Meaning |
+|------:|------|-------|---------|
+| 0 | `forward` | [-1, 1] | Movement along the creature's local forward |
+| 1 | `turn` | [-1, 1] | Yaw rotation left/right |
+| 2 | `sprint_or_effort` | [0, 1] | Scales speed between `CreatureCapabilityMotor.MaxSpeed` and `SprintSpeed` |
+
+Discrete interaction branch (size 6):
+
+| Value | Name | Meaning |
 |------:|------|---------|
-| 0 | `move_x` | Horizontal / strafe |
-| 1 | `move_z` | Forward / back |
+| 0 | `none` | No interaction |
+| 1 | `eat` | Consume a local plant in interact range |
+| 2 | `drink` | Drink from a local water source in range |
+| 3 | `attack` | Damage living prey in local attack range (predators only) |
+| 4 | `rest` | Set `CurrentActivity` to Resting |
+| 5 | `reproduce_request` | Reserved for a future reproduction system; **no-op** until that executor is attached |
 
-Executed by `PlanarMoveActionExecutor`. Speed comes from `CreatureCapabilityMotor.MaxSpeed` when present.
+ML-Agents `ActionSpec`: 3 continuous actions, 1 discrete branch of size 6.
 
-Eat / drink / attack / rest are **not** in the PPO action space. Those simulation mechanics are not yet exposed as dedicated AI executors. Do not invent fake interaction buttons on the learned agent.
+Executed by `PlanarMoveActionExecutor`. If a Rigidbody is present, motion uses `MovePosition` / `MoveRotation`. Otherwise Transform movement is explicitly local-forward then yaw. There is no world X/Z strafe action, so diagonal √2 world-strafe is not part of the action space.
 
-The scripted baseline may call Creatures / Environment owner APIs when a locally sensed target is in range. That is an intentional benchmark difference until interaction actions exist; sensing still uses this same schema. See [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md).
+Invalid interactions are safe no-ops. They do not mutate biology and do not apply extra reward penalties.
 
 ## Reward components
 
@@ -126,6 +145,8 @@ Switch at runtime: `CreatureBrain.SetPolicyKind`. Simulation can pass `AgentPoli
 
 `SimulationConfig.HerbivorePolicy` / `PredatorPolicy` remain the experiment-level defaults.
 
+PPO and the scripted baseline use the **same** sensory channels and the **same** interaction executor. The baseline may choose different actions heuristically; it does not have privileged eat/drink/attack APIs.
+
 How the heuristic decides, which sensors it uses, and how to run scripted-vs-PPO experiments: [SCRIPTED_BASELINE.md](SCRIPTED_BASELINE.md).
 
 ## PPO config
@@ -152,7 +173,7 @@ See [Training/README.md](../Training/README.md):
 On each trainable creature:
 
 1. `CreatureIdentity`, `CreatureVitals`, `CreatureGenome`, `CreatureCapabilityMotor`
-2. `CreatureBrain` + `PlanarMoveActionExecutor`
+2. `CreatureBrain` + `PlanarMoveActionExecutor` (canonical locomotion + interaction)
 3. `EvoLifeCreatureAgent` (Behavior Parameters added by ML-Agents; Decision Requester is added when PPO control is enabled)
 4. Collider if nearby-creature observations should be non-zero
 5. Scene `ResourceRegistry` plus `PlantResource` / `WaterSource` (they register on enable)
@@ -165,11 +186,12 @@ Do not treat these as production values:
 - `EvoLifeCreatureAgent.maxEpisodeSteps`
 - Local pose / vitals reset flags
 - PPO YAML hyperparameters
-- `PlanarMoveActionExecutor` fallback `moveSpeed` (phenotype motor speed is preferred)
+- `PlanarMoveActionExecutor` fallback `moveSpeed` / `turnSpeedDegrees` (phenotype motor speed is preferred)
 
 ## Known limitations
 
-- Locomotion-only PPO actions: learned agents cannot eat/drink/attack until interaction executors exist. The scripted baseline may use local owner APIs (documented difference).
-- Nearby-creature sensing needs colliders; otherwise those five slots stay zero.
+- Nearby-creature sensing needs colliders; otherwise those eight slots stay zero.
+- `reproduce_request` is reserved and does nothing until a reproduction executor is attached.
 - No trained ONNX is shipped. Do not commit model binaries unless required.
 - Unity Editor is required to compile/run ML-Agents PlayMode tests.
+- This document does not claim PPO is better than the scripted baseline.

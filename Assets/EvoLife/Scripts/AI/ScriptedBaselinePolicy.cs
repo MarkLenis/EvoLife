@@ -6,8 +6,9 @@ namespace EvoLife.AI
     /// <summary>
     /// Deterministic heuristic baseline for evaluation against PPO.
     /// Uses the same <see cref="IObservationSource"/> / <see cref="CreatureObservationSchema"/>
-    /// local sensors as learned agents. Does not mutate vital fields; locomotion goes through
-    /// <see cref="IActionExecutor"/>; eat/drink/attack use <see cref="ICreatureInteractor"/>.
+    /// local sensors as learned agents. Does not mutate vital fields. Locomotion and
+    /// eat/drink/attack/rest go through the canonical <see cref="IActionExecutor"/> path
+    /// (CreatureActionSchema v2). There is no privileged interactor bypass.
     /// </summary>
     public sealed class ScriptedBaselinePolicy : ICreaturePolicy
     {
@@ -17,7 +18,6 @@ namespace EvoLife.AI
         readonly CreatureRole role;
         readonly BaselineMotiveEvaluator evaluator;
         readonly BaselineMemory memory = new BaselineMemory();
-        readonly ICreatureInteractor interactor;
         readonly float[] actions = new float[CreatureActionSchema.ContinuousCount];
 
         float[] observationScratch;
@@ -29,6 +29,8 @@ namespace EvoLife.AI
         public float? DeltaTimeOverride { get; set; }
 
         public BaselineMotive LastMotive => memory.CurrentMotive;
+
+        public int LastInteraction { get; private set; }
 
         public ScriptedBaselineSettings Settings => settings;
 
@@ -42,12 +44,10 @@ namespace EvoLife.AI
         public ScriptedBaselinePolicy(
             ScriptedBaselineSettings settings,
             CreatureRole role,
-            int seed = 1,
-            ICreatureInteractor interactor = null)
+            int seed = 1)
         {
             this.role = role;
             this.settings = settings ?? ScriptedBaselineSettings.ForRole(role);
-            this.interactor = interactor;
             evaluator = new BaselineMotiveEvaluator(seed);
         }
 
@@ -76,45 +76,19 @@ namespace EvoLife.AI
             var world = BaselineSensedWorld.FromObservations(observationScratch);
             var decision = evaluator.Evaluate(world, memory, settings, role, ResolveDeltaTime());
 
-            actions[CreatureActionSchema.IndexMoveX] = decision.MoveX;
-            actions[CreatureActionSchema.IndexMoveZ] = decision.MoveZ;
+            actions[CreatureActionSchema.IndexForward] = decision.Forward;
+            actions[CreatureActionSchema.IndexTurn] = decision.Turn;
+            actions[CreatureActionSchema.IndexSprintOrEffort] = decision.SprintOrEffort;
             CreatureActionSchema.ClampTo(actions, actions);
-            actionExecutor.ApplyActions(actions);
+            LastInteraction = decision.Interaction;
+            actionExecutor.ApplyActions(actions, decision.Interaction);
 
-            ApplyInteractions(decision);
-            _ = rewardCalculator?.CalculateReward(vitals, vitals != null && !vitals.IsAlive);
-        }
-
-        void ApplyInteractions(in BaselineDecision decision)
-        {
-            if (interactor == null)
-            {
-                return;
-            }
-
-            if (decision.Rest)
-            {
-                interactor.SetResting();
-            }
-
-            var consumed = false;
-            if (decision.TryEat)
-            {
-                consumed = interactor.TryEat();
-            }
-            else if (decision.TryDrink)
-            {
-                consumed = interactor.TryDrink();
-            }
-            else if (decision.TryAttack)
-            {
-                consumed = interactor.TryAttack();
-            }
-
-            if (consumed)
+            if (decision.TryEat || decision.TryDrink || decision.TryAttack)
             {
                 memory.BeginInteractCooldown(settings.InteractCooldownSeconds);
             }
+
+            _ = rewardCalculator?.CalculateReward(vitals, vitals != null && !vitals.IsAlive);
         }
 
         float ResolveDeltaTime()
