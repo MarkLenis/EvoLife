@@ -44,7 +44,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 24705ded5c98d6a4588163b8f9868d0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Environment::EvoLife.Environment.PlantResource
 --- !u!114 &100011
@@ -56,7 +56,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 0c75adf84e0a571469a66ca344084eb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Presentation::EvoLife.Presentation.PlantPresentation
 --- !u!135 &100080

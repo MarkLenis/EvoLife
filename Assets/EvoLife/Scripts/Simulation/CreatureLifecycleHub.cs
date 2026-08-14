@@ -28,7 +28,7 @@ namespace EvoLife.Simulation
             }
 
             var view = new CreatureObservationView(instance);
-            var id = view.Identity != null ? view.Identity.Id.Value : instance.GetInstanceID();
+            var id = view.Identity != null ? view.Identity.Id.Value : instance.GetEntityId().GetHashCode();
 
             var deathSource = instance.GetComponent<ICreatureDeathObservable>();
             if (deathSource != null)

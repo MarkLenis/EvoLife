@@ -56,7 +56,7 @@ namespace EvoLife.Presentation
             config.SetInitialPopulation(Mathf.Max(0, herbivores), Mathf.Max(0, predators));
             config.Ecosystem.Mode = EcosystemMode.Persistent;
             config.Ecosystem.TrainingRespawnEnabled = false;
-            config.Ecosystem.FounderSpawnRadius = 16f;
+            config.Ecosystem.FounderSpawnRadius = 42f;
             config.Ecosystem.MaxHerbivores = 80;
             config.Ecosystem.MaxPredators = 24;
 
@@ -141,26 +141,26 @@ namespace EvoLife.Presentation
 
         void ResolveReferences()
         {
-            clock = clock != null ? clock : GetComponent<SimulationClock>() ?? FindObjectOfType<SimulationClock>();
-            runner = runner != null ? runner : GetComponent<SimulationRunner>() ?? FindObjectOfType<SimulationRunner>();
-            population = population != null ? population : GetComponent<PopulationTracker>() ?? FindObjectOfType<PopulationTracker>();
-            lifecycleHub = lifecycleHub != null ? lifecycleHub : GetComponent<CreatureLifecycleHub>() ?? FindObjectOfType<CreatureLifecycleHub>();
-            spawner = spawner != null ? spawner : GetComponent<CreatureSpawner>() ?? FindObjectOfType<CreatureSpawner>();
-            reproduction = reproduction != null ? reproduction : GetComponent<ReproductionSystem>() ?? FindObjectOfType<ReproductionSystem>();
-            ecosystem = ecosystem != null ? ecosystem : GetComponent<EcosystemManager>() ?? FindObjectOfType<EcosystemManager>();
-            environmentalCreatures = environmentalCreatures != null ? environmentalCreatures : GetComponent<EnvironmentalCreatureBridge>() ?? FindObjectOfType<EnvironmentalCreatureBridge>();
-            trainingRespawn = trainingRespawn != null ? trainingRespawn : GetComponent<TrainingRespawnController>() ?? FindObjectOfType<TrainingRespawnController>();
-            registry = registry != null ? registry : FindObjectOfType<ResourceRegistry>();
-            resourceManager = resourceManager != null ? resourceManager : FindObjectOfType<ResourceManager>();
-            dayNight = dayNight != null ? dayNight : FindObjectOfType<DayNightManager>();
-            events = events != null ? events : FindObjectOfType<EnvironmentalEventManager>();
-            worldBuilder = worldBuilder != null ? worldBuilder : GetComponent<PresentationWorldBuilder>() ?? FindObjectOfType<PresentationWorldBuilder>();
-            lighting = lighting != null ? lighting : GetComponent<DayNightLightingPresenter>() ?? FindObjectOfType<DayNightLightingPresenter>();
-            eventVisuals = eventVisuals != null ? eventVisuals : GetComponent<EnvironmentalEventVisualAdapter>() ?? FindObjectOfType<EnvironmentalEventVisualAdapter>();
-            ground = ground != null ? ground : GetComponent<BiomeGroundPresenter>() ?? FindObjectOfType<BiomeGroundPresenter>();
+            clock = clock != null ? clock : GetComponent<SimulationClock>() ?? FindFirstObjectByType<SimulationClock>();
+            runner = runner != null ? runner : GetComponent<SimulationRunner>() ?? FindFirstObjectByType<SimulationRunner>();
+            population = population != null ? population : GetComponent<PopulationTracker>() ?? FindFirstObjectByType<PopulationTracker>();
+            lifecycleHub = lifecycleHub != null ? lifecycleHub : GetComponent<CreatureLifecycleHub>() ?? FindFirstObjectByType<CreatureLifecycleHub>();
+            spawner = spawner != null ? spawner : GetComponent<CreatureSpawner>() ?? FindFirstObjectByType<CreatureSpawner>();
+            reproduction = reproduction != null ? reproduction : GetComponent<ReproductionSystem>() ?? FindFirstObjectByType<ReproductionSystem>();
+            ecosystem = ecosystem != null ? ecosystem : GetComponent<EcosystemManager>() ?? FindFirstObjectByType<EcosystemManager>();
+            environmentalCreatures = environmentalCreatures != null ? environmentalCreatures : GetComponent<EnvironmentalCreatureBridge>() ?? FindFirstObjectByType<EnvironmentalCreatureBridge>();
+            trainingRespawn = trainingRespawn != null ? trainingRespawn : GetComponent<TrainingRespawnController>() ?? FindFirstObjectByType<TrainingRespawnController>();
+            registry = registry != null ? registry : FindFirstObjectByType<ResourceRegistry>();
+            resourceManager = resourceManager != null ? resourceManager : FindFirstObjectByType<ResourceManager>();
+            dayNight = dayNight != null ? dayNight : FindFirstObjectByType<DayNightManager>();
+            events = events != null ? events : FindFirstObjectByType<EnvironmentalEventManager>();
+            worldBuilder = worldBuilder != null ? worldBuilder : GetComponent<PresentationWorldBuilder>() ?? FindFirstObjectByType<PresentationWorldBuilder>();
+            lighting = lighting != null ? lighting : GetComponent<DayNightLightingPresenter>() ?? FindFirstObjectByType<DayNightLightingPresenter>();
+            eventVisuals = eventVisuals != null ? eventVisuals : GetComponent<EnvironmentalEventVisualAdapter>() ?? FindFirstObjectByType<EnvironmentalEventVisualAdapter>();
+            ground = ground != null ? ground : GetComponent<BiomeGroundPresenter>() ?? FindFirstObjectByType<BiomeGroundPresenter>();
             if (sun == null)
             {
-                sun = FindObjectOfType<Light>();
+                sun = FindFirstObjectByType<Light>();
             }
 
             if (worldRoot == null)

@@ -122,7 +122,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 10113781b05e1804db2c388cf7983b2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Simulation::EvoLife.Simulation.SimulationClock
 --- !u!1 &200000
@@ -220,7 +220,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 200000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: ae170551f79d49140a77bcf696e1d4fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.UI::EvoLife.UI.DesktopCameraController
 --- !u!114 &200005
@@ -232,7 +232,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 200000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: b4d5d1d370feaf64eb09fe174ba51453, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.UI::EvoLife.UI.CreatureSelectionController
 --- !u!1 &300000
@@ -277,7 +277,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 300000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: afc1cd3f8b2ae9b43911f6e5cc08005e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.UI::EvoLife.UI.DesktopDebugUi
 --- !u!114 &300003
@@ -289,6 +289,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 300000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 6f781aa836402da4f9cb03671db7637f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.UI::EvoLife.UI.CreatureAiDebugVisualizer

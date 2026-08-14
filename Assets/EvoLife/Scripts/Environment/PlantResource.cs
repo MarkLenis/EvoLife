@@ -42,7 +42,7 @@ namespace EvoLife.Environment
             EnsureStock();
             if (registry == null)
             {
-                registry = FindObjectOfType<ResourceRegistry>();
+                registry = FindFirstObjectByType<ResourceRegistry>();
             }
 
             registry?.Register(this);

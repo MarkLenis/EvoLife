@@ -3,13 +3,13 @@ using UnityEngine;
 namespace EvoLife.Presentation
 {
     /// <summary>
-    /// Maps canonical <c>body_size</c> phenotype to a visual-only scale.
-    /// Does not modify root colliders, motors, or biology.
+    /// Maps canonical <c>body_size</c> phenotype to a visual-only scale on the Visual child.
+    /// Root collider / sensing / motors stay unchanged.
     /// </summary>
     public static class PhenotypeVisualScale
     {
-        public const float Minimum = 0.75f;
-        public const float Maximum = 1.35f;
+        public const float Minimum = 0.80f;
+        public const float Maximum = 1.25f;
         public const float Neutral = 1f;
 
         public static float ForBodySize(float bodySizeMultiplier)

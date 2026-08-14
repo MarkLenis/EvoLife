@@ -18,6 +18,8 @@ namespace EvoLife.Tests
             Assert.AreEqual(PhenotypeVisualScale.Minimum, PhenotypeVisualScale.ForBodySize(0.1f));
             Assert.AreEqual(PhenotypeVisualScale.Maximum, PhenotypeVisualScale.ForBodySize(8f));
             Assert.AreEqual(1.1f, PhenotypeVisualScale.ForBodySize(1.1f), 0.0001f);
+            Assert.AreEqual(0.80f, PhenotypeVisualScale.Minimum, 0.0001f);
+            Assert.AreEqual(1.25f, PhenotypeVisualScale.Maximum, 0.0001f);
         }
 
         [Test]
@@ -40,6 +42,10 @@ namespace EvoLife.Tests
                 Assert.IsNull(predator.GetComponent<MeshCollider>());
                 Assert.IsNotNull(herbivore.transform.Find(PresentationPrimitives.VisualRootName));
                 Assert.Greater(herbivore.transform.Find(PresentationPrimitives.VisualRootName).childCount, 0);
+                Assert.IsNotNull(herbivore.transform.Find(PresentationPrimitives.VisualRootName + "/Tail"));
+                Assert.IsNotNull(predator.transform.Find(PresentationPrimitives.VisualRootName + "/Tail"));
+                Assert.IsNotNull(herbivore.transform.Find(PresentationPrimitives.VisualRootName + "/Head"));
+                Assert.IsNotNull(predator.transform.Find(PresentationPrimitives.VisualRootName + "/Snout"));
             }
             finally
             {
@@ -56,6 +62,7 @@ namespace EvoLife.Tests
             {
                 var genome = go.GetComponent<CreatureGenome>();
                 genome.Initialize(Genome.FromTraitValues((TraitId.BodySize, 3f)));
+                Assert.AreEqual(3f, genome.BodySizeMultiplier, 0.0001f);
                 var visual = go.GetComponent<PhenotypeVisual>();
                 visual.Apply();
 
@@ -140,9 +147,138 @@ namespace EvoLife.Tests
 
             var map = new BiomeMap();
             map.ReplaceZones(zones);
-            Assert.AreEqual(BiomeKind.Forest, map.ResolveKind(new Vector3(-16f, 0f, 14f)));
-            Assert.AreEqual(BiomeKind.Wetland, map.ResolveKind(new Vector3(18f, 0f, 12f)));
-            Assert.AreEqual(BiomeKind.Rocky, map.ResolveKind(new Vector3(2f, 0f, -18f)));
+            Assert.AreEqual(BiomeKind.Forest, map.ResolveKind(DemoBiomeLayout.ForestCenter));
+            Assert.AreEqual(BiomeKind.Wetland, map.ResolveKind(DemoBiomeLayout.WetlandCenter));
+            Assert.AreEqual(BiomeKind.Rocky, map.ResolveKind(DemoBiomeLayout.RockyCenter));
+            Assert.AreEqual(BiomeKind.Grassland, map.ResolveKind(Vector3.zero));
+            Assert.Greater(DemoBiomeLayout.WorldRadius, 60f);
+        }
+
+        [Test]
+        public void DecorAndAnchors_CreateWithoutCollidersOnProps()
+        {
+            var root = new GameObject("DecorTestRoot");
+            try
+            {
+                DemoWorldDecor.Build(root.transform, null);
+                var anchors = PresentationCameraAnchors.Ensure(root.transform);
+                Assert.IsNotNull(anchors.Find("CameraAnchor_Overview"));
+                Assert.IsNotNull(root.transform.Find("Decorations/Trees"));
+                Assert.IsNotNull(root.transform.Find("Landmarks"));
+                Assert.Greater(root.transform.Find("Decorations/Trees").childCount, 60);
+                Assert.Greater(root.transform.Find("Decorations/Rocks").childCount, 20);
+                Assert.Greater(root.transform.Find("Decorations/Reeds").childCount, 30);
+                var colliders = root.GetComponentsInChildren<Collider>();
+                Assert.AreEqual(0, colliders.Length);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void ModelLibrary_ExposesCuratedResourcePaths()
+        {
+            Assert.Greater(PresentationModelLibrary.ForestTrees.Length, 5);
+            Assert.Greater(PresentationModelLibrary.LargeRocks.Length, 3);
+            Assert.IsFalse(string.IsNullOrEmpty(PresentationModelLibrary.Herbivore));
+            Assert.IsFalse(string.IsNullOrEmpty(PresentationModelLibrary.Predator));
+        }
+
+        [Test]
+        public void IrregularDisc_BreaksCircularRadius()
+        {
+            var mesh = PresentationGroundMesh.CreateIrregularDisc(20f, 28, 0.25f, 11, 0.2f);
+            try
+            {
+                Assert.Greater(PresentationGroundMesh.RimRadiusVariance(mesh), 4f);
+                Assert.Greater(mesh.vertexCount, 20);
+            }
+            finally
+            {
+                Object.DestroyImmediate(mesh);
+            }
+        }
+
+        [Test]
+        public void PlantPresentation_DoesNotOverwriteExistingTriggerRadius()
+        {
+            var go = new GameObject("PlantRadiusGuard");
+            try
+            {
+                var collider = go.AddComponent<SphereCollider>();
+                collider.isTrigger = true;
+                collider.radius = 0.91f;
+                var plant = go.AddComponent<PlantPresentation>();
+                plant.EnsureVisuals();
+                Assert.AreEqual(0.91f, go.GetComponent<SphereCollider>().radius, 0.0001f);
+                Assert.IsTrue(go.GetComponent<SphereCollider>().isTrigger);
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void CreatureSilhouettes_DifferByShapeNotOnlyColor()
+        {
+            var herbivore = CreaturePresentationFactory.CreateTemplate(CreatureRole.Herbivore);
+            var predator = CreaturePresentationFactory.CreateTemplate(CreatureRole.Predator);
+            try
+            {
+                var herbTail = herbivore.transform.Find(PresentationPrimitives.VisualRootName + "/Tail");
+                var predTail = predator.transform.Find(PresentationPrimitives.VisualRootName + "/Tail");
+                var herbEar = herbivore.transform.Find(PresentationPrimitives.VisualRootName + "/EarL");
+                var predSnout = predator.transform.Find(PresentationPrimitives.VisualRootName + "/Snout");
+                Assert.IsNotNull(herbEar);
+                Assert.IsNotNull(predSnout);
+                Assert.Less(predTail.localPosition.z, herbTail.localPosition.z);
+                Assert.Greater(herbEar.localPosition.y, predator.transform.Find(PresentationPrimitives.VisualRootName + "/EarL").localPosition.y);
+                Assert.Greater(predSnout.localPosition.z, herbivore.transform.Find(PresentationPrimitives.VisualRootName + "/Snout").localPosition.z);
+            }
+            finally
+            {
+                Object.DestroyImmediate(herbivore);
+                Object.DestroyImmediate(predator);
+            }
+        }
+
+        [Test]
+        public void BiomeGroundPresenter_UsesOrganicPatchesInsteadOfTransitionRings()
+        {
+            var world = new GameObject("OrganicBiomeWorld");
+            var env = new GameObject("OrganicBiomeEnv");
+            try
+            {
+                var registry = env.AddComponent<ResourceRegistry>();
+                var manager = env.AddComponent<ResourceManager>();
+                manager.PlaceOnStart = false;
+                manager.Configure(registry, DemoBiomeLayout.CreateSpawnSettings(), DemoBiomeLayout.CreateZones(), 0);
+                var presenter = env.AddComponent<BiomeGroundPresenter>();
+                presenter.Bind(manager, world.transform);
+                presenter.Build();
+
+                Assert.Greater(presenter.GroundCount, 20);
+                Assert.IsNotNull(world.transform.Find("Biomes/ForestVisual/Ground_Forest"));
+                Assert.IsNotNull(world.transform.Find("Biomes/WetlandVisual/Ground_Wetland"));
+                Assert.IsNotNull(world.transform.Find("Biomes/RockyVisual/Ground_Rocky"));
+                Assert.IsNull(world.transform.Find("Biomes/Transitions"));
+                var transforms = world.GetComponentsInChildren<Transform>();
+                for (var i = 0; i < transforms.Length; i++)
+                {
+                    Assert.IsFalse(transforms[i].name.StartsWith("Transition_"));
+                }
+
+                var colliders = world.GetComponentsInChildren<Collider>();
+                Assert.AreEqual(0, colliders.Length);
+            }
+            finally
+            {
+                Object.DestroyImmediate(world);
+                Object.DestroyImmediate(env);
+            }
         }
     }
 }

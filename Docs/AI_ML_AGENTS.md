@@ -6,7 +6,7 @@ Related: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDAR
 
 ## Agent class
 
-`EvoLife.AI.EvoLifeCreatureAgent` is the ML-Agents `Agent` subclass (compiled when `com.unity.ml-agents` ≥ 2.0.0 defines `EVOLIFE_MLAGENTS`).
+`EvoLife.AI.EvoLifeCreatureAgent` is the ML-Agents `Agent` subclass (compiled when `com.unity.ml-agents` ≥ 4.0.0 defines `EVOLIFE_MLAGENTS`).
 
 It bridges:
 

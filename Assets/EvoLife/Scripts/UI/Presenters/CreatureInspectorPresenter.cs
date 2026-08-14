@@ -183,7 +183,8 @@ namespace EvoLife.UI
             var result = new NamedTraitDisplay[names.Length];
             for (var i = 0; i < names.Length; i++)
             {
-                var found = genome != null && genome.TryGetTrait(names[i], out var value);
+                float value = 0f;
+                var found = genome != null && genome.TryGetTrait(names[i], out value);
                 result[i] = new NamedTraitDisplay
                 {
                     Name = names[i],

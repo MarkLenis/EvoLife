@@ -95,8 +95,6 @@ namespace EvoLife.AI
 
         public SensedTargetDebug HeuristicTarget => debugHeuristic;
 
-        public CreatureControlMode ActiveControlMode => controlMode;
-
         public float EpisodeSurvivalSeconds => vitals != null ? vitals.Age : 0f;
 
         public bool HasEpisodeReturn =>
@@ -140,7 +138,7 @@ namespace EvoLife.AI
 
             if (resourceRegistry == null)
             {
-                resourceRegistry = FindObjectOfType<ResourceRegistry>();
+                resourceRegistry = FindFirstObjectByType<ResourceRegistry>();
             }
 
             observations = CreatureObservationFactory.Create(

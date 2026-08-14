@@ -4,22 +4,22 @@
 
 ### Prerequisites
 
-- Unity **2022.3 LTS** (see `ProjectSettings/ProjectVersion.txt`)
+- Unity **6.5** (see `ProjectSettings/ProjectVersion.txt`)
 - Git
-- Python **3.10+** (for Backend)
-- Optional: ML-Agents Python package matching `com.unity.ml-agents` 2.x for training
+- Python **3.10.x** (for Backend; ML-Agents training recommends **3.10.12**)
+- Optional: Python `mlagents==1.1.0` matching `com.unity.ml-agents` 4.1.x for training
 
 ### Clone and open Unity
 
 ```bash
 git clone <repo-url> EvoLife
-# Open the repository root in Unity Hub → Editor 2022.3.x
+# Open the repository root in Unity Hub → Editor 6000.5.x (Unity 6.5)
 ```
 
 On first open:
 
 1. Let Package Manager resolve packages from `Packages/manifest.json`.
-2. Confirm `com.unity.ml-agents`, Test Framework, and Newtonsoft JSON imported.
+2. Confirm `com.unity.ml-agents` **4.1.x**, Test Framework, and Newtonsoft JSON imported.
 3. Create a Bootstrap scene under `Assets/EvoLife/Scenes/` if one is not yet assigned (wire `SimulationClock`, `SimulationRunner`, `PopulationTracker`, `CreatureSpawner`, `ReproductionSystem`, `EcosystemManager`, `ResourceManager`, `DayNightManager`, `EnvironmentalEventManager`, analytics components).
 4. Unity will generate `.meta` files — **commit them** with assets so GUIDs stay stable across machines.
 
@@ -38,7 +38,7 @@ Point Unity `BackendClient.baseUrl` at `http://127.0.0.1:8000`.
 ### Training setup (optional)
 
 ```bash
-pip install mlagents  # version compatible with ML-Agents 2.0.x
+pip install mlagents==1.1.0  # matches com.unity.ml-agents 4.1.x
 chmod +x Training/scripts/*.sh
 # Start Unity with the Agent scene, then:
 ./Training/scripts/train_herbivore.sh

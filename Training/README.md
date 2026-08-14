@@ -1,6 +1,6 @@
 # EvoLife ML-Agents Training
 
-Unity package: `com.unity.ml-agents` **2.0.1**. Python: `mlagents` compatible with ML-Agents 2.0.x.
+Unity package: `com.unity.ml-agents` **4.1.0**. Python: `mlagents==1.1.0` (matches ML-Agents 4.1.x).
 
 This folder is for **training**. Evaluation and presentation/demo are documented elsewhere:
 
@@ -37,7 +37,7 @@ A YAML behavior that is not present as `LearnedPpo` in Unity will never connect.
 ## Start training
 
 ```bash
-pip install mlagents   # version compatible with com.unity.ml-agents 2.0.x
+pip install mlagents==1.1.0   # matches com.unity.ml-agents 4.1.x
 chmod +x Training/scripts/*.sh
 
 # Terminal 1 — trainer waits for Unity
@@ -52,7 +52,7 @@ ROLE=herbivore STAGE=1 ./Training/scripts/train_curriculum.sh
 
 Then in Unity:
 
-1. Open the project (Unity 2022.3 LTS). Lightweight training arenas are enough; polished terrain is not required.
+1. Open the project (Unity 6.5). Lightweight training arenas are enough; polished terrain is not required.
 2. Apply a `TrainingCurriculum` / `ExperimentConfiguration` stage (see [Docs/TRAINING_CURRICULUM.md](../Docs/TRAINING_CURRICULUM.md)).
 3. On the creature prefab/instance: `CreatureBrain` policy = **LearnedPpo** for the roles you are training.
 4. Confirm `EvoLifeCreatureAgent` is present. Behavior name is applied from `CreatureIdentity.role`.

@@ -15,12 +15,27 @@ namespace EvoLife.Presentation
         const string FallbackShader = "Unlit/Color";
 
         static Material grassland;
+        static Material grasslandSunlit;
+        static Material grasslandShade;
         static Material forest;
+        static Material forestFloor;
+        static Material canopy;
+        static Material canopyAlt;
         static Material wetland;
+        static Material wetMud;
         static Material rocky;
+        static Material dryEarth;
+        static Material outerBuffer;
         static Material water;
         static Material plantHealthy;
         static Material plantDepleted;
+        static Material decorativeGrass;
+        static Material dryGrass;
+        static Material trunk;
+        static Material stone;
+        static Material stoneDark;
+        static Material reed;
+        static Material flower;
         static Material herbivore;
         static Material herbivoreAccent;
         static Material predator;
@@ -29,18 +44,33 @@ namespace EvoLife.Presentation
         static Material smoke;
 
         public static Material Grassland => grassland != null ? grassland : (grassland = CreateOpaque(PresentationPalette.Grassland));
+        public static Material GrasslandSunlit => grasslandSunlit != null ? grasslandSunlit : (grasslandSunlit = CreateOpaque(PresentationPalette.GrasslandSunlit));
+        public static Material GrasslandShade => grasslandShade != null ? grasslandShade : (grasslandShade = CreateOpaque(PresentationPalette.GrasslandShade));
         public static Material Forest => forest != null ? forest : (forest = CreateOpaque(PresentationPalette.Forest));
+        public static Material ForestFloor => forestFloor != null ? forestFloor : (forestFloor = CreateOpaque(PresentationPalette.ForestFloor));
+        public static Material Canopy => canopy != null ? canopy : (canopy = CreateOpaque(PresentationPalette.Canopy));
+        public static Material CanopyAlt => canopyAlt != null ? canopyAlt : (canopyAlt = CreateOpaque(PresentationPalette.CanopyAlt));
         public static Material Wetland => wetland != null ? wetland : (wetland = CreateOpaque(PresentationPalette.Wetland));
+        public static Material WetMud => wetMud != null ? wetMud : (wetMud = CreateOpaque(PresentationPalette.WetMud));
         public static Material Rocky => rocky != null ? rocky : (rocky = CreateOpaque(PresentationPalette.Rocky));
+        public static Material DryEarth => dryEarth != null ? dryEarth : (dryEarth = CreateOpaque(PresentationPalette.DryEarth));
+        public static Material OuterBuffer => outerBuffer != null ? outerBuffer : (outerBuffer = CreateOpaque(PresentationPalette.OuterBuffer));
         public static Material Water => water != null ? water : (water = CreateWater(PresentationPalette.Water));
         public static Material PlantHealthy => plantHealthy != null ? plantHealthy : (plantHealthy = CreateOpaque(PresentationPalette.PlantHealthy));
         public static Material PlantDepleted => plantDepleted != null ? plantDepleted : (plantDepleted = CreateOpaque(PresentationPalette.PlantDepleted));
+        public static Material DecorativeGrass => decorativeGrass != null ? decorativeGrass : (decorativeGrass = CreateOpaque(PresentationPalette.DecorativeGrass));
+        public static Material DryGrass => dryGrass != null ? dryGrass : (dryGrass = CreateOpaque(PresentationPalette.DryGrass));
+        public static Material Trunk => trunk != null ? trunk : (trunk = CreateOpaque(PresentationPalette.Trunk));
+        public static Material Stone => stone != null ? stone : (stone = CreateOpaque(PresentationPalette.Stone));
+        public static Material StoneDark => stoneDark != null ? stoneDark : (stoneDark = CreateOpaque(PresentationPalette.StoneDark));
+        public static Material Reed => reed != null ? reed : (reed = CreateOpaque(PresentationPalette.Reed));
+        public static Material Flower => flower != null ? flower : (flower = CreateOpaque(PresentationPalette.Flower));
         public static Material Herbivore => herbivore != null ? herbivore : (herbivore = CreateOpaque(PresentationPalette.Herbivore));
         public static Material HerbivoreAccent => herbivoreAccent != null ? herbivoreAccent : (herbivoreAccent = CreateOpaque(PresentationPalette.HerbivoreAccent));
         public static Material Predator => predator != null ? predator : (predator = CreateOpaque(PresentationPalette.Predator));
         public static Material PredatorAccent => predatorAccent != null ? predatorAccent : (predatorAccent = CreateOpaque(PresentationPalette.PredatorAccent));
         public static Material Wildfire => wildfire != null ? wildfire : (wildfire = CreateOpaque(PresentationPalette.Wildfire));
-        public static Material Smoke => smoke != null ? smoke : (smoke = CreateWater(new Color(0.35f, 0.32f, 0.3f, 0.35f)));
+        public static Material Smoke => smoke != null ? smoke : (smoke = CreateWater(new Color(0.38f, 0.36f, 0.34f, 0.32f)));
 
         public static Material ForBiome(EvoLife.Common.BiomeKind kind)
         {

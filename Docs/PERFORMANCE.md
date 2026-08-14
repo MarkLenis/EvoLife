@@ -32,28 +32,28 @@ Analytics and experiment code should keep calling `CaptureCensus()` (or `Capture
 
 ## Presentation choices that stay cheap
 
-- Primitive meshes (sphere / capsule / cylinder / cube), not imported high-poly assets
+- Curated Kenney CC0 low-poly FBX (trees, rocks, bushes, grass, deer, fox), **not** high-poly film assets
 - Primitive colliders on creatures (`CapsuleCollider`); trigger spheres on plants/water
-- No `MeshCollider` on population objects; no NavMesh
+- No `MeshCollider` on population or décor; imported colliders are stripped on spawn; no NavMesh
 - `sharedMaterial` + `MaterialPropertyBlock` for depletion / lushness (no `renderer.material` instancing)
-- Shadows, light probes, and reflection probes off on presentation renderers
-- GPU instancing enabled on opaque stylized materials
+- Shadows on trees / large rocks / creatures only; grass/reeds do not cast
+- GPU instancing enabled on opaque stylized ground materials
 - Event cues are a few scaled primitives, not particle-heavy VFX (and can be disabled)
-- Decorative forest trees are a fixed handful of meshes, not `PlantResource` instances
+- Decorative forest trees are a fixed set of Kenney meshes, not `PlantResource` instances
 
 ## Reviewed and left alone
 
 Low-risk, behavior-preserving only. The following were inspected and **not** rewritten:
 
 - `PhysicsCreatureProximitySensor` / `LocalCreatureInteractor` already use `OverlapSphereNonAlloc` with a size-32 buffer. Caching `GetComponentInParent` would touch AI, which this PR does not own.
-- `PlantResource` / `WaterSource` `FindObjectOfType<ResourceRegistry>` runs on enable (spawn), not per frame. `ResourceManager` still binds the registry after instantiate.
-- `CreatureBrain` / `EvoLifeCreatureAgent` `FindObjectOfType` is spawn-time.
+- `PlantResource` / `WaterSource` `FindFirstObjectByType<ResourceRegistry>` runs on enable (spawn), not per frame. `ResourceManager` still binds the registry after instantiate.
+- `CreatureBrain` / `EvoLifeCreatureAgent` `FindFirstObjectByType` is spawn-time.
 - `EnvironmentalEventManager.ActiveEvents` allocates a copy list. Visuals use `HasActiveEvent` instead. Changing `ActiveEvents` was skipped so Agent 10 event UI can keep the current snapshot contract.
 - Creature vitals ticking remains a Simulation concern (`SimulationRunner` tick list). This PR does not add a second biology clock.
 
 ## Demo scale guidance (unprofiled)
 
-`PresentationDemoBootstrap` defaults to 24 / 6 so the scene is inspectable. Caps on the demo config are 80 herbivores / 24 predators. Raising founder counts toward ~80 / ~12 is a **profiling** exercise in the Unity Profiler (CPU `SimulationRunner.Update`, `ResourceManager.Tick`, `LateUpdate` plant visuals, physics overlaps). Until that is done, do not claim those counts are smooth.
+Default demo spawn counts (editable on `PresentationDemoBootstrap`): **24 herbivores**, **6 predators**. Caps remain 80 / 24. These are presentation defaults, not proven performance ceilings. The demo world footprint is ~150m so ~80 herbivores have room to spread at overview scale.
 
 If a demo hitch appears:
 

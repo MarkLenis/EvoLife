@@ -11,8 +11,7 @@
     "EvoLife.Analytics",
     "EvoLife.UI",
     "EvoLife.Presentation",
-    "UnityEngine.TestRunner",
-    "UnityEditor.TestRunner"
+    "Unity.ML-Agents"
   ],
   "includePlatforms": [
     "Editor"
@@ -27,7 +26,13 @@
   "defineConstraints": [
     "UNITY_INCLUDE_TESTS"
   ],
-  "versionDefines": [],
+  "versionDefines": [
+    {
+      "name": "com.unity.ml-agents",
+      "expression": "4.0.0",
+      "define": "EVOLIFE_MLAGENTS"
+    }
+  ],
   "noEngineReferences": false,
   "optionalUnityReferences": [
     "TestAssemblies"

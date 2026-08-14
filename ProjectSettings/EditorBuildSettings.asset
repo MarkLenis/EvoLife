@@ -1,14 +1,18 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!13 &1
+--- !u!1045 &1
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
     path: Assets/EvoLife/Scenes/Bootstrap.unity
-    guid: a1111111111111111111111111111111
+    guid: de188eed69e43d94cb243c5cf59f3418
   - enabled: 1
     path: Assets/EvoLife/Scenes/EvoLifeDemo.unity
-    guid: a2222222222222222222222222222222
-  m_configObjects: {}
+    guid: eca13c49cea87c949a80e8ac12c42d47
+  - enabled: 0
+    path: Assets/EvoLife/Scenes/UiDebug.unity
+    guid: 11fc1d817d0b1424fb30bd81d202b8ea
+  m_configObjects:
+    com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}

@@ -148,7 +148,7 @@ Implementors: `SimulationClock`, `EnvironmentalEventManager`, `CreatureVitals`, 
 
 1. Main Camera: `DesktopCameraController`, `CreatureSelectionController` (or let `DesktopDebugUi` add them).
 2. Empty GameObject `DesktopDebugUi`: `DesktopDebugUi` + `CreatureAiDebugVisualizer`.
-3. Assign (or leave empty for `FindObjectOfType` / interface search): `SimulationClock`, `PopulationTracker`, `CreatureLifecycleHub`, `ExperimentOrchestrator`, `SimulationConfig`, census / day-night / event manager behaviours.
+3. Assign (or leave empty for `FindFirstObjectByType` / interface search): `SimulationClock`, `PopulationTracker`, `CreatureLifecycleHub`, `ExperimentOrchestrator`, `SimulationConfig`, census / day-night / event manager behaviours.
 4. Creature prefabs: existing colliders, or optional `CreatureSelectable`.
 5. Do **not** require a baked Canvas prefab; `DesktopDebugUi` builds one at runtime.
 
