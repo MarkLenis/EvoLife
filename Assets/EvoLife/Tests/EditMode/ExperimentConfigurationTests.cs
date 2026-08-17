@@ -435,7 +435,7 @@ namespace EvoLife.Tests
                     Vector3.zero,
                     new System.Random(config.RandomSeed));
 
-                var owners = Object.FindObjectsOfType<TestPolicyOwner>();
+                var owners = Object.FindObjectsByType<TestPolicyOwner>(FindObjectsSortMode.None);
                 var herbivores = 0;
                 var predators = 0;
                 for (var i = 0; i < owners.Length; i++)
@@ -445,6 +445,8 @@ namespace EvoLife.Tests
                     {
                         continue;
                     }
+
+                    if (identity.Role == CreatureRole.Herbivore)
                     {
                         herbivores++;
                         Assert.AreEqual(AgentPolicyKind.LearnedPpo, owners[i].PolicyKind);
@@ -473,7 +475,7 @@ namespace EvoLife.Tests
                     }
                 }
 
-                var leftovers = Object.FindObjectsOfType<CreatureIdentity>();
+                var leftovers = Object.FindObjectsByType<CreatureIdentity>(FindObjectsSortMode.None);
                 for (var i = 0; i < leftovers.Length; i++)
                 {
                     if (leftovers[i] != null)

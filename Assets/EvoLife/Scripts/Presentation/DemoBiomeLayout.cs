@@ -6,13 +6,38 @@ using EvoLife.Environment;
 namespace EvoLife.Presentation
 {
     /// <summary>
-    /// Canonical demo biome layout. Matches <see cref="BiomeMap"/> contracts;
-    /// specialized zones are listed first so first-containing-wins stays correct.
+    /// Canonical demo biome layout for the research diorama (~150m footprint).
+    /// Specialized zones are listed first so <see cref="BiomeMap"/> first-containing-wins
+    /// keeps forest / wetland / rocky preferred over the grassland basin.
+    /// Densities are presentation-tuned for readability (~250–350 edible plants), not
+    /// a claim about proven performance at 80/12 population caps.
     /// </summary>
     public static class DemoBiomeLayout
     {
-        public const float WorldRadius = 28f;
-        public const int WaterSourceCount = 2;
+        /// <summary>Active ecosystem radius (~150m diameter visual footprint).</summary>
+        public const float WorldRadius = 75f;
+
+        /// <summary>Outer visual buffer beyond the logical spawn radius.</summary>
+        public const float OuterBuffer = 15f;
+
+        public const int WaterSourceCount = 3;
+
+        public static readonly Vector3 ForestCenter = new Vector3(-32f, 0f, 42f);
+        public const float ForestRadius = 34f;
+
+        public static readonly Vector3 WetlandCenter = new Vector3(-42f, 0f, -28f);
+        public const float WetlandRadius = 24f;
+
+        public static readonly Vector3 RockyCenter = new Vector3(38f, 0f, -40f);
+        public const float RockyRadius = 30f;
+
+        public const float ElevationWetland = 0.04f;
+        public const float ElevationGrassland = 0f;
+        public const float ElevationForest = 0.08f;
+        public const float ElevationRocky = 0.12f;
+
+        public static readonly Vector3 OverviewCameraPosition = new Vector3(0f, 52f, -102f);
+        public static readonly Vector3 OverviewCameraLookAt = Vector3.zero;
 
         public static List<BiomeZone> CreateZones()
         {
@@ -20,30 +45,30 @@ namespace EvoLife.Presentation
             {
                 BiomeZone.Create(
                     BiomeKind.Forest,
-                    new Vector3(-16f, 0f, 14f),
-                    13f,
-                    BiomeMap.DefaultDensityFor(BiomeKind.Forest),
+                    ForestCenter,
+                    ForestRadius,
+                    0.018f,
                     BiomeMap.DefaultRegenFor(BiomeKind.Forest),
                     BiomeMap.DefaultTemperatureFor(BiomeKind.Forest)),
                 BiomeZone.Create(
                     BiomeKind.Wetland,
-                    new Vector3(18f, 0f, 12f),
-                    11f,
-                    BiomeMap.DefaultDensityFor(BiomeKind.Wetland),
+                    WetlandCenter,
+                    WetlandRadius,
+                    0.012f,
                     BiomeMap.DefaultRegenFor(BiomeKind.Wetland),
                     BiomeMap.DefaultTemperatureFor(BiomeKind.Wetland)),
                 BiomeZone.Create(
                     BiomeKind.Rocky,
-                    new Vector3(2f, 0f, -18f),
-                    13f,
-                    BiomeMap.DefaultDensityFor(BiomeKind.Rocky),
+                    RockyCenter,
+                    RockyRadius,
+                    0.004f,
                     BiomeMap.DefaultRegenFor(BiomeKind.Rocky),
                     BiomeMap.DefaultTemperatureFor(BiomeKind.Rocky)),
                 BiomeZone.Create(
                     BiomeKind.Grassland,
                     Vector3.zero,
                     WorldRadius,
-                    BiomeMap.DefaultDensityFor(BiomeKind.Grassland),
+                    0.011f,
                     BiomeMap.DefaultRegenFor(BiomeKind.Grassland),
                     BiomeMap.DefaultTemperatureFor(BiomeKind.Grassland))
             };
@@ -55,13 +80,13 @@ namespace EvoLife.Presentation
             {
                 Seed = seed,
                 WorldRadius = WorldRadius,
-                DefaultDensity = BiomeMap.DefaultDensityFor(BiomeKind.Grassland),
-                MinSeparation = 1.6f,
+                DefaultDensity = 0.011f,
+                MinSeparation = 2.2f,
                 DefaultCapacity = 20f,
                 DefaultRemaining = 20f,
                 DefaultRegenPerSecond = 0.5f,
                 DefaultRegenDelaySeconds = 2f,
-                MaxPlacementAttempts = 24
+                MaxPlacementAttempts = 28
             };
         }
     }

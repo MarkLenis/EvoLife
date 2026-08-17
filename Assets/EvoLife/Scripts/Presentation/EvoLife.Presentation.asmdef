@@ -7,7 +7,8 @@
     "EvoLife.Genetics",
     "EvoLife.Environment",
     "EvoLife.Simulation",
-    "EvoLife.AI"
+    "EvoLife.AI",
+    "Unity.ML-Agents"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -16,6 +17,12 @@
   "precompiledReferences": [],
   "autoReferenced": true,
   "defineConstraints": [],
-  "versionDefines": [],
+  "versionDefines": [
+    {
+      "name": "com.unity.ml-agents",
+      "expression": "4.0.0",
+      "define": "EVOLIFE_MLAGENTS"
+    }
+  ],
   "noEngineReferences": false
 }

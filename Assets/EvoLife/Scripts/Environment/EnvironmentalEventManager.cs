@@ -127,6 +127,11 @@ namespace EvoLife.Environment
             TickActive(deltaTimeSeconds, now);
         }
 
+        void IEnvironmentalEventCommands.Trigger(EnvironmentalEventKind kind)
+        {
+            Trigger(kind);
+        }
+
         public ActiveEnvironmentalEvent Trigger(EnvironmentalEventKind kind)
         {
             var definition = config != null

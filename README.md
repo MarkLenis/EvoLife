@@ -19,10 +19,10 @@ genetic inheritance, and a FastAPI analytics backend.
 
 ### Unity
 
-1. Install **Unity 2022.3 LTS** (see `ProjectSettings/ProjectVersion.txt`).
+1. Install **Unity 6.5** (see `ProjectSettings/ProjectVersion.txt`; Hub may rewrite the patch when you open the project).
 2. Open this repository root as a Unity project.
-3. Allow Package Manager to resolve `com.unity.ml-agents` and test frameworks.
-4. Open `Assets/EvoLife/Scenes/EvoLifeDemo.unity` for the stylized demo, or `Assets/EvoLife/Scenes/Bootstrap.unity` for a lightweight/training placeholder.
+3. Allow Package Manager to resolve `com.unity.ml-agents` **4.1.x** and test frameworks.
+4. Open `Assets/EvoLife/Scenes/EvoLifeDemo.unity` and press **Play** for the ~150m research-diorama demo (biomes, plants, creatures build at runtime). Use `Bootstrap.unity` for a lightweight/training placeholder. See [Docs/PRESENTATION.md](Docs/PRESENTATION.md).
 
 ### Backend
 

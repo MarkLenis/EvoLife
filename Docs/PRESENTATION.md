@@ -1,144 +1,105 @@
 # Presentation
 
-Stylized desktop demo visuals for EvoLife. Simulation, AI, biology, genetics, reproduction, analytics, and experiment lifecycle stay in their owning modules. This layer only reads those contracts and draws the world.
+Stylized desktop demo visuals for EvoLife — a **research diorama** meant to make AI experiment behavior readable in a university demo. Simulation, AI, biology, genetics, reproduction, analytics, and experiment lifecycle stay in their owning modules. This layer only reads those contracts and draws the world.
 
 Related: [PERFORMANCE.md](PERFORMANCE.md), [ENVIRONMENT.md](ENVIRONMENT.md), [ENVIRONMENT_EVENTS.md](ENVIRONMENT_EVENTS.md), [ARCHITECTURE.md](ARCHITECTURE.md), [AGENT_BOUNDARIES.md](AGENT_BOUNDARIES.md).
+
+## Design principle
+
+If forced to choose between “more beautiful” and “easier to understand AI behavior,” choose **understandability**.
+
+Visual hierarchy: creatures → resources → biome boundaries → event cues → decoration.
 
 ## Scenes
 
 | Scene | Purpose |
 |-------|---------|
-| `Assets/EvoLife/Scenes/EvoLifeDemo.unity` | Presentation / demo world. Stylized biomes, creature/resource visuals, optional lighting and event cues. |
-| `Assets/EvoLife/Scenes/Bootstrap.unity` | Lightweight bootstrap / training-oriented placeholder. Do **not** treat it as the demo, and do not load presentation effects into ML-Agents training by default. |
+| `Assets/EvoLife/Scenes/EvoLifeDemo.unity` | Presentation / demo world (~150m basin). |
+| `Assets/EvoLife/Scenes/Bootstrap.unity` | Lightweight bootstrap / training-oriented placeholder. |
 
-`EvoLifeDemo` is **not** the default ML-Agents training environment. Train in a minimal scene (Bootstrap or a dedicated training scene). Demo numbers are not experiment results.
+`EvoLifeDemo` is **not** the default ML-Agents training environment.
+
+## World layout (basin, not quadrants)
+
+Active footprint ≈ **150m** diameter (`DemoBiomeLayout.WorldRadius = 75`) plus ~15m outer visual buffer.
+
+| Region | Placement | Role |
+|--------|-----------|------|
+| Grassland | Center basin | Main feeding / pursuit readability |
+| Forest | North / northwest crescent | Darker habitat, sparse non-colliding trees |
+| Wetland | West / southwest | Shallow ponds + reeds; drinkable `WaterSource`s |
+| Rocky / dry | South / southeast | Resource-poor contrast; drought cue |
+
+Logical zones remain circular `BiomeZone`s (specialized first). Visual biome edges are **irregular ground patches**, not concentric transition rings. The painted boundary can be more organic than the logical circle.
+
+Plant densities on the demo layout are **lower than BiomeMap defaults** so a large map does not explode plant count. ResourceManager remains authoritative.
+
+Default demo spawn: **24 herbivores / 6 predators** (caps 80 / 24). Caps are visual/performance targets, not profiled guarantees.
 
 ## What the demo communicates
 
-- Ecosystem extent: a ground disc at `DemoBiomeLayout.WorldRadius` (28)
-- Resource locations: plant meshes plus wetland ponds from `WaterSource`
-- Biome differences: grassland / forest / wetland / rocky ground colors
-- Herbivore vs predator: green rounded body vs rust elongated body, snout on +Z
-- Population motion: existing `PlanarMoveActionExecutor` locomotion (no second controller)
-
-Default demo spawn counts (editable on `PresentationDemoBootstrap`): **24 herbivores**, **6 predators**. Caps remain 80 / 24. These are presentation defaults, not proven performance ceilings.
-
-## Biome visual mapping
-
-Logical zones are unchanged (`BiomeMap`, first containing zone wins, else grassland). Visual discs match those circles:
-
-| Biome | Center | Radius | Visual |
-|-------|--------|--------|--------|
-| Forest | (-16, 0, 14) | 13 | dark green disc + decorative trees (not food) |
-| Wetland | (18, 0, 12) | 11 | teal disc; drinkable ponds from `WaterSource` |
-| Rocky | (2, 0, -18) | 13 | tan disc |
-| Grassland | origin / default | 28 | light green disc under the others |
-
-Specialized zones are listed **before** the large grassland zone so `BiomeMap.ResolveKind` still prefers forest/wetland/rocky. Regen, density, and temperature use existing `BiomeMap.Default*` values. Shaders never own biome logic.
+- Food concentration (edible leafy clusters vs thin decorative tufts)
+- Water (shallow teal ponds; multiple wetland sources)
+- Biome differences (palette + landmarks)
+- Herbivore vs predator (**Kenney deer vs fox meshes**, plus facing locators)
+- Population motion / clustering in the open basin
+- Event stress (drought desaturation, concentrated wildfire cue, heat tint). Food boom is communicated by actual extra vegetation.
 
 ## Creature prefab hierarchy
 
 ```
-Creature root          simulation + AI + collider live here
-├─ CreatureIdentity
-├─ CreatureVitals
-├─ CreatureGenome
-├─ CreatureCapabilityMotor
-├─ CreatureBrain
-├─ PlanarMoveActionExecutor
-├─ EvoLifeCreatureAgent
-├─ CreatureReproductionBridge   (also added at spawn if missing)
-├─ CapsuleCollider              primitive, not MeshCollider
-├─ Rigidbody (kinematic)        so OverlapSphere sees moving colliders
+Creature root          simulation + AI + CapsuleCollider + kinematic Rigidbody
+├─ … required runtime components …
 ├─ CreaturePresentation
 ├─ PhenotypeVisual
-└─ Visual/                      meshes only; scaled by body_size
-   ├─ Body
-   ├─ Head
-   ├─ Snout                     marks forward (+Z)
-   └─ EarL / EarR
+└─ Visual/             meshes only; body_size scales THIS child (0.80–1.25)
+   ├─ Model            Kenney Cube Pets deer (herbivore) or fox (predator)
+   └─ Head / Snout / Tail / EarL locators for facing tests
 ```
 
-`CreaturePresentationFactory` builds this at runtime for the demo. Checked-in prefabs under `Assets/EvoLife/Prefabs/Creatures/` are the same contract for manual assignment.
+Forward = **+Z**. Colliders stay on the root — genetics visualization does not change sensing fairness.
 
-Do not put locomotion or vitals on visual children. Swap meshes under `Visual/` without touching the root.
+Imported Kenney CC0 meshes live under `Assets/EvoLife/Resources/EvoLifeModels/` (Nature Kit trees/rocks/plants, Cube Pets deer/fox). `PresentationModelLibrary` loads them at runtime and falls back to primitives if a mesh is missing. Licenses: `Assets/EvoLife/Models/THIRD_PARTY_NOTICES.md`.
 
-### Phenotype visuals
+## Plants / water / décor
 
-- `body_size` scales **only** the `Visual` child via `PhenotypeVisualScale` (clamped to `[0.75, 1.35]`).
-- Root collider, motor speeds, and sensing range are **not** changed. Body size is visual-only.
-- Optional generation tint (disabled by default) lightens materials with `MaterialPropertyBlock`; it has no gameplay effect.
-- Aggression is not visualized as a combat stat.
+| Object | Collider | Notes |
+|--------|----------|-------|
+| Edible `PlantResource` | trigger sphere (unchanged radius) | Kenney bush mesh on `Visual/`; depletion scales that child |
+| `WaterSource` | trigger sphere (unchanged radius) | Irregular shallow disc + Kenney lily pads; mesh does not block movement |
+| Decorative grass / reeds / stones / trees | **none** | Kenney Nature Kit meshes; colliders stripped on spawn |
 
-## Plant / water prefabs
+## Day / night / events
 
-| Prefab | Runtime | Collider |
-|--------|---------|----------|
-| `Prefabs/Environment/Plant.prefab` | `PlantResource` + `PlantPresentation` | trigger `SphereCollider` |
-| `Prefabs/Environment/WaterSource.prefab` | `WaterSource` + `WaterPresentation` | trigger `SphereCollider` |
+`DayNightManager` is simulation authority. `DayNightLightingPresenter` rotates/intensifies the sun and keeps **night readable** (not near-black).
 
-`ResourceManager` still owns placement and regen. If no prefab is assigned it creates empty nodes; `PresentationWorldBuilder` then attaches presentation components.
+`EnvironmentalEventVisualAdapter` only **reads** event state. Drought → ground desaturation; wildfire → limited glow/smoke near forest edge; heat → warm ground tint; food boom → slightly lusher ground. No second resource lifecycle.
 
-- Plants stay in place when depleted. Foliage scale/tint shows remaining / capacity.
-- Regenerated plants are the same GameObjects.
-- Water is a flat stylized disc. It does not replace drinking (`IResourceNode.TryConsume`).
-- Visual mesh colliders are stripped so plants/water do not block movement.
+## Camera anchors (no controller)
 
-Selection raycasts against plant/water triggers should use `QueryTriggerInteraction.Collide` (Agent 10).
+Runtime anchors under `PresentationAnchors` (Agent 10 may bind a controller later):
 
-## Day / night lighting
+- `CameraAnchor_Overview` ≈ `(0, 52, -102)` looking at origin
+- `CameraAnchor_Grassland` / `ForestEdge` / `Wetland` / `Rocky` / `LowAngleDemo`
 
-`DayNightManager` remains the simulation-time authority. `DayNightLightingPresenter` implements `IDayNightLightingHook`:
+Main Camera is positioned to the overview on Play for demo convenience. **Do not add a second enabled camera.**
 
-- rotates the directional light from `NormalizedTimeOfDay`
-- eases intensity / sun color
-- optionally sets flat ambient
+## Integration hooks for Agent 10
 
-Biology does not read Unity lighting. Training scenes can omit the presenter.
+| Hook / owner object | Use |
+|---------------------|-----|
+| `Main Camera` / `Agent10_CameraRigHook` | Attach `DesktopCameraController` + selection |
+| `Agent10_UiCanvasHook` | Parent desktop debug Canvas |
+| `SimulationSystems` | `SimulationClock`, `PopulationTracker`, spawn/reproduction |
+| `Environment` | `ResourceManager`, `DayNightManager`, `EnvironmentalEventManager` |
+| `PresentationSystems` | Bootstrap / lighting / event visuals |
 
-## Event visuals
+Shared files Presentation intentionally leaves to UI: everything under `Assets/EvoLife/Scripts/UI/`.
 
-`EnvironmentalEventVisualAdapter` **subscribes** to `EnvironmentalEventManager.EventStarted` / `EventEnded` and reads `HasActiveEvent`. It must not call `Trigger`, `DepletePlants`, `BoostPlantAvailability`, or creature ports.
+## Shader / materials
 
-| Event | Presentation cue |
-|-------|------------------|
-| Drought | drier ground (`SetLushness`) |
-| Food boom | slightly lusher ground; plants already show extra food |
-| Wildfire | cheap glow + smoke meshes |
-| Heat wave | orange haze disc |
-| Other kinds | no extra world mesh |
+Built-in RP stylized shaders (`EvoLifeStylizedColor` / `EvoLifeStylizedWater`) with Unlit fallback. Shared materials + `MaterialPropertyBlock` only.
 
-Toggle `enableEffects` off for cheap runs. Effects are presentation-only.
+## Manual inspection
 
-## ShaderGraph / materials
-
-The project uses the **Built-in** render pipeline (no URP/HDRP in `Packages/manifest.json`). Shader Graph was **not** added, because that would force a pipeline conversion.
-
-Instead:
-
-- `Assets/EvoLife/Shaders/EvoLifeStylizedColor.shader` — opaque instanced color
-- `Assets/EvoLife/Shaders/EvoLifeStylizedWater.shader` — transparent vertex wave, no grab-pass
-- Fallback: `Unlit/Color` / `Standard` via `Shader.Find`
-- Shared materials in `Assets/EvoLife/Materials/` and `PresentationMaterials` (assign `sharedMaterial`, never `renderer.material`)
-
-Simulation remains functional if shaders fail to import.
-
-## Integration with desktop UI
-
-Presentation does **not** own camera controls, selection, inspector, dashboard, Canvas, event UI, or AI debug overlays.
-
-Hooks in `EvoLifeDemo.unity`:
-
-1. `Main Camera` / `Agent10_CameraRigHook` — attach `DesktopCameraController` + `CreatureSelectionController` on the existing camera. Do **not** add a second enabled camera.
-2. `Agent10_UiCanvasHook` — parent or place `DesktopDebugUi` here (runtime Canvas).
-3. Wire HUD/inspector to existing `SimulationClock`, `PopulationTracker`, `EcosystemManager`, `EnvironmentalEventManager`. See [UI_DEBUG.md](UI_DEBUG.md).
-4. Keep `PresentationDemoBootstrap` / world visuals. Do not duplicate `DayNightLightingPresenter` as a second sun controller.
-5. One audio listener on Main Camera.
-
-Shared files Presentation avoided so UI can own them:
-
-- `Assets/EvoLife/Scripts/UI/` (including `SimulationHud`, camera, selection, inspector, dashboard, debug overlay)
-
-## Manual Unity inspection
-
-Automated tests cover component contracts, not pixels. After opening the Editor, follow [MANUAL_UNITY_VERIFICATION.md](MANUAL_UNITY_VERIFICATION.md).
+See [MANUAL_UNITY_VERIFICATION.md](MANUAL_UNITY_VERIFICATION.md) presentation checklist. Automated tests cover contracts, not pixels.

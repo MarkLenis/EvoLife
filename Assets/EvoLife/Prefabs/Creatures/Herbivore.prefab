@@ -52,7 +52,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 646546548c36eab48bde85b3acdbe568, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Creatures::EvoLife.Creatures.CreatureIdentity
   speciesId: herbivore
@@ -67,7 +67,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 32dd6e9182d3ab94e8c9e7f9d8e1b5a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Creatures::EvoLife.Creatures.CreatureVitals
 --- !u!114 &100012
@@ -79,7 +79,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 0cb95218e735b2b4fb81315c6f5d6df4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Genetics::EvoLife.Genetics.CreatureGenome
 --- !u!114 &100013
@@ -91,7 +91,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 0d2664c8ffba1844b81e4b5dd2c122df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Creatures::EvoLife.Creatures.CreatureCapabilityMotor
 --- !u!114 &100014
@@ -103,7 +103,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: a87737f8fe004634689f3226df49d883, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.AI::EvoLife.AI.PlanarMoveActionExecutor
 --- !u!114 &100015
@@ -115,7 +115,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 4e0205a49b4a5644fa6ddc95fb044638, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.AI::EvoLife.AI.CreatureBrain
 --- !u!114 &100016
@@ -127,7 +127,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 6f75d5387290c8a44b691a8132876082, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.AI::EvoLife.AI.EvoLifeCreatureAgent
 --- !u!114 &100017
@@ -139,7 +139,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: a4e31cf712f3c834cbb8e88822af1014, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Simulation::EvoLife.Simulation.CreatureReproductionBridge
 --- !u!114 &100018
@@ -151,7 +151,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: d6e3fcae84c95494dab63e179dc6fb5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Presentation::EvoLife.Presentation.CreaturePresentation
 --- !u!114 &100019
@@ -163,7 +163,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 075faea6ca98acf4ba6e118c0cb449db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Presentation::EvoLife.Presentation.PhenotypeVisual
 --- !u!136 &100080

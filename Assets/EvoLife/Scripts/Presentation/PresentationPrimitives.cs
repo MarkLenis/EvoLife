@@ -32,46 +32,76 @@ namespace EvoLife.Presentation
             return go.transform;
         }
 
+        public static void ClearChildren(Transform parent)
+        {
+            if (parent == null)
+            {
+                return;
+            }
+
+            for (var i = parent.childCount - 1; i >= 0; i--)
+            {
+                Object.DestroyImmediate(parent.GetChild(i).gameObject);
+            }
+        }
+
         public static GameObject CreateChild(
             Transform parent,
             string name,
             PrimitiveType type,
             Vector3 localPosition,
             Vector3 localScale,
-            Material material)
+            Material material,
+            Vector3 localEulerAngles = default,
+            bool castShadows = false,
+            bool receiveShadows = false)
         {
             var go = GameObject.CreatePrimitive(type);
             go.name = name;
             StripCollider(go);
             go.transform.SetParent(parent, false);
             go.transform.localPosition = localPosition;
-            go.transform.localRotation = Quaternion.identity;
+            go.transform.localRotation = Quaternion.Euler(localEulerAngles);
             go.transform.localScale = localScale;
-            ApplySharedMaterial(go, material);
+            ApplySharedMaterial(go, material, castShadows, receiveShadows);
             return go;
         }
 
-        public static void ApplySharedMaterial(GameObject go, Material material)
+        public static GameObject CreateMeshChild(
+            Transform parent,
+            string name,
+            Mesh mesh,
+            Vector3 localPosition,
+            Material material,
+            bool receiveShadows = true,
+            bool castShadows = false)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.transform.localRotation = Quaternion.identity;
+            go.transform.localScale = Vector3.one;
+            var filter = go.AddComponent<MeshFilter>();
+            filter.sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            ApplyRenderer(renderer, material, castShadows, receiveShadows);
+            var owner = go.AddComponent<PresentationMeshOwner>();
+            owner.Own(mesh);
+            return go;
+        }
+
+        public static void ApplySharedMaterial(
+            GameObject go,
+            Material material,
+            bool castShadows = false,
+            bool receiveShadows = false)
         {
             if (go == null)
             {
                 return;
             }
 
-            var renderer = go.GetComponent<MeshRenderer>();
-            if (renderer == null)
-            {
-                return;
-            }
-
-            renderer.shadowCastingMode = ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
-            renderer.lightProbeUsage = LightProbeUsage.Off;
-            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
-            if (material != null)
-            {
-                renderer.sharedMaterial = material;
-            }
+            ApplyRenderer(go.GetComponent<MeshRenderer>(), material, castShadows, receiveShadows);
         }
 
         public static void StripCollider(GameObject go)
@@ -88,6 +118,53 @@ namespace EvoLife.Presentation
             }
 
             Object.DestroyImmediate(collider);
+        }
+
+        public static void PrepareImportedVisual(GameObject go, bool castShadows)
+        {
+            if (go == null)
+            {
+                return;
+            }
+
+            var colliders = go.GetComponentsInChildren<Collider>(true);
+            for (var i = 0; i < colliders.Length; i++)
+            {
+                Object.DestroyImmediate(colliders[i]);
+            }
+
+            var animators = go.GetComponentsInChildren<Animator>(true);
+            for (var i = 0; i < animators.Length; i++)
+            {
+                animators[i].enabled = false;
+            }
+
+            var renderers = go.GetComponentsInChildren<MeshRenderer>(true);
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                var renderer = renderers[i];
+                renderer.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+                renderer.receiveShadows = castShadows;
+                renderer.lightProbeUsage = LightProbeUsage.Off;
+                renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            }
+        }
+
+        static void ApplyRenderer(MeshRenderer renderer, Material material, bool castShadows, bool receiveShadows)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            renderer.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+            renderer.receiveShadows = receiveShadows;
+            renderer.lightProbeUsage = LightProbeUsage.Off;
+            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            if (material != null)
+            {
+                renderer.sharedMaterial = material;
+            }
         }
     }
 }

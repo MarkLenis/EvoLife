@@ -6,7 +6,7 @@
     "EvoLife.Creatures",
     "EvoLife.Genetics",
     "EvoLife.Environment",
-    "Unity.MLAgents"
+    "Unity.ML-Agents"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -18,7 +18,7 @@
   "versionDefines": [
     {
       "name": "com.unity.ml-agents",
-      "expression": "2.0.0",
+      "expression": "4.0.0",
       "define": "EVOLIFE_MLAGENTS"
     }
   ],

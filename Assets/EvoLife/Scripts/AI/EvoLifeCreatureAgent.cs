@@ -347,7 +347,7 @@ namespace EvoLife.AI
             {
                 if (resourceRegistry == null)
                 {
-                    resourceRegistry = FindObjectOfType<ResourceRegistry>();
+                    resourceRegistry = FindFirstObjectByType<ResourceRegistry>();
                 }
 
                 observations = CreatureObservationFactory.Create(

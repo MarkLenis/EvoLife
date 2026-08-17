@@ -17,7 +17,6 @@ namespace EvoLife.Presentation
 
         GameObject wildfireGlow;
         GameObject smoke;
-        GameObject heatHaze;
         bool subscribed;
 
         public bool EnableEffects
@@ -95,6 +94,7 @@ namespace EvoLife.Presentation
             if (ground != null)
             {
                 ground.SetLushness(LastLushness);
+                ground.SetHeatTint(heat ? 0.38f : 0f);
             }
 
             WildfireVisible = enableEffects && wildfire;
@@ -107,11 +107,6 @@ namespace EvoLife.Presentation
             if (smoke != null)
             {
                 smoke.SetActive(WildfireVisible);
-            }
-
-            if (heatHaze != null)
-            {
-                heatHaze.SetActive(enableEffects && heat);
             }
         }
 
@@ -139,9 +134,11 @@ namespace EvoLife.Presentation
 
             if (wildfireGlow == null)
             {
+                // Concentrated cue near forest edge — not a full-screen effect.
                 wildfireGlow = PresentationPrimitives.CreateChild(
                     effectsRoot, "WildfireGlow", PrimitiveType.Sphere,
-                    new Vector3(0f, 1.2f, 0f), new Vector3(6f, 0.4f, 6f),
+                    DemoBiomeLayout.ForestCenter + new Vector3(8f, 1.4f, -10f),
+                    new Vector3(10f, 0.5f, 10f),
                     PresentationMaterials.Wildfire);
                 wildfireGlow.SetActive(false);
             }
@@ -150,19 +147,12 @@ namespace EvoLife.Presentation
             {
                 smoke = PresentationPrimitives.CreateChild(
                     effectsRoot, "Smoke", PrimitiveType.Sphere,
-                    new Vector3(0f, 2.4f, 0f), new Vector3(3.5f, 2.2f, 3.5f),
+                    DemoBiomeLayout.ForestCenter + new Vector3(8f, 3.2f, -10f),
+                    new Vector3(5f, 3.2f, 5f),
                     PresentationMaterials.Smoke);
                 smoke.SetActive(false);
             }
 
-            if (heatHaze == null)
-            {
-                heatHaze = PresentationPrimitives.CreateChild(
-                    effectsRoot, "HeatHaze", PrimitiveType.Cylinder,
-                    new Vector3(0f, 0.2f, 0f), new Vector3(18f, 0.02f, 18f),
-                    PresentationMaterials.Wildfire);
-                heatHaze.SetActive(false);
-            }
         }
     }
 }

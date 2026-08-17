@@ -25,7 +25,7 @@ namespace EvoLife.Analytics
         {
             if (lifecycleHub == null)
             {
-                lifecycleHub = FindObjectOfType<CreatureLifecycleHub>();
+                lifecycleHub = FindFirstObjectByType<CreatureLifecycleHub>();
             }
 
             if (lifecycleHub != null)

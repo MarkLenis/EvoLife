@@ -121,7 +121,7 @@ namespace EvoLife.Environment
         {
             if (registry == null)
             {
-                registry = GetComponent<ResourceRegistry>() ?? FindObjectOfType<ResourceRegistry>();
+                registry = GetComponent<ResourceRegistry>() ?? FindFirstObjectByType<ResourceRegistry>();
             }
 
             SyncSerializedZones();

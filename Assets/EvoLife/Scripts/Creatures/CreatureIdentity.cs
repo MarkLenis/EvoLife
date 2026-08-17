@@ -25,7 +25,7 @@ namespace EvoLife.Creatures
 
         public void Assign(CreatureId creatureId, string species, CreatureRole creatureRole)
         {
-            Assign(creatureId, species, creatureRole, generation: 0, parentA: null, parentB: null);
+            Assign(creatureId, species, creatureRole, generationNumber: 0, parentAId: null, parentBId: null);
         }
 
         public void Assign(

@@ -116,27 +116,27 @@ namespace EvoLife.UI
         {
             if (clock == null)
             {
-                clock = FindObjectOfType<SimulationClock>();
+                clock = FindFirstObjectByType<SimulationClock>();
             }
 
             if (collector == null)
             {
-                collector = FindObjectOfType<PopulationStatisticCollector>();
+                collector = FindFirstObjectByType<PopulationStatisticCollector>();
             }
 
             if (orchestrator == null)
             {
-                orchestrator = FindObjectOfType<ExperimentOrchestrator>();
+                orchestrator = FindFirstObjectByType<ExperimentOrchestrator>();
             }
 
             if (lifecycleHub == null)
             {
-                lifecycleHub = FindObjectOfType<CreatureLifecycleHub>();
+                lifecycleHub = FindFirstObjectByType<CreatureLifecycleHub>();
             }
 
             if (populationTracker == null)
             {
-                populationTracker = FindObjectOfType<PopulationTracker>();
+                populationTracker = FindFirstObjectByType<PopulationTracker>();
             }
 
             census = environmentCensusBehaviour as IReadOnlyResourceCensus
@@ -369,7 +369,7 @@ namespace EvoLife.UI
 
         static T FindInterface<T>() where T : class
         {
-            var behaviours = FindObjectsOfType<MonoBehaviour>();
+            var behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
             for (var i = 0; i < behaviours.Length; i++)
             {
                 if (behaviours[i] is T match)
@@ -383,7 +383,7 @@ namespace EvoLife.UI
 
         static void EnsureEventSystem()
         {
-            if (FindObjectOfType<EventSystem>() != null)
+            if (FindFirstObjectByType<EventSystem>() != null)
             {
                 return;
             }

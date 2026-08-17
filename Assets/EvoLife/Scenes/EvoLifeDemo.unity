@@ -13,7 +13,7 @@ OcclusionCullingSettings:
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 9
+  serializedVersion: 10
   m_Fog: 0
   m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   m_FogMode: 3
@@ -31,20 +31,19 @@ RenderSettings:
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
   m_HaloTexture: {fileID: 0}
-  m_SpotCookie: {fileID: 0}
+  m_SpotCookie: {fileID: 10001, guid: 0000000000000000e000000000000000, type: 0}
   m_DefaultReflectionMode: 0
   m_DefaultReflectionResolution: 128
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 12
-  m_GIWorkflowMode: 1
+  serializedVersion: 13
+  m_BakeOnSceneLoad: 0
   m_GISettings:
     serializedVersion: 2
     m_BounceScale: 1
@@ -55,6 +54,45 @@ LightmapSettings:
     m_EnableRealtimeLightmaps: 0
   m_LightmapEditorSettings:
     serializedVersion: 12
+    m_Resolution: 2
+    m_BakeResolution: 40
+    m_AtlasSize: 1024
+    m_AO: 0
+    m_AOMaxDistance: 1
+    m_CompAOExponent: 1
+    m_CompAOExponentDirect: 0
+    m_ExtractAmbientOcclusion: 0
+    m_Padding: 2
+    m_LightmapParameters: {fileID: 0}
+    m_LightmapsBakeMode: 1
+    m_TextureCompression: 1
+    m_ReflectionCompression: 2
+    m_MixedBakeMode: 2
+    m_BakeBackend: 2
+    m_PVRSampling: 1
+    m_PVRDirectSampleCount: 32
+    m_PVRSampleCount: 512
+    m_PVRBounces: 2
+    m_PVREnvironmentSampleCount: 256
+    m_PVREnvironmentReferencePointCount: 2048
+    m_PVRFilteringMode: 1
+    m_PVRDenoiserTypeDirect: 1
+    m_PVRDenoiserTypeIndirect: 1
+    m_PVRDenoiserTypeAO: 1
+    m_PVRFilterTypeDirect: 0
+    m_PVRFilterTypeIndirect: 0
+    m_PVRFilterTypeAO: 0
+    m_PVREnvironmentMIS: 1
+    m_PVRCulling: 1
+    m_PVRFilteringGaussRadiusDirect: 1
+    m_PVRFilteringGaussRadiusIndirect: 1
+    m_PVRFilteringGaussRadiusAO: 1
+    m_PVRFilteringAtrousPositionSigmaDirect: 0.5
+    m_PVRFilteringAtrousPositionSigmaIndirect: 2
+    m_PVRFilteringAtrousPositionSigmaAO: 1
+    m_ExportTrainingData: 0
+    m_TrainingDataDestination: TrainingData
+    m_LightProbeSampleCountMultiplier: 4
   m_LightingDataAsset: {fileID: 0}
   m_LightingSettings: {fileID: 0}
 --- !u!196 &4
@@ -62,7 +100,7 @@ NavMeshSettings:
   serializedVersion: 2
   m_ObjectHideFlags: 0
   m_BuildSettings:
-    serializedVersion: 2
+    serializedVersion: 3
     agentTypeID: 0
     agentRadius: 0.5
     agentHeight: 2
@@ -75,7 +113,7 @@ NavMeshSettings:
     cellSize: 0.16666667
     manualTileSize: 0
     tileSize: 256
-    accuratePlacement: 0
+    buildHeightMesh: 0
     maxJobWorkers: 0
     preserveTilesOutsideBounds: 0
     debug:
@@ -113,13 +151,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 100000}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &100002
 MonoBehaviour:
@@ -130,9 +168,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 10113781b05e1804db2c388cf7983b2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Simulation::EvoLife.Simulation.SimulationClock
+  timeScale: 1
+  isPaused: 0
 --- !u!114 &100003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -142,7 +182,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: a5ddc57ce46be794bb5aadb89ceec2ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Simulation::EvoLife.Simulation.SimulationRunner
   clock: {fileID: 100002}
@@ -157,7 +197,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: ea79520fb3afd134bb6ec5e83fd4bd0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Simulation::EvoLife.Simulation.PopulationTracker
 --- !u!114 &100005
@@ -169,7 +209,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 087137a9faa61d54fb93e872ac928655, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Simulation::EvoLife.Simulation.CreatureLifecycleHub
   populationTracker: {fileID: 100004}
@@ -182,12 +222,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: e0424de56e98ca2418d12ff64f3d394b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Simulation::EvoLife.Simulation.CreatureSpawner
   populationTracker: {fileID: 100004}
   lifecycleHub: {fileID: 100005}
+  defaultVitals: {fileID: 0}
   reproductionSystem: {fileID: 100007}
+  nextCreatureId: 1
 --- !u!114 &100007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -197,13 +239,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 084f3c78f4c2d3b4988c64f38eb1abbc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Simulation::EvoLife.Simulation.ReproductionSystem
   spawner: {fileID: 100006}
   populationTracker: {fileID: 100004}
   lifecycleHub: {fileID: 100005}
   clock: {fileID: 100002}
+  simulationConfig: {fileID: 0}
+  reproductionConfig: {fileID: 0}
+  herbivorePrefab: {fileID: 0}
+  predatorPrefab: {fileID: 0}
 --- !u!114 &100008
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -213,15 +259,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 61fc53bb3d3715d499978298d89646d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Simulation::EvoLife.Simulation.EcosystemManager
+  config: {fileID: 0}
   clock: {fileID: 100002}
   spawner: {fileID: 100006}
   populationTracker: {fileID: 100004}
   lifecycleHub: {fileID: 100005}
   reproduction: {fileID: 100007}
   trainingRespawn: {fileID: 100010}
+  herbivorePrefab: {fileID: 0}
+  predatorPrefab: {fileID: 0}
+  reproductionConfig: {fileID: 0}
   environmentalCreatures: {fileID: 100009}
   environmentalEvents: {fileID: 400005}
   resourceManager: {fileID: 400003}
@@ -237,12 +287,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 63fb84a8a91f91e4884fc50dbf22a22d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Simulation::EvoLife.Simulation.EnvironmentalCreatureBridge
   spawner: {fileID: 100006}
   lifecycleHub: {fileID: 100005}
   populationTracker: {fileID: 100004}
+  config: {fileID: 0}
+  herbivorePrefab: {fileID: 0}
+  predatorPrefab: {fileID: 0}
+  spawnOrigin: {fileID: 0}
+  seed: 42
 --- !u!114 &100010
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -252,11 +307,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 100000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 984252a4380adac41ad999a7810636be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Simulation::EvoLife.Simulation.TrainingRespawnController
   spawner: {fileID: 100006}
   populationTracker: {fileID: 100004}
+  config: {fileID: 0}
+  herbivorePrefab: {fileID: 0}
+  predatorPrefab: {fileID: 0}
 --- !u!1 &200000
 GameObject:
   m_ObjectHideFlags: 0
@@ -282,14 +340,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 200000}
-  m_LocalRotation: {x: 0.3420201, y: 0, z: 0, w: 0.9396926}
-  m_LocalPosition: {x: 0, y: 28, z: -32}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.3826834, y: 0, z: 0, w: 0.9238795}
+  m_LocalPosition: {x: 0, y: 65, z: -75}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 40, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 45, y: 0, z: 0}
 --- !u!20 &200002
 Camera:
   m_ObjectHideFlags: 0
@@ -304,9 +362,17 @@ Camera:
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
   m_SensorSize: {x: 36, y: 24}
   m_LensShift: {x: 0, y: 0}
-  m_FocalLength: 50
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
@@ -314,7 +380,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 200
+  far clip plane: 320
   field of view: 50
   orthographic: 0
   orthographic size: 5
@@ -365,13 +431,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 300000}
+  serializedVersion: 2
   m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
   m_LocalPosition: {x: 0, y: 24, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
 --- !u!108 &300002
 Light:
@@ -381,15 +447,14 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 300000}
   m_Enabled: 1
-  serializedVersion: 10
+  serializedVersion: 13
   m_Type: 1
-  m_Shape: 0
   m_Color: {r: 1, g: 0.96, b: 0.88, a: 1}
   m_Intensity: 1.05
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.8
-  m_CookieSize: 10
+  m_CookieSize2D: {x: 10, y: 10}
   m_Shadows:
     m_Type: 0
     m_Resolution: -1
@@ -433,8 +498,12 @@ Light:
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
-  m_ShadowRadius: 0
+  m_ForceVisible: 0
+  m_ShapeRadius: 0
   m_ShadowAngle: 0
+  m_LightUnit: 1
+  m_LuxAtDistance: 1
+  m_EnableSpotReflector: 1
 --- !u!1 &400000
 GameObject:
   m_ObjectHideFlags: 0
@@ -462,13 +531,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 400000}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &400002
 MonoBehaviour:
@@ -479,7 +548,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 400000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: ea77e190f28ce924e92f673eb5cbf02c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Environment::EvoLife.Environment.ResourceRegistry
 --- !u!114 &400003
@@ -491,10 +560,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 400000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 08af91b6dcc5a204996a8d9277a43f2d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Environment::EvoLife.Environment.ResourceManager
   registry: {fileID: 400002}
+  plantSpawn:
+    seed: 42
+    worldRadius: 20
+    defaultDensity: 0.04
+    minSeparation: 1.5
+    defaultCapacity: 20
+    defaultRemaining: 20
+    defaultRegenPerSecond: 0.5
+    defaultRegenDelaySeconds: 2
+    maxPlacementAttempts: 24
+  zones: []
   waterSourceCount: 2
   placeOnStart: 0
   plantPrefab: {fileID: 0}
@@ -508,7 +588,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 400000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: e00dec05e83e9a541a12c0a47785ba37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Environment::EvoLife.Environment.DayNightManager
   dayDurationSeconds: 120
@@ -523,10 +603,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 400000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 97ec16062669002469cceeffb623020e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Environment::EvoLife.Environment.EnvironmentalEventManager
+  config: {fileID: 0}
   resourceManager: {fileID: 400003}
+  vitalEffectsBehaviour: {fileID: 0}
+  populationCommandsBehaviour: {fileID: 0}
 --- !u!1 &500000
 GameObject:
   m_ObjectHideFlags: 0
@@ -550,13 +633,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 500000}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &600000
 GameObject:
@@ -581,13 +664,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 600000}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &700000
 GameObject:
@@ -612,13 +695,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 700000}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &800000
 GameObject:
@@ -648,13 +731,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 800000}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &800002
 MonoBehaviour:
@@ -665,7 +748,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 800000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: e3fb2d638b9057e418ae68bd958e56d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Presentation::EvoLife.Presentation.PresentationDemoBootstrap
   clock: {fileID: 100002}
@@ -689,6 +772,10 @@ MonoBehaviour:
   worldRoot: {fileID: 500001}
   herbivores: 24
   predators: 6
+  herbivorePrefabOverride: {fileID: 0}
+  predatorPrefabOverride: {fileID: 0}
+  plantPrefabOverride: {fileID: 0}
+  waterPrefabOverride: {fileID: 0}
 --- !u!114 &800003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -698,7 +785,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 800000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 1251ad28fe2753a4f8ab8cf78d45d786, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Presentation::EvoLife.Presentation.PresentationWorldBuilder
   resourceManager: {fileID: 400003}
@@ -715,7 +802,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 800000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 6df6da93bd9d4074da727ef6381f67de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Presentation::EvoLife.Presentation.BiomeGroundPresenter
   worldRoot: {fileID: 500001}
@@ -729,11 +816,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 800000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 510e117a66e76424d964ccf61b7aa9a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Presentation::EvoLife.Presentation.DayNightLightingPresenter
   sun: {fileID: 300002}
   affectAmbient: 1
+  dayIntensity: 1.1
+  nightIntensity: 0.28
 --- !u!114 &800006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -743,11 +832,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 800000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 30bd98dcf50a31241b2ed38c5431d63a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: EvoLife.Presentation::EvoLife.Presentation.EnvironmentalEventVisualAdapter
   events: {fileID: 400005}
   ground: {fileID: 800004}
+  effectsRoot: {fileID: 0}
   enableEffects: 1
 --- !u!1 &900000
 GameObject:
@@ -773,13 +863,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 900000}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.08, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &900002
 BoxCollider:
@@ -789,8 +879,29 @@ BoxCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 900000}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 56, y: 0.1, z: 56}
+  serializedVersion: 3
+  m_Size: {x: 180, y: 0.1, z: 180}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 100001}
+  - {fileID: 200001}
+  - {fileID: 300001}
+  - {fileID: 400001}
+  - {fileID: 500001}
+  - {fileID: 600001}
+  - {fileID: 700001}
+  - {fileID: 800001}
+  - {fileID: 900001}

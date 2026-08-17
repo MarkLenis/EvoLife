@@ -5,7 +5,7 @@ namespace EvoLife.Presentation
 {
     /// <summary>
     /// Optional plant visual. Does not own <see cref="PlantResource"/> lifecycle.
-    /// Depletion only scales / tints the Visual child.
+    /// Depletion only scales / tints the Visual child. Does not change interaction radius.
     /// </summary>
     public sealed class PlantPresentation : MonoBehaviour
     {
@@ -13,9 +13,11 @@ namespace EvoLife.Presentation
         [SerializeField] Renderer foliageRenderer;
 
         PlantResource plant;
-        readonly MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+        MaterialPropertyBlock propertyBlock;
         static readonly int ColorId = Shader.PropertyToID("_Color");
         bool visualsReady;
+
+        MaterialPropertyBlock PropertyBlock => propertyBlock ??= new MaterialPropertyBlock();
 
         void Awake()
         {
@@ -38,33 +40,34 @@ namespace EvoLife.Presentation
                 return;
             }
 
-            if (visualRoot.childCount == 0)
+            PresentationPrimitives.ClearChildren(visualRoot);
+            if (!PresentationModelLibrary.TrySpawn(
+                visualRoot, "Foliage", PresentationModelLibrary.EdiblePlant,
+                Vector3.zero, 4.2f, Vector3.zero, false, out var foliage))
             {
                 PresentationPrimitives.CreateChild(
                     visualRoot, "Stem", PrimitiveType.Cylinder,
-                    new Vector3(0f, 0.28f, 0f), new Vector3(0.08f, 0.28f, 0.08f),
+                    new Vector3(0f, 0.32f, 0f), new Vector3(0.10f, 0.32f, 0.10f),
                     PresentationMaterials.PlantDepleted);
-                var foliage = PresentationPrimitives.CreateChild(
-                    visualRoot, "Foliage", PrimitiveType.Sphere,
-                    new Vector3(0f, 0.62f, 0f), new Vector3(0.45f, 0.4f, 0.45f),
+                PresentationPrimitives.CreateChild(
+                    visualRoot, "LeafA", PrimitiveType.Sphere,
+                    new Vector3(-0.28f, 0.62f, 0.08f), new Vector3(0.52f, 0.16f, 0.38f),
                     PresentationMaterials.PlantHealthy);
-                foliageRenderer = foliage.GetComponent<Renderer>();
-            }
-            else if (foliageRenderer == null)
-            {
-                var foliage = visualRoot.Find("Foliage");
-                foliageRenderer = foliage != null ? foliage.GetComponent<Renderer>() : visualRoot.GetComponentInChildren<Renderer>();
-            }
-
-            var trigger = GetComponent<SphereCollider>();
-            if (trigger == null)
-            {
-                trigger = gameObject.AddComponent<SphereCollider>();
+                PresentationPrimitives.CreateChild(
+                    visualRoot, "LeafB", PrimitiveType.Sphere,
+                    new Vector3(0.26f, 0.66f, -0.10f), new Vector3(0.48f, 0.14f, 0.40f),
+                    PresentationMaterials.PlantHealthy);
+                foliage = PresentationPrimitives.CreateChild(
+                    visualRoot, "Foliage", PrimitiveType.Sphere,
+                    new Vector3(0f, 0.88f, 0.02f), new Vector3(0.72f, 0.48f, 0.72f),
+                    PresentationMaterials.PlantHealthy);
             }
 
-            trigger.isTrigger = true;
-            trigger.center = new Vector3(0f, 0.35f, 0f);
-            trigger.radius = 0.4f;
+            foliageRenderer = foliage != null
+                ? foliage.GetComponentInChildren<Renderer>()
+                : visualRoot.GetComponentInChildren<Renderer>();
+
+            EnsureTriggerWithoutChangingRadius();
             visualsReady = true;
         }
 
@@ -81,8 +84,8 @@ namespace EvoLife.Presentation
                 fill = Mathf.Clamp01(plant.AvailableAmount / plant.Capacity);
             }
 
-            var scale = Mathf.Lerp(0.35f, 1f, fill);
-            visualRoot.localScale = new Vector3(scale, Mathf.Lerp(0.45f, 1f, fill), scale);
+            var scale = Mathf.Lerp(0.42f, 1f, fill);
+            visualRoot.localScale = new Vector3(scale, Mathf.Lerp(0.50f, 1f, fill), scale);
 
             if (foliageRenderer == null)
             {
@@ -90,9 +93,23 @@ namespace EvoLife.Presentation
             }
 
             var color = Color.Lerp(PresentationPalette.PlantDepleted, PresentationPalette.PlantHealthy, fill);
-            foliageRenderer.GetPropertyBlock(propertyBlock);
-            propertyBlock.SetColor(ColorId, color);
-            foliageRenderer.SetPropertyBlock(propertyBlock);
+            var block = PropertyBlock;
+            foliageRenderer.GetPropertyBlock(block);
+            block.SetColor(ColorId, color);
+            foliageRenderer.SetPropertyBlock(block);
+        }
+
+        void EnsureTriggerWithoutChangingRadius()
+        {
+            var trigger = GetComponent<SphereCollider>();
+            if (trigger == null)
+            {
+                trigger = gameObject.AddComponent<SphereCollider>();
+                trigger.center = new Vector3(0f, 0.35f, 0f);
+                trigger.radius = 0.4f;
+            }
+
+            trigger.isTrigger = true;
         }
     }
 }

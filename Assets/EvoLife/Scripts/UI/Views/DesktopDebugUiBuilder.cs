@@ -66,7 +66,7 @@ namespace EvoLife.UI
             CreateButton(top.transform, "10x", "10x", 0.36f, () => onSpeed?.Invoke(SimulationSpeedPresets.Ten), font);
             widgets.Focus = CreateButton(top.transform, "Focus", "Focus (F)", 0.46f, null, font);
             widgets.FreeCamera = CreateButton(top.transform, "Free", "Free cam (C)", 0.56f, null, font);
-            widgets.ToggleAiDebug = CreateButton(top.transform, "AiDebug", "AI debug (F3)", 0.68f, onToggleAiDebug, font);
+            widgets.ToggleAiDebug = CreateButton(top.transform, "AiDebug", "AI debug (F3)", 0.68f, () => onToggleAiDebug?.Invoke(), font);
             widgets.ReloadScene = CreateButton(top.transform, "Reload", "Reload scene", 0.82f, null, font);
 
             var dashPanel = CreatePanel(root.transform, "Dashboard", new Vector2(0f, 0.22f), new Vector2(0.34f, 0.90f), new Color(0f, 0f, 0f, 0.55f));

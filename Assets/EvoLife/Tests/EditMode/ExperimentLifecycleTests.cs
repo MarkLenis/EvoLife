@@ -344,7 +344,7 @@ namespace EvoLife.Tests
 
             public void Dispose()
             {
-                var identities = UnityEngine.Object.FindObjectsOfType<CreatureIdentity>();
+                var identities = UnityEngine.Object.FindObjectsByType<CreatureIdentity>(FindObjectsSortMode.None);
                 for (var i = 0; i < identities.Length; i++)
                 {
                     if (identities[i] != null)

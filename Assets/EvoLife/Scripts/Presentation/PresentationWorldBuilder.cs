@@ -63,8 +63,25 @@ namespace EvoLife.Presentation
                 AttachWaterVisuals();
             }
 
+            PresentationCameraAnchors.Ensure();
+            ApplyOverviewCameraIfPresent();
             eventVisuals?.RefreshVisuals();
             Built = true;
+        }
+
+        static void ApplyOverviewCameraIfPresent()
+        {
+            var camera = Camera.main;
+            if (camera == null)
+            {
+                return;
+            }
+
+            // Default overview only — does not add a camera controller (Agent 10 owns that).
+            camera.transform.position = DemoBiomeLayout.OverviewCameraPosition;
+            camera.transform.LookAt(DemoBiomeLayout.OverviewCameraLookAt);
+            camera.farClipPlane = Mathf.Max(camera.farClipPlane, 360f);
+            camera.clearFlags = CameraClearFlags.Skybox;
         }
 
         void AttachPlantVisuals()

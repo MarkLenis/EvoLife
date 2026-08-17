@@ -51,8 +51,8 @@ namespace EvoLife.Presentation
 
             var collider = root.AddComponent<CapsuleCollider>();
             collider.center = new Vector3(0f, 0.45f, 0f);
-            collider.radius = role == CreatureRole.Predator ? 0.38f : 0.34f;
-            collider.height = role == CreatureRole.Predator ? 1.1f : 0.95f;
+            collider.radius = role == CreatureRole.Predator ? 0.36f : 0.34f;
+            collider.height = role == CreatureRole.Predator ? 1.05f : 1.0f;
             collider.direction = 1;
 
             var body = root.AddComponent<Rigidbody>();

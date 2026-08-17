@@ -17,23 +17,18 @@ namespace EvoLife.Presentation
 
         CreatureGenome genome;
         CreatureIdentity identity;
-        readonly MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+        MaterialPropertyBlock propertyBlock;
         static readonly int ColorId = Shader.PropertyToID("_Color");
         Renderer[] renderers = System.Array.Empty<Renderer>();
+
+        MaterialPropertyBlock PropertyBlock => propertyBlock ??= new MaterialPropertyBlock();
 
         public Transform VisualRoot => visualRoot;
         public float AppliedScale { get; private set; } = 1f;
 
         void Awake()
         {
-            genome = GetComponent<CreatureGenome>();
-            identity = GetComponent<CreatureIdentity>();
-            if (visualRoot == null)
-            {
-                var found = transform.Find(PresentationPrimitives.VisualRootName);
-                visualRoot = found;
-            }
-
+            ResolveBindings();
             CacheRenderers();
         }
 
@@ -41,6 +36,7 @@ namespace EvoLife.Presentation
 
         public void Apply()
         {
+            ResolveBindings();
             if (applyBodySize)
             {
                 ApplyScale();
@@ -52,10 +48,34 @@ namespace EvoLife.Presentation
             }
         }
 
+        void ResolveBindings()
+        {
+            if (genome == null)
+            {
+                genome = GetComponent<CreatureGenome>();
+            }
+
+            if (identity == null)
+            {
+                identity = GetComponent<CreatureIdentity>();
+            }
+
+            if (visualRoot == null)
+            {
+                visualRoot = transform.Find(PresentationPrimitives.VisualRootName);
+            }
+        }
+
         void ApplyScale()
         {
             if (visualRoot == null)
             {
+                visualRoot = PresentationPrimitives.EnsureVisualRoot(transform);
+            }
+
+            if (visualRoot == null)
+            {
+                AppliedScale = PhenotypeVisualScale.Neutral;
                 return;
             }
 
@@ -86,9 +106,10 @@ namespace EvoLife.Presentation
                     ? shared.GetColor("_Color")
                     : Color.white;
                 var tinted = Color.Lerp(baseColor, Color.white, shift);
-                renderer.GetPropertyBlock(propertyBlock);
-                propertyBlock.SetColor(ColorId, tinted);
-                renderer.SetPropertyBlock(propertyBlock);
+                var block = PropertyBlock;
+                renderer.GetPropertyBlock(block);
+                block.SetColor(ColorId, tinted);
+                renderer.SetPropertyBlock(block);
             }
         }
 

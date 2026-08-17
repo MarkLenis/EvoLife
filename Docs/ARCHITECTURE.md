@@ -10,12 +10,12 @@ Experiments and training curriculum: [EXPERIMENTS.md](EXPERIMENTS.md), [TRAINING
 
 ## Unity version
 
-The repository previously contained only a README (no Unity project). The scaffold targets:
+The scaffold targets:
 
-- **Unity 2022.3 LTS** (`ProjectSettings/ProjectVersion.txt`)
-- **ML-Agents** `com.unity.ml-agents` **2.0.1** (`Packages/manifest.json`)
+- **Unity 6.5** (`ProjectSettings/ProjectVersion.txt`)
+- **ML-Agents** `com.unity.ml-agents` **4.1.0** (`Packages/manifest.json`)
 
-If the team standardizes on a different 2022.3 patch or Unity 6 later, update `ProjectVersion.txt` and re-validate ML-Agents compatibility.
+If the team standardizes on a different Unity 6.5 patch, update `ProjectVersion.txt` and re-validate ML-Agents compatibility.
 
 ---
 

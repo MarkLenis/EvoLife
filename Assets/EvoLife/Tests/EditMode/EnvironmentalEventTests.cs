@@ -4,6 +4,7 @@ using UnityEngine;
 using EvoLife.Common;
 using EvoLife.Creatures;
 using EvoLife.Environment;
+using EvoLife.Genetics;
 using EvoLife.Simulation;
 
 namespace EvoLife.Tests
@@ -213,7 +214,7 @@ namespace EvoLife.Tests
             }
             finally
             {
-                var identities = Object.FindObjectsOfType<CreatureIdentity>();
+                var identities = Object.FindObjectsByType<CreatureIdentity>(FindObjectsSortMode.None);
                 for (var i = 0; i < identities.Length; i++)
                 {
                     if (identities[i] != null)

@@ -731,7 +731,7 @@ namespace EvoLife.Tests
 
         static void Cleanup(List<GameObject> objects, params UnityEngine.Object[] extras)
         {
-            var identities = UnityEngine.Object.FindObjectsOfType<CreatureIdentity>();
+            var identities = UnityEngine.Object.FindObjectsByType<CreatureIdentity>(FindObjectsSortMode.None);
             for (var i = 0; i < identities.Length; i++)
             {
                 if (identities[i] != null)
